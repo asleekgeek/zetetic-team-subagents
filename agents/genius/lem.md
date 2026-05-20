@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When the question is \"what could this technology/system become?\" and the standard forecast is too narrow"
 agent_topic: genius-lem
 shapes: [possibility-space-exploration, push-to-logical-extreme, unknowable-system-audit, review-of-nonexistent, evolution-as-design-analogy]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: genius
 ---
 

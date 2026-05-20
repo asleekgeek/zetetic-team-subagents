@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When a bug only appears under concurrency, load, or partial failure; when \"it works on my machine\" hides a race"
 agent_topic: genius-lamport
 shapes: [distributed-causality, proof-before-code, invariants-not-traces, spec-first, partial-failure-default]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: genius
 ---
 

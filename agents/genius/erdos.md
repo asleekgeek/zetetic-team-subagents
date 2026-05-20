@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "\"When you need to prove that a configuration with certain properties exists but constructing it explicitly is hard"
 agent_topic: genius-erdos
 shapes: [probabilistic-existence-proof, random-graph-threshold, extremal-combinatorics, collaborative-problem-decomposition, the-book-proof]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: genius
 ---
 

@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a measurement exceeds what known parts predict and the residual needs a carrier"
 agent_topic: genius-curie
 shapes: [residual-with-a-carrier, instrument-before-hypothesis, name-the-anomaly, two-independent-methods, observer-effect-audit]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: genius
 ---
 

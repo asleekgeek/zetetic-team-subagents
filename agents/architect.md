@@ -5,7 +5,7 @@ model: opus
 effort: high
 when_to_use: "When planning structural changes, decomposing large modules, designing new layers, analyzing dependencies"
 agent_topic: architect
-tools: [Read, Bash, Glob, Grep]
+tools: [Read, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: architect
 ---
 

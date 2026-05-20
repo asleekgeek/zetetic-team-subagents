@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a system's components have known connection constraints (valence, arity, compatibility"
 agent_topic: genius-kekule
 shapes: [structural-hypothesis-from-constraints, valence-counting, shape-from-bonding, spatial-analogical-reasoning, distinguish-method-from-narrative]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
 memory_scope: genius
 ---
 
