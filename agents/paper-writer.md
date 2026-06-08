@@ -329,6 +329,82 @@ Never use `cortex:recall` to verify a write you just made. It is async. Use `mem
 ### Wiki vs memory
 
 Wiki (`cortex:wiki_write`, `wiki_read`) is a **separate durable documentation surface** — markdown files at `~/.claude/methodology/wiki/` backed by `wiki.pages` table. It is never pruned. Use it for ADRs, specs, and long-form reference. It is NOT memory — it does not decay, does not have heat scores, and is not subject to dream-cycle consolidation. Wiki pages are indexed back into memory as protected pointer entries so `recall` can surface them, but the wiki itself lives outside the memory lifecycle.
+
+### Isolation rules — preventing cross-contamination and context poisoning
+
+Two contamination vectors exist. Both must be actively guarded against.
+
+#### Vector 1 — cortex:recall without agent_topic (DB-level)
+
+`cortex:recall(query="X")` searches the entire Cortex DB across all agents,
+all sessions, all domains. If agent A wrote a stale checkpoint or a wrong
+decision to Cortex, agent B's unscoped recall can surface it mid-task and
+poison its reasoning.
+
+**Rule: always scope cortex:recall to your own agent_topic for task-specific queries.**
+
+```python
+# WRONG — surfaces any agent's memories matching the query
+cortex:recall(query="payment refund logic")
+
+# CORRECT — scoped to this agent's memories only
+cortex:recall(query="payment refund logic", agent_topic="<your-agent-topic>")
+```
+
+When is an unscoped recall appropriate?
+- Explicitly seeking cross-agent context (e.g., "what did the architect decide about X?")
+- Retrieving shared project decisions from `/memories/project/` or `/memories/lessons/`
+- Looking up wiki documentation
+
+Even then: review retrieved cross-agent memories critically. A different agent's
+reasoning, checkpoint state, or rejected approach is not ground truth for your task.
+
+#### Vector 2 — memory-tool.sh search without scope (FS-level)
+
+`tools/memory-tool.sh search "<query>"` without `--scope` greps ALL scopes.
+Genius agents share one `/memories/genius/` scope — a search there returns
+files from all 98 genius agents unless filtered to a subpath.
+
+**Rule: always pass `--scope <your-scope>` and filter to your subpath.**
+
+```bash
+# WRONG — returns files from all genius agents
+MEMORY_AGENT_ID=feynman tools/memory-tool.sh search "rederivation" --scope genius
+
+# CORRECT — scoped to this genius agent's subpath
+MEMORY_AGENT_ID=feynman tools/memory-tool.sh search "rederivation" --scope genius
+# then filter results to /memories/genius/feynman/ paths only
+
+# BETTER — use view on your known path directly
+MEMORY_AGENT_ID=feynman tools/memory-tool.sh view /memories/genius/feynman/
+```
+
+#### Promotion path — the only legitimate cross-agent memory flow
+
+Agent memory stays isolated until explicitly promoted. Promotion is always
+mediated by the orchestrator or curator:
+
+```
+Agent local FS (/memories/<scope>/)
+  ↓  agent writes decision/lesson to its own scope
+  ↓  signals orchestrator: "this is worth sharing"
+Orchestrator reviews
+  ↓  writes to /memories/lessons/ or /memories/project/
+  ↓  (ACL blocks direct agent writes to lessons/)
+Shared scope — readable by all agents
+```
+
+Do NOT use `cortex:remember(is_global=True)` to bypass this flow. Global
+memories surface in every agent's unscoped recall — this is the fastest path
+to context poisoning at scale.
+
+#### Summary checklist before any memory read
+
+- [ ] Using `memory-tool.sh view` with an explicit path → safe
+- [ ] Using `memory-tool.sh search --scope <my-scope>` → safe
+- [ ] Using `cortex:recall` with `agent_topic=<my-topic>` → safe
+- [ ] Using `cortex:recall` without agent_topic for a task-specific query → **stop, add filter**
+- [ ] Using `cortex:remember(is_global=True)` for task state → **stop, use local FS instead**
 </memory-architecture>
 
 <memory>
