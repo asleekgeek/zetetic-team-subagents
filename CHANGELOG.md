@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.15.0] — Complete the plugin hook manifest
+
+### Fixed
+
+- **Missing hooks in the plugin manifest.** `.claude-plugin/plugin.json`
+  had drifted from `hooks/hooks.json`: the inline `hooks` block omitted
+  three hooks that the canonical wiring defines, so they never registered
+  when the plugin loaded — `pre-tool-secret-shield.py` (PreToolUse),
+  `stop-context-guard.py` (Stop, the context-budget guard from
+  [session-optimizer](https://github.com/cdeust/session-optimizer)), and
+  `session-end-memory-drain.sh` (Stop). The manifest now mirrors
+  `hooks/hooks.json` exactly (17 hook commands). The Stop block fires all
+  three lifecycle hooks; PreToolUse re-includes the secret shield.
+
+### Changed
+
+- Marketplace entry hook count corrected (16 → 17).
+
+## [2.14.0] — Public-readiness baseline
+
 ### Added
 
 - Public-readiness baseline: CONTRIBUTING.md, CODE_OF_CONDUCT.md,

@@ -1,7 +1,7 @@
 {
   "name": "zetetic-team-subagents",
   "description": "97 genius reasoning patterns from history's greatest minds. One epistemic standard none of them can bypass.",
-  "version": "2.14.0",
+  "version": "2.15.0",
   "author": {
     "name": "Clement Deust",
     "email": "admin@ai-architect.tools"
@@ -24,6 +24,16 @@
   },
   "hooks": {
     "PreToolUse": [
+      {
+        "matcher": "Read|Bash|Grep|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-secret-shield.py",
+            "timeout": 5
+          }
+        ]
+      },
       {
         "matcher": "Bash",
         "when": "command contains 'git commit'",
@@ -158,7 +168,25 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/stop-context-guard.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end-memory-drain.sh",
             "timeout": 10
           }
         ]
