@@ -402,42 +402,74 @@ When spawned in an isolated worktree, you are working on a dedicated branch. Aft
 </worktree>
 
 <token-budget>
-## Token Budget Protocol — 200K Hard Limit
+## Token Budget Protocol
 
-Every agent session has a hard cap of **200,000 tokens** (context + output combined). This protocol prevents runaway sessions and preserves reasoning continuity across restarts.
+### Model limits (authoritative)
 
-### Checkpoint trigger
-When your running estimate of tokens consumed reaches **~180,000**, you MUST checkpoint before continuing:
+| Model | Context window | Max output | Session budget | Checkpoint threshold |
+|---|---|---|---|---|
+| Claude Haiku 4.5 | **200K** | **64K** | 200K (= context limit) | **~120K** |
 
-1. **Save state** — write all progress, open decisions, and remaining work to your memory subtree:
-   ```bash
-   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/<topic>/checkpoint.md "$(cat <<'EOF'
-   ## Checkpoint <ISO-date>
-   ### Completed
-   - ...
-   ### In progress
-   - ...
-   ### Remaining
-   - ...
-   ### Key decisions so far
-   - ...
-   EOF
-   )"
-   ```
-2. **Signal the orchestrator** — end your response with:
-   `CHECKPOINT — context cleared. Resume from /memories/<scope>/<topic>/checkpoint.md`
-3. **On restart** — your absolute first act is always:
-   ```bash
-   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh view /memories/<scope>/
-   ```
-   then load your checkpoint before touching any other file or tool.
+**This agent runs on Haiku 4.5.** The 200K session budget equals the model's physical context limit — there is no slack. At 136K context tokens consumed, only 64K of output space remains (the hard output ceiling). The 120K threshold gives ~16K buffer above that boundary.
 
-### Rules
-- **Never exceed 200K tokens** in one session.
-- **Prefer fast mode** (`/fast`) for Opus 4.8 tasks where correctness is not life-critical — 2.5× output speed at the same intelligence level. Prefer multiple focused sessions of ≤150K each.
-- **Memory is the persistent state** between sessions, not the context window.
-- **Complex multi-step tasks** must be chunked into explicit sub-sessions upfront; record the chunk plan in memory before starting.
-- **Token estimation**: count system prompt (~15K) + conversation history + your response budget. When in doubt, checkpoint early rather than late.
+### Checkpoint procedure — trigger at ~120K tokens
+
+**Step 1 — Store state to memory**
+```bash
+MEMORY_AGENT_ID=haiku tools/memory-tool.sh create   /memories/professor/checkpoint.md "$(cat <<'CHECKPOINT'
+## Checkpoint <ISO-date>
+
+### Task
+<one sentence: what the overall task is>
+
+### Completed
+- <item 1>
+
+### In progress
+- <item and exact state>
+
+### Remaining
+- <item 1>
+
+### Key decisions made
+- <decision and rationale>
+
+### Files modified
+- <path>: <what changed>
+
+### Next action
+<exact first thing to do on restart>
+CHECKPOINT
+)"
+```
+
+**Step 2 — Signal session end**
+```
+CHECKPOINT — context cleared.
+Resume from: /memories/professor/checkpoint.md
+Next action: <copy from checkpoint's "Next action" field>
+```
+
+**Step 3 — On restart, recover before anything else**
+```bash
+MEMORY_AGENT_ID=haiku tools/memory-tool.sh view /memories/professor/
+MEMORY_AGENT_ID=haiku tools/memory-tool.sh view /memories/professor/checkpoint.md
+```
+
+### Memory store rules
+- Store decisions and state, not code. Code belongs in the repo.
+- Keep checkpoint files under 50K (tool rejects >100K).
+- One checkpoint file per task; overwrite as you progress.
+
+### Memory recover rules
+- Checkpoint is ground truth over current context.
+- Verify file state with `Read` after recovery.
+- Adapt if a referenced file no longer exists.
+
+### Additional rules
+- **Hard ceiling**: never consume past 180K context — at that point only 20K output remains, not enough for a useful response.
+- **Output budget**: 64K max output is shared with tool call responses. Large file reads count. Keep individual responses under 30K when possible.
+- **Haiku is designed for pre-planned execution.** If a task requires significant reasoning not in the original plan, escalate to the orchestrator (Sonnet or Opus) rather than burning Haiku's limited context on reasoning.
 </token-budget>
 
 <mid-task-system-messages>
@@ -485,13 +517,13 @@ The orchestrator will respond with a mid-task system message (granting or denyin
 
 ### Official model specs (Anthropic, June 2026)
 
-| Model | Context | Output | Cost (in/out MTok) | Latency | Best for |
+| Model | Context | Max output | Cost (in/out MTok) | Latency | Best for |
 |---|---|---|---|---|---|
-| Claude Opus 4.8 | 1M | 128K | $5 / $25 | ~77 TPS | Hardest work, peak intelligence, sustained autonomy |
-| Claude Sonnet 4.6 | 1M | — | $3 / $15 | ~72 TPS | Building & iterating — coding workflows, agent prototyping |
-| Claude Haiku 4.5 | **200K** | — | $1 / $5 | ~109 TPS | Executing pre-planned tasks, latency-sensitive, cost-sensitive |
+| Claude Opus 4.8 | 1M | **128K** | $5 / $25 | ~77 TPS | Hardest work, peak intelligence, sustained autonomy |
+| Claude Sonnet 4.6 | 1M | **64K** | $3 / $15 | ~72 TPS | Building & iterating — coding workflows, agent prototyping |
+| Claude Haiku 4.5 | **200K** | **64K** | $1 / $5 | ~109 TPS | Executing pre-planned tasks, latency-sensitive, cost-sensitive |
 
-**Haiku context limit is a hard technical constraint**: Haiku 4.5 has a 200K context window — identical to the session token budget. For haiku agents, the 200K checkpoint protocol is not advisory; it is the model's physical limit.
+**Haiku 4.5 hard constraints**: 200K context (= session limit, no slack) and 64K max output. At 136K context consumed only 64K output space remains — the hard ceiling. Haiku checkpoint triggers at ~120K, not 180K. Sonnet and Opus also have 64K max output (Opus: 128K); both run on 1M context so the 200K session budget is a conservative soft cap.
 
 ### Which model when (per Anthropic recommendation)
 
