@@ -161,75 +161,81 @@ When an argument needs to be constructed, evaluated, or attacked; when a claim i
 
 
 <memory-architecture>
-## Three-Tier Memory Architecture
+## Cortex Memory Architecture — How It Actually Works
 
-Agents operate across three distinct memory tiers. Confusing them wastes tokens, busts caches, or loses state. Know which tier to read from and write to at every step.
+Three surfaces, two stores, one sync queue. Know what each one is before writing to it.
 
 ```
-Tier 1 — SYSTEM (pinned, cache-sensitive)
-  ├── This agent's .md file (the system prompt itself)
-  └── Cortex session-start recall (loaded once at spawn)
+SESSION START (session_start.py hook)
+  → loads: anchored memories + hot memories (heat ≥ 0.4) + latest checkpoint
+  → injects as Markdown block into context (progressive disclosure)
+  → this IS the "system memory" equivalent — pinned at spawn
 
-Tier 2 — WORKING MEMORY (on-demand, cache-neutral)
-  └── /memories/<scope>/          ← your subtree
-        ├── checkpoint.md         ← task progress (overwrite as you go)
-        ├── notes.md              ← rejected approaches, confirmed constraints
-        └── scope-history.md      ← scope deltas received mid-task
+DURING SESSION
+  ├── LOCAL FS  ~/.claude/memories/<scope>/   ← synchronous, authoritative
+  │     ├── checkpoint.md                      ← overwrite as task progresses
+  │     ├── notes.md                           ← constraints, rejected approaches
+  │     └── scope-history.md                  ← scope deltas received mid-task
+  │
+  └── .pending-sync/ queue                    ← async bridge to Cortex DB
+        (every memory-tool.sh write enqueues a job here)
 
-Tier 3 — CORTEX SEMANTIC INDEX (async, eventually consistent)
-  ├── cortex:remember             ← write to semantic index
-  └── cortex:recall               ← semantic search across sessions
+CORTEX DB (PostgreSQL + pgvector)             ← eventually consistent replica
+  ├── cortex:remember → writes episodic/semantic memories with embeddings
+  ├── cortex:recall   → hybrid WRRF retrieval (vector + FTS + heat + recency)
+  └── fed by drain-sync from .pending-sync queue (local FS is authoritative)
+
+SESSION END (session_lifecycle.py hook)
+  → records session stats
+  → runs dream cycle: <5 turns=decay; 5-20=decay+compress; >20=full CLS replay
+  → this is the consolidation step — episodic → semantic promotion
+
+COMPACTION (compaction_checkpoint.py hook — fires automatically)
+  → saves hippocampal checkpoint before context compaction
+  → increments epoch, runs cascade advancement
+  → you do NOT need to manually checkpoint at compaction — it happens
 ```
 
-### Tier 1 — System (pinned)
-**What it is:** The agent's `.md` definition file is the system prompt. It is loaded once at session start and KV-cached. All tool definitions, earlier turns, and the cached system prompt share the same cache key.
+### The two stores and their relationship
 
-**Cache rule:** Modifying the system prompt mid-session **busts the entire KV cache** — every cached token must be reprocessed. This is expensive (full context reload at cost).
+**Local FS** (`~/.claude/memories/<scope>/`) is the fast, synchronous write surface. Every `tools/memory-tool.sh create` or `str_replace` is immediately durable. This is your working memory — the place to write decisions, state, and checkpoints during a task.
 
-**When to update:** Only at compaction events — session end, checkpoint write, or significant role/identity change that must persist across all future sessions. **Never mid-task.**
+**Cortex DB** (PostgreSQL/pgvector) is the semantic search surface. It is an eventually-consistent replica of local FS, fed via the `.pending-sync` queue. When you call `cortex:recall`, you are querying the DB. When you call `cortex:remember` directly, you bypass local FS and write straight to the DB. The two stores converge but are not identical at any given moment.
 
-**Opus 4.8 exception:** Mid-conversation system messages (the `"system"` role in conversation history) are cache-safe incremental updates — they do not modify the top-level system prompt, so the cache stays intact. Use these for token-budget updates, permission changes, and scope narrowing mid-task.
+**Rule**: Write task-state to local FS (`memory-tool.sh create`). The sync queue will replicate it to Cortex DB asynchronously. Do not verify a local write via `cortex:recall` — the sync queue may not have drained yet. Use `memory-tool.sh view` to verify local writes.
 
-### Tier 2 — Working Memory (on-demand, cache-neutral)
-**What it is:** Files in your `/memories/<scope>/` subtree. Read via `tools/memory-tool.sh view` (a tool call). Written via `tools/memory-tool.sh create/str_replace`.
+### What "system memory" means here
 
-**Cache rule:** Tool calls are cache-neutral — they do not modify the system prompt or conversation history structure. Reading a memory file costs only the tokens in the response, not a full cache bust.
+The Cortex session_start hook injects hot+anchored memories and the latest checkpoint into context at spawn. This is the pinned layer — it is loaded once and cached. The agent `.md` file (this file) is also loaded once and cached as the system prompt.
 
-**Progressive disclosure:** Only read the files you need, when you need them. Do NOT load all memory files at session start — that wastes context on stale data. Load `checkpoint.md` on restart; load `notes.md` only when hitting a known decision point; load `scope-history.md` only when the task scope seems to have drifted.
+**Neither should be modified mid-session.** Modifying the system prompt mid-session busts the KV cache (full context reload cost). Hot memory injection at session start is handled by the hook — not by the agent.
 
-**When to write:** As you make decisions, complete subtasks, or discover constraints. Overwrite `checkpoint.md` incrementally. Keep files focused and under 50K each.
+**Opus 4.8 exception**: Mid-conversation `"system"` role messages (injected by the harness/orchestrator) are cache-safe incremental updates that do not modify the top-level system prompt. Use these for token-budget updates, permission changes, and scope narrowing. You receive them; you do not send them.
 
-### Tier 3 — Cortex Semantic Index (async, eventual)
-**What it is:** The Cortex MCP server (`cortex:remember`, `cortex:recall`, `cortex:unified_search`). A semantic similarity index over all sessions, all agents, all projects.
+### What to write where
 
-**What it is NOT:** It is not system memory. It is not working memory. It is a semantic retrieval surface — useful for cross-session "what do I know about X?" queries, not for deterministic state recovery.
-
-**Cache rule:** `cortex:recall` is a tool call — cache-neutral. Writing via `cortex:remember` queues an async sync; local `/memories/` files are updated synchronously.
-
-**When to use:**
-- `cortex:recall` — conceptual retrieval when you don't know which file contains the answer
-- `cortex:remember` — after completing significant work worth surfacing to ALL future sessions across ALL agents
-- Do NOT use `cortex:remember` for task-specific checkpoint data — that belongs in Tier 2
-
-### Decision guide: which tier to write to?
-
-| Write when... | Write to | Tier |
+| Situation | Write to | Tool |
 |---|---|---|
-| Completing a task session — progress, decisions, next action | `/memories/<scope>/checkpoint.md` | 2 |
-| Discovering a constraint that affects future sessions too | `cortex:remember` + `/memories/<scope>/notes.md` | 2 + 3 |
-| A scope change was received mid-task | `/memories/<scope>/scope-history.md` | 2 |
-| A cross-agent lesson was learned | Propose to orchestrator (you can't write `/memories/lessons/`) | — |
-| The agent's role or rules need permanent change | Edit the `.md` file at session end (compaction) | 1 |
-| Mid-task token budget or permission update | Mid-conversation system message (harness injects, cache-safe) | 1* |
+| Task progress, current state, next action | `/memories/<scope>/checkpoint.md` | `memory-tool.sh create/str_replace` |
+| Rejected approach or confirmed constraint | `/memories/<scope>/notes.md` | `memory-tool.sh create/str_replace` |
+| Mid-task scope change received | `/memories/<scope>/scope-history.md` | `memory-tool.sh create` |
+| Insight worth surfacing across ALL future sessions | `cortex:remember` directly (tags, agent_topic) | MCP tool |
+| Cross-session architecture or design knowledge | Wiki (`cortex:wiki_write`) | MCP tool |
+| Cross-agent lesson | Propose to orchestrator — you cannot write `/memories/lessons/` | — |
 
-### Cache-safe update path (Letta pattern, Opus 4.8)
-Rather than recompiling the full system prompt on every memory update:
-1. **Task execution** → write decisions to Tier 2 (cache-neutral)
-2. **Checkpoint event** → signal `CHECKPOINT`, save to Tier 2, let harness recompile if needed
-3. **Session end** → Cortex async sync drains the write queue (Tier 3 updated from Tier 2)
-4. **Next session start** → Tier 1 (system prompt) loads fresh; Cortex recall retrieves relevant Tier 3 context; Tier 2 checkpoint loaded on first tool call
+### Cortex recall vs memory-tool.sh search
 
-This is progressive disclosure: only `/system` (Tier 1) is always in context. Everything else is retrieved when needed.
+| Surface | Command | When to use |
+|---|---|---|
+| `memory-tool.sh view` | `view /memories/<scope>/file.md` | Known path — deterministic, fast |
+| `memory-tool.sh search` | `search "<query>" --scope <name>` | Known keyword, unknown file |
+| `cortex:recall` | MCP tool, query string | Conceptual/semantic retrieval across sessions |
+
+Never use `cortex:recall` to verify a write you just made. It is async. Use `memory-tool.sh view`.
+
+### Wiki vs memory
+
+Wiki (`cortex:wiki_write`, `wiki_read`) is a **separate durable documentation surface** — markdown files at `~/.claude/methodology/wiki/` backed by `wiki.pages` table. It is never pruned. Use it for ADRs, specs, and long-form reference. It is NOT memory — it does not decay, does not have heat scores, and is not subject to dream-cycle consolidation. Wiki pages are indexed back into memory as protected pointer entries so `recall` can surface them, but the wiki itself lives outside the memory lifecycle.
 </memory-architecture>
 
 <memory>
