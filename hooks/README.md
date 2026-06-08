@@ -65,6 +65,7 @@ Replace `/path/to/zetetic-team-subagents` with the actual path to your clone.
 | **pre-push-review** | Before `git push` | Runs zetetic checker on all changes since last push | Yes — violations block push |
 | **session-start** | Session start | Loads repo state, difficulty books, agent worktrees, cached session | No — context injection |
 | **session-end** | Session end (`Stop`) | Saves session summary to local cache and Cortex | No — background save |
+| **stop-context-guard** | Session end (`Stop`) | Enforces the per-model token budget: free mechanical checkpoint at the ~180K/120K threshold; blocks once at the 200K soft cap and injects the checkpoint procedure. Ships in [session-optimizer](https://github.com/cdeust/session-optimizer). | At 200K only — one-time, loop-safe |
 | **pre-edit-layer-check** | Before `Edit`/`Write` | Warns if editing a core/ file (risk of layer violation) | No — advisory |
 | **post-edit-balance** | After `Edit`/`Write` | Reminds to run /balance after editing pipeline files | No — advisory |
 | **notification-handler** | Subagent completes | Logs result, checks for unmerged agent worktrees | No — informational |

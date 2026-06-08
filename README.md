@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/tests-241-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/agents-116-8A2BE2" alt="Agents">
   <img src="https://img.shields.io/badge/skills-63-green" alt="Skills">
-  <img src="https://img.shields.io/badge/hooks-16_lifecycle-red" alt="Hooks">
+  <img src="https://img.shields.io/badge/hooks-17_lifecycle-red" alt="Hooks">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
@@ -185,6 +185,17 @@ A `pre-tool-secret-shield` hook blocks any agent from reading `.env`, `.aws/cred
 
 ---
 
+## A visible, enforced context budget
+
+Every agent here follows a per-model **token-budget protocol** (`agents/orchestrator.md` → `<token-budget>`): checkpoint at ~180K tokens (Opus 4.8 / Sonnet 4.6) or ~120K (Haiku 4.5), with a 200K session soft cap. Left to prose, that protocol is easy to ignore. This plugin ships it as a **status line you can see** and a **hook that enforces it** — both from the companion [**session-optimizer**](https://github.com/cdeust/session-optimizer) repo (MIT).
+
+- **`statusline-command.sh`** — a persistent two-line status bar. The context progress bar, percentage, and token count are colored **green → yellow → red** on the exact per-model threshold above, with a `⚠ save+recall` marker once you cross 200K. It also shows model, effort, git branch + dirty flag, worktree, PR badge, session cost, duration, and 5h/7d rate-limit usage — so the cost of *not* checkpointing is always on screen.
+- **`hooks/stop-context-guard.py`** ([included here](hooks/stop-context-guard.py), registered as a `Stop` hook) — reads the live token usage from the transcript and acts when you cross the line: at the checkpoint threshold it captures mechanical state (branch, last commit, modified files) **for free**, with no model tokens spent; at the 200K soft cap it blocks the stop **exactly once** and injects the checkpoint procedure, so the agent persists a scoped `memory-tool.sh` checkpoint and tells you to `/clear` and resume via `cortex:recall`. Loop-safe and non-fatal by construction.
+
+Together they close the four failure modes of a long session — **context poisoning** (stale accumulation stops growing), **session poisoning** (a clean reset boundary is forced), **quota poisoning** (the 5h/7d budget isn't burned on oversized turns), and **runaway cost** (the largest-context turns are the most expensive). Install both from [session-optimizer](https://github.com/cdeust/session-optimizer); the `Stop` hook is wired into this plugin's [`hooks/hooks.json`](hooks/hooks.json) out of the box.
+
+---
+
 ## Adopt in an existing project (gradual)
 
 If your codebase has historical magic numbers and orphan TODOs, running `--staged` on every commit would be painful. The plugin supports a **transition profile**:
@@ -206,6 +217,7 @@ Full migration path: [`docs/MIGRATION.md`](docs/MIGRATION.md).
 | [Cortex](https://github.com/cdeust/Cortex) | Local persistent memory + cognitive profiling — pre-loads your reasoning patterns at session start |
 | [automatised-pipeline](https://github.com/cdeust/automatised-pipeline) | Codebase-intelligence MCP — agents query a property graph instead of `grep -r` |
 | [prd-spec-generator](https://github.com/cdeust/prd-spec-generator) | TypeScript MCP that turns a feature description into a 9-file PRD with multi-judge verification using these agents |
+| [session-optimizer](https://github.com/cdeust/session-optimizer) | Context-budget status line + `Stop` guard hook — makes the per-model checkpoint protocol visible and self-enforcing |
 
 ---
 
