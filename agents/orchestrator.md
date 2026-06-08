@@ -139,7 +139,10 @@ When the task is **architecturally ambiguous** — i.e., two or more plausible a
 2. For each pair of independent subtasks, verify **file-level non-overlap**: do their expected artifacts touch the same file? If yes, they are not truly independent — treat as dependent.
 3. Independent subtasks that touch non-overlapping files → spawn in parallel, each in its own git worktree on a dedicated branch.
 4. Dependent subtasks → run sequentially. The output of the earlier task is the input to the later one (via artifact handoff, Move 6).
-5. **Do not fake parallelism.** If the dependency graph is a chain, spawning five agents in parallel does not accelerate the chain; it only multiplies coordination cost. State the chain as a chain.
+5. 
+**Dynamic workflow warning (Move 3 addendum):** Dynamic workflows (100s of parallel subagents) are a last resort — not the default for parallelism. For most tasks, 2–5 targeted subagents via the `Agent` tool provide adequate parallelism at a fraction of the cost. See `<dynamic-workflows>` section for the decision gate.
+
+**Do not fake parallelism.** If the dependency graph is a chain, spawning five agents in parallel does not accelerate the chain; it only multiplies coordination cost. State the chain as a chain.
 6. Apply Amdahl's law informally: parallelism helps only to the extent that parallelizable work dominates the critical path (see Move 7).
 
 *Domain instance:* Subtasks (b), (c), (d) from the OAuth example. (b) must finish first (interface is its artifact). Once (b) is merged, (c) and (d) have non-overlapping file scope: (c) touches `infrastructure/oauth/`, (d) touches `handlers/auth/`. Parallelize (c) and (d) in separate worktrees. (e) runs sequentially after both merge.
@@ -591,3 +594,47 @@ The orchestrator will respond with a mid-task system message (granting or denyin
 - **Token budget interaction**: high effort burns more tokens per turn. Near the 200K session limit, prefer medium/low + checkpoint over burning budget on extended thinking.
 - **Cost-aware orchestration**: an opus high-effort turn costs ~50× a haiku turn. Use haiku for parallelizable mechanical subtasks after opus has produced the plan.
 </effort-calibration>
+
+<dynamic-workflows>
+## Dynamic Workflows — Use Sparingly (Last Resort)
+
+Claude Code dynamic workflows (research preview) run 10s–100s of parallel subagents, check their work, and return a single synthesized result. They are powerful for extraordinarily large tasks but carry **severe token and cost implications**.
+
+### Cost reality
+- Each subagent is a full model invocation with its own context load.
+- 100 parallel subagents at Sonnet 4.6 = 100× the per-turn cost, plus orchestration overhead.
+- Token consumption compounds: every subagent loads the system prompt, tools, and context; nothing is shared.
+- A single dynamic workflow run on a large codebase can consume millions of tokens in minutes.
+
+### The rule: exhaust sequential and targeted parallel options first
+
+Before triggering a dynamic workflow, confirm ALL of these are true:
+1. The task genuinely cannot be decomposed into a small (≤5) set of targeted subtasks.
+2. Manual fan-out via the `Agent` tool would require >20 independent agents to be useful.
+3. The cost has been acknowledged by the user or the orchestrator has explicit budget authorization.
+4. No simpler approach (grep, read, targeted search, sequential agents) can answer the question.
+
+If even one of these is false: **do not use dynamic workflows**.
+
+### When dynamic workflows ARE appropriate
+- Finding bugs or patterns across a very large codebase (100+ files) where targeted search misses cross-file interactions.
+- Large-scale refactors or migrations that genuinely affect every file.
+- Stress-testing / adversarial verification at scale before a major release.
+- Long-running work where hours of compute are authorized and budgeted.
+
+### What to use instead (in order of preference)
+1. **Read + Grep + targeted search** — covers 90% of codebase exploration.
+2. **Agent tool with 2–5 focused subagents** — covers most parallel analysis needs.
+3. **Sequential specialist agents** — orchestrator → architect → engineer chain.
+4. **Dynamic workflows** — only when the above have been tried and are insufficient.
+
+### Cost estimation before triggering
+Always estimate before launching:
+```
+Estimated subagents: N
+Avg context per subagent: ~X tokens
+Model: <model>
+Estimated cost: N × X × (price/MTok) ≈ $Y
+```
+If the estimate exceeds $5 for a single workflow run, require explicit user authorization before proceeding.
+</dynamic-workflows>
