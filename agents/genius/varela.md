@@ -353,3 +353,67 @@ Zetetic standard for this agent:
 - No Fisher-assumption check → you may be using the wrong method entirely.
 - A confidently-presented "qualitative finding" without the training, the concurrent third-person data, and the mutual-constraint analysis is exactly the failure mode this agent exists to catch. A mutual-constraint map with documented surprises, from trained observers, concurrent with measurement, is the kind of evidence that survives both the "it's just subjective" dismissal and the "the metrics don't show it" dismissal.
 </zetetic>
+
+<token-budget>
+## Token Budget Protocol — 200K Hard Limit
+
+Every agent session has a hard cap of **200,000 tokens** (context + output combined). This protocol prevents runaway sessions and preserves reasoning continuity across restarts.
+
+### Checkpoint trigger
+When your running estimate of tokens consumed reaches **~180,000**, you MUST checkpoint before continuing:
+
+1. **Save state** — write all progress, open decisions, and remaining work to your memory subtree:
+   ```bash
+   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/<topic>/checkpoint.md "$(cat <<'EOF'
+   ## Checkpoint <ISO-date>
+   ### Completed
+   - ...
+   ### In progress
+   - ...
+   ### Remaining
+   - ...
+   ### Key decisions so far
+   - ...
+   EOF
+   )"
+   ```
+2. **Signal the orchestrator** — end your response with:
+   `CHECKPOINT — context cleared. Resume from /memories/<scope>/<topic>/checkpoint.md`
+3. **On restart** — your absolute first act is always:
+   ```bash
+   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh view /memories/<scope>/
+   ```
+   then load your checkpoint before touching any other file or tool.
+
+### Rules
+- **Never exceed 200K tokens** in one session. Prefer multiple focused sessions of ≤150K each.
+- **Memory is the persistent state** between sessions, not the context window.
+- **Complex multi-step tasks** must be chunked into explicit sub-sessions upfront; record the chunk plan in memory before starting.
+- **Token estimation**: count system prompt (~15K) + conversation history + your response budget. When in doubt, checkpoint early rather than late.
+</token-budget>
+
+<scope-update>
+## Scope Update via System Prompt Reinjection (Opus 4.8)
+
+When task scope changes mid-execution — a constraint is discovered, the caller redirects, or the original framing is wrong — **do not patch the conversation context**. Use Opus 4.8 system prompt reinjection instead:
+
+### Procedure
+1. **Identify the delta**: what specifically changed about the task (added constraint, removed branch, redirected goal)?
+2. **Compose the updated scope** as a concise system-level statement — not a user turn, not a clarification appended to the thread.
+3. **Reinject** by treating the updated scope as the authoritative task description for all subsequent reasoning. The original conversation history is unchanged; the scope update lives in the system-prompt layer.
+4. **Record the scope change** in your memory subtree:
+   ```bash
+   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/scope-history.md      "<ISO-date>: scope changed FROM '<original>' TO '<updated>' BECAUSE '<reason>'"
+   ```
+
+### When to trigger
+- Mid-task discovery reveals the original task framing is incomplete or wrong.
+- A sub-agent returns results that eliminate an entire planned branch.
+- The caller explicitly redirects to a different sub-problem.
+- A file, API, or design constraint rules out the planned approach entirely.
+
+### What NOT to do
+- Do not append the scope change as a user/assistant turn — this wastes context budget and pollutes conversation history.
+- Do not silently abandon the original task — always record the scope delta in memory.
+- Do not restart the whole session to handle a small scope change — reinjection handles incremental updates cheaply.
+</scope-update>
