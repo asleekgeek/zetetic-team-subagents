@@ -329,34 +329,74 @@ When your running estimate of tokens consumed reaches **~180,000**, you MUST che
    then load your checkpoint before touching any other file or tool.
 
 ### Rules
-- **Never exceed 200K tokens** in one session. Prefer multiple focused sessions of ≤150K each.
+- **Never exceed 200K tokens** in one session.
+- **Prefer fast mode** (`/fast`) for Opus 4.8 tasks where correctness is not life-critical — 2.5× output speed at the same intelligence level. Prefer multiple focused sessions of ≤150K each.
 - **Memory is the persistent state** between sessions, not the context window.
 - **Complex multi-step tasks** must be chunked into explicit sub-sessions upfront; record the chunk plan in memory before starting.
 - **Token estimation**: count system prompt (~15K) + conversation history + your response budget. When in doubt, checkpoint early rather than late.
 </token-budget>
 
-<scope-update>
-## Scope Update via System Prompt Reinjection (Opus 4.8)
+<mid-task-system-messages>
+## Mid-Task System Messages (Opus 4.8 — Research Preview)
 
-When task scope changes mid-execution — a constraint is discovered, the caller redirects, or the original framing is wrong — **do not patch the conversation context**. Use Opus 4.8 system prompt reinjection instead:
+**What this is:** The orchestrator/harness can inject a system-level instruction update mid-conversation — without breaking the prompt cache and without routing it through a user turn. This is a *harness* capability. You receive it; you do not initiate it.
 
-### Procedure
-1. **Identify the delta**: what specifically changed about the task (added constraint, removed branch, redirected goal)?
-2. **Compose the updated scope** as a concise system-level statement — not a user turn, not a clarification appended to the thread.
-3. **Reinject** by treating the updated scope as the authoritative task description for all subsequent reasoning. The original conversation history is unchanged; the scope update lives in the system-prompt layer.
-4. **Record the scope change** in your memory subtree:
+**What it carries:** Token budget updates, permission changes, environment context changes, scope narrowing or expansion, priority shifts. It arrives as a system message between assistant turns.
+
+### How you respond to a mid-task system message
+1. **Acknowledge the update** — treat the new system message as immediately authoritative. It supersedes any prior instruction on the same topic.
+2. **Do not re-derive context from scratch** — the prompt cache is intact; continue from where you were, applying the updated constraint.
+3. **Record the delta in memory** if the update changes your task scope or resource budget:
    ```bash
-   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/scope-history.md      "<ISO-date>: scope changed FROM '<original>' TO '<updated>' BECAUSE '<reason>'"
+   MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/scope-history.md      "<ISO-date>: received mid-task system message — <what changed>"
    ```
+4. **If the update contradicts work already done**, surface the conflict immediately: state what was done under the old instructions, what the new instruction says, and which outputs (if any) need to be revised.
 
-### When to trigger
-- Mid-task discovery reveals the original task framing is incomplete or wrong.
-- A sub-agent returns results that eliminate an entire planned branch.
-- The caller explicitly redirects to a different sub-problem.
-- A file, API, or design constraint rules out the planned approach entirely.
+### How to signal the harness that you NEED a scope update
+If mid-task you discover that:
+- A constraint makes the original task impossible or significantly wrong
+- A sub-agent result eliminates an entire branch of planned work
+- A new permission or token budget is required to proceed
+
+…do NOT improvise or widen your own scope. Instead, pause and emit a structured signal:
+```
+SCOPE_UPDATE_REQUEST: {
+  "reason": "<one sentence>",
+  "current_task": "<what you were doing>",
+  "blocker": "<what changed or was discovered>",
+  "requested_change": "<what you need from the harness>"
+}
+```
+The orchestrator will respond with a mid-task system message granting or denying the request.
 
 ### What NOT to do
-- Do not append the scope change as a user/assistant turn — this wastes context budget and pollutes conversation history.
-- Do not silently abandon the original task — always record the scope delta in memory.
-- Do not restart the whole session to handle a small scope change — reinjection handles incremental updates cheaply.
-</scope-update>
+- Do not fake a scope update by inserting a user-turn clarification — it burns context and breaks cache.
+- Do not silently widen your own permissions or budget mid-task.
+- Do not ignore a received system message — apply it immediately and record the delta.
+</mid-task-system-messages>
+
+<effort-calibration>
+## Effort Calibration (Opus 4.8)
+
+Opus 4.8 exposes an explicit **effort** control. Lower effort = faster responses + slower rate-limit burn. Higher effort = extended thinking for harder problems. **Default to the lowest effort that produces a correct result.**
+
+### Decision table
+
+| Task type | Effort | Rationale |
+|---|---|---|
+| Reading files, grepping, listing | low | Pure I/O — no reasoning required |
+| Routine implementation following a detailed plan | low | Plan already did the reasoning |
+| Bug fix with a clear root cause | low–medium | Apply the fix; reasoning is light |
+| Code review, analysis report | medium | Judgment required but bounded |
+| Architecture decision, PRD, design | medium | Structured reasoning, not open-ended search |
+| Formal verification, concurrency proof, security audit | high | Correctness is load-bearing; wrong answer is worse than slow |
+| Stuck / blocked / surprising result | high | Use extended thinking to break the impasse |
+| Everything else | medium | Safe default |
+
+### Rules
+- **Never default to high effort** — it should be explicitly triggered, not the fallback.
+- **Fast mode** (`/fast` in Claude Code) runs Opus 4.8 at ~2.5× speed. Prefer it for any task where latency matters and correctness is not life-critical.
+- **Effort ≠ quality** for most tasks. A low-effort Opus 4.8 response on a well-specified implementation task is better than a high-effort response on a vague one. Clarify the task first.
+- **Re-evaluate effort mid-task**: if a subtask turns out simpler than expected, drop to low. If a subtask reveals unexpected complexity, escalate to high for that subtask only — not the whole session.
+- **Token budget interaction**: high effort consumes more tokens per turn. If you are approaching the 200K session limit, prefer medium/low effort and checkpoint rather than burning the budget on extended thinking.
+</effort-calibration>
