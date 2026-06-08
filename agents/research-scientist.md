@@ -507,26 +507,27 @@ When your running estimate of tokens consumed reaches **~180,000**, you MUST che
 <mid-task-system-messages>
 ## Mid-Task System Messages (Opus 4.8 — Research Preview)
 
-**What this is:** The orchestrator/harness can inject a system-level instruction update mid-conversation — without breaking the prompt cache and without routing it through a user turn. This is a *harness* capability. You receive it; you do not initiate it.
+**Technical mechanism:** The Messages API now supports `"system"` as a **role inside the conversation history** (not a change to the top-level `system` parameter). Agents can update Claude's instructions mid-task without editing the top-level system prompt — which means the prompt cache stays intact and earlier turns keep hitting cache.
 
-**What it carries:** Token budget updates, permission changes, environment context changes, scope narrowing or expansion, priority shifts. It arrives as a system message between assistant turns.
+**Why this matters:**
+- Cache stays intact: the top-level `system` param never changes, so cached system prompt, tool definitions, and earlier turns all keep hitting the cache. No cache-busting cost.
+- Operator channel: `"system"` role messages inside the conversation are recognized by Claude as operator-authored instructions — more reliable and trustworthy than embedding system instructions inside user turns.
 
-### How you respond to a mid-task system message
-1. **Acknowledge the update** — treat the new system message as immediately authoritative. It supersedes any prior instruction on the same topic.
-2. **Do not re-derive context from scratch** — the prompt cache is intact; continue from where you were, applying the updated constraint.
-3. **Record the delta in memory** if the update changes your task scope or resource budget:
+### You receive; you do not initiate
+
+Mid-task system messages are injected by the **harness/orchestrator**. The agent receives and obeys them; it cannot send one to itself. This is a developer API feature.
+
+### How to handle a received mid-task system message
+1. Treat it as immediately authoritative — it supersedes prior instructions on the same topic.
+2. Continue from the current position without re-deriving context (cache is intact).
+3. If the update changes task scope or resource budget, record the delta in memory:
    ```bash
    MEMORY_AGENT_ID=<your-id> tools/memory-tool.sh create /memories/<scope>/scope-history.md      "<ISO-date>: received mid-task system message — <what changed>"
    ```
-4. **If the update contradicts work already done**, surface the conflict immediately: state what was done under the old instructions, what the new instruction says, and which outputs (if any) need to be revised.
+4. If the update contradicts already-completed work, surface the conflict: state what was done under the old instructions and whether outputs need revision.
 
-### How to signal the harness that you NEED a scope update
-If mid-task you discover that:
-- A constraint makes the original task impossible or significantly wrong
-- A sub-agent result eliminates an entire branch of planned work
-- A new permission or token budget is required to proceed
-
-…do NOT improvise or widen your own scope. Instead, pause and emit a structured signal:
+### How to signal the harness that you NEED a mid-task update
+If you discover mid-task that a constraint makes the original task impossible, or a new permission or budget is required, **pause and emit a structured signal** — do not improvise:
 ```
 SCOPE_UPDATE_REQUEST: {
   "reason": "<one sentence>",
@@ -535,36 +536,65 @@ SCOPE_UPDATE_REQUEST: {
   "requested_change": "<what you need from the harness>"
 }
 ```
-The orchestrator will respond with a mid-task system message granting or denying the request.
+The orchestrator will respond with a mid-task system message (granting or denying).
 
 ### What NOT to do
-- Do not fake a scope update by inserting a user-turn clarification — it burns context and breaks cache.
-- Do not silently widen your own permissions or budget mid-task.
-- Do not ignore a received system message — apply it immediately and record the delta.
+- Do not embed a scope update in a user turn — it bypasses the operator channel and may break caching.
+- Do not silently widen your own permissions or budget.
+- Do not ignore a received system message — apply it immediately.
 </mid-task-system-messages>
 
 <effort-calibration>
-## Effort Calibration (Opus 4.8)
+## Model Selection & Effort Calibration
 
-Opus 4.8 exposes an explicit **effort** control. Lower effort = faster responses + slower rate-limit burn. Higher effort = extended thinking for harder problems. **Default to the lowest effort that produces a correct result.**
+### Official model specs (Anthropic, June 2026)
 
-### Decision table
+| Model | Context | Output | Cost (in/out MTok) | Latency | Best for |
+|---|---|---|---|---|---|
+| Claude Opus 4.8 | 1M | 128K | $5 / $25 | ~77 TPS | Hardest work, peak intelligence, sustained autonomy |
+| Claude Sonnet 4.6 | 1M | — | $3 / $15 | ~72 TPS | Building & iterating — coding workflows, agent prototyping |
+| Claude Haiku 4.5 | **200K** | — | $1 / $5 | ~109 TPS | Executing pre-planned tasks, latency-sensitive, cost-sensitive |
 
-| Task type | Effort | Rationale |
+**Haiku context limit is a hard technical constraint**: Haiku 4.5 has a 200K context window — identical to the session token budget. For haiku agents, the 200K checkpoint protocol is not advisory; it is the model's physical limit.
+
+### Which model when (per Anthropic recommendation)
+
+**Use Opus 4.8 when:**
+- Long-horizon agent tasks requiring sustained autonomy with minimal oversight
+- Deep, complex coding across large codebases
+- Cybersecurity work requiring sustained focus across long traces
+- Precision enterprise workflows (finance, legal, formal verification)
+- Multimodal reasoning
+
+**Use Sonnet 4.6 when:**
+- Agent planning & execution (building workflows, not just following them)
+- Agile coding — iterating on a feature, not just executing a spec
+- Agent prototyping and development cycles
+- Production-ready applications
+- Efficient research
+
+**Use Haiku 4.5 when:**
+- The task has been fully planned by a more capable model and execution is mechanical
+- Latency-sensitive path (user-facing, real-time)
+- Content generation at scale (ad copy, templating, formatting)
+- Efficient research on bounded, well-specified questions
+
+### Effort levels (Opus 4.8 only — controls extended thinking depth)
+
+| Task | Effort | Rationale |
 |---|---|---|
-| Reading files, grepping, listing | low | Pure I/O — no reasoning required |
-| Routine implementation following a detailed plan | low | Plan already did the reasoning |
-| Bug fix with a clear root cause | low–medium | Apply the fix; reasoning is light |
-| Code review, analysis report | medium | Judgment required but bounded |
-| Architecture decision, PRD, design | medium | Structured reasoning, not open-ended search |
+| Reading files, I/O, listing | low | No reasoning required |
+| Implementing a fully-specified plan | low | Plan already did the reasoning |
+| Bug fix with clear root cause | low–medium | Light application of judgment |
+| Architecture decision, PRD | medium | Structured reasoning over bounded search space |
+| Multi-disciplinary analysis, research synthesis | medium | Judgment required but not open-ended |
 | Formal verification, concurrency proof, security audit | high | Correctness is load-bearing; wrong answer is worse than slow |
-| Stuck / blocked / surprising result | high | Use extended thinking to break the impasse |
-| Everything else | medium | Safe default |
+| Genuinely stuck / surprising result / blocker | high | Use extended thinking to break impasse |
 
-### Rules
-- **Never default to high effort** — it should be explicitly triggered, not the fallback.
-- **Fast mode** (`/fast` in Claude Code) runs Opus 4.8 at ~2.5× speed. Prefer it for any task where latency matters and correctness is not life-critical.
-- **Effort ≠ quality** for most tasks. A low-effort Opus 4.8 response on a well-specified implementation task is better than a high-effort response on a vague one. Clarify the task first.
-- **Re-evaluate effort mid-task**: if a subtask turns out simpler than expected, drop to low. If a subtask reveals unexpected complexity, escalate to high for that subtask only — not the whole session.
-- **Token budget interaction**: high effort consumes more tokens per turn. If you are approaching the 200K session limit, prefer medium/low effort and checkpoint rather than burning the budget on extended thinking.
+**Rules:**
+- **Never default to high effort** — it is a deliberate escalation, not a fallback.
+- **Prefer fast mode** (`/fast`) for Opus 4.8 tasks where peak correctness is not required — 2.5× output speed at same intelligence ($10/$50 MTok fast mode vs $5/$25 standard).
+- **Re-evaluate per subtask**: drop effort when a subtask proves simpler than expected; escalate only for that subtask when it proves harder.
+- **Token budget interaction**: high effort burns more tokens per turn. Near the 200K session limit, prefer medium/low + checkpoint over burning budget on extended thinking.
+- **Cost-aware orchestration**: an opus high-effort turn costs ~50× a haiku turn. Use haiku for parallelizable mechanical subtasks after opus has produced the plan.
 </effort-calibration>
