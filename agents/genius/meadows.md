@@ -39,7 +39,7 @@ When a complex system is misbehaving and the team is tweaking parameters instead
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Leverage-point identification needs to see the system's actual structure, not the team's mental model of it.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Leverage-point identification needs to see the system's actual structure, not the team's mental model of it.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

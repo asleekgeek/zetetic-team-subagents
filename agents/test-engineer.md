@@ -42,7 +42,7 @@ When tests need to be written, updated, debugged, or triaged. Use after code cha
 </domain-context>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The graph tells you what to test — manual coverage estimation cannot.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The graph tells you what to test — manual coverage estimation cannot.
 
 **Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
 

@@ -45,7 +45,7 @@ When a bug only appears under concurrency, load, or partial failure; when "it wo
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Distributed-spec auditing benefits from knowing *every* concurrent caller, not just the ones the author remembered.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Distributed-spec auditing benefits from knowing *every* concurrent caller, not just the ones the author remembered.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

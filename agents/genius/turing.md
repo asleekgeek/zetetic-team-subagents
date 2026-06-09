@@ -34,7 +34,7 @@ When a problem is drowning in implementation detail and nobody has asked what th
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Reducing a system to its computational essence requires seeing where the actual computation happens — communities + processes give exactly that.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Reducing a system to its computational essence requires seeing where the actual computation happens — communities + processes give exactly that.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

@@ -35,7 +35,7 @@ When a subtype/implementation breaks when substituted for its parent/interface; 
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Substitutability must be verified across *all* subtypes — the graph enumerates them.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Substitutability must be verified across *all* subtypes — the graph enumerates them.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

@@ -35,7 +35,7 @@ When a system must be changeable by its users, not just its developers; when ear
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Late-binding and messaging-vs-procedure-call are graph-shape questions — the graph reveals which.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Late-binding and messaging-vs-procedure-call are graph-shape questions — the graph reveals which.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

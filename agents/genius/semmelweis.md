@@ -37,7 +37,7 @@ When two matched groups have wildly different outcomes and nobody has investigat
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Detecting statistical anomalies between matched groups of code paths (regression detection, drift between supposedly-equivalent implementations) becomes graph-comparable.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Detecting statistical anomalies between matched groups of code paths (regression detection, drift between supposedly-equivalent implementations) becomes graph-comparable.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` twice — once on each group / before-state / after-state; capture both `graph_path` values; pass them to comparison tools.
 

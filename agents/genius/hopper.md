@@ -44,7 +44,7 @@ Parallel to the compile-as-barrier move was a second insight: *debugging is as i
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Abstraction barriers and debugging both benefit from seeing where the seams actually are versus where they were drawn on paper.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Abstraction barriers and debugging both benefit from seeing where the seams actually are versus where they were drawn on paper.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

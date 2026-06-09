@@ -44,7 +44,7 @@ When a program's correctness cannot be established by running it (concurrency, s
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, the local-reasoning audit can be grounded in the actual call graph instead of grep-based guesses.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, the local-reasoning audit can be grounded in the actual call graph instead of grep-based guesses.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path` from the response; pass it to all subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

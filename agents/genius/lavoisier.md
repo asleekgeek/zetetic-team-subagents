@@ -34,7 +34,7 @@ When a system has inputs and outputs and nobody has verified that the totals mat
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Mass-balance applied to code: every input must appear as an output (or a side effect, or a discarded value with reason). The graph traces the flows.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Mass-balance applied to code: every input must appear as an output (or a side effect, or a discarded value with reason). The graph traces the flows.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 

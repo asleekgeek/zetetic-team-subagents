@@ -43,7 +43,7 @@ When a system must remain correct and responsive under overload, partial failure
 </revolution>
 
 <codebase-intelligence>
-**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Priority-displaced scheduling and graceful-degradation design need to know which paths exist before they can be ranked.
+**Optional MCP server: `automatised-pipeline`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Priority-displaced scheduling and graceful-degradation design need to know which paths exist before they can be ranked.
 
 **Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
 
