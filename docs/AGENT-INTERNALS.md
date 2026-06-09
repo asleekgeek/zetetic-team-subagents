@@ -37,7 +37,7 @@ distinct-from-X clauses; loaded only when the agent is invoked):**
 <blind-spots>...</blind-spots>
 
 <codebase-intelligence>
-[Optional MCP server `ai-architect` tool table + workflow; graceful
+[Optional MCP server `automatised-pipeline` tool table + workflow; graceful
  degradation when the server is absent.]
 </codebase-intelligence>
 ```
