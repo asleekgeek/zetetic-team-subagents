@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a system must remain correct and responsive under overload, partial failure, or operator error"
 agent_topic: genius-hamilton
 shapes: [hard-real-time, priority-under-failure, graceful-degradation, asynchronous-first, defensive-by-default]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -49,10 +49,10 @@ When a system must remain correct and responsive under overload, partial failure
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_processes` | Enumerating every execution flow so each can be tagged with priority and degradation behaviour. The list IS the scheduling problem statement. |
-| `mcp__ai-architect__get_impact` | Before deciding a path is "displaceable under overload," enumerate its callers — no caller should depend on it being non-interruptible. |
-| `mcp__ai-architect__check_security_gates` | Cross-check: "displaceable" paths must not be in a critical security community (S1 gate). Errors-by-design only applies to non-safety-critical paths. |
-| `mcp__ai-architect__detect_changes` | After adding a degradation handler, confirm it does not change observable behaviour on the happy path. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Enumerating every execution flow so each can be tagged with priority and degradation behaviour. The list IS the scheduling problem statement. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before deciding a path is "displaceable under overload," enumerate its callers — no caller should depend on it being non-interruptible. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__check_security_gates` | Cross-check: "displaceable" paths must not be in a critical security community (S1 gate). Errors-by-design only applies to non-safety-critical paths. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | After adding a degradation handler, confirm it does not change observable behaviour on the happy path. |
 
 **Graceful degradation (meta — applies to MCP itself):** without MCP, design priority schedules from the requirements doc + manual code reading; mark the prioritization as `evidence: doc-derived` rather than `graph-derived`.
 </codebase-intelligence>

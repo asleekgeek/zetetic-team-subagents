@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a problem is drowning in implementation detail and nobody has asked what the simplest machine that solves it would be"
 agent_topic: genius-turing
 shapes: [reduce-to-mechanism, universality, decidability-first, imitation-game, oracle-separation]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -40,9 +40,9 @@ When a problem is drowning in implementation detail and nobody has asked what th
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_processes` | Identifying the *actual* computation primitives (entry-point traces) underneath the layers of code. The simplest mechanism that does the work is at the bottom of one of these traces. |
-| `mcp__ai-architect__cluster_graph` | Detecting whether the system's structure is universal (small core + dispatch) or special-purpose (many parallel implementations). |
-| `mcp__ai-architect__query_graph` | Hunting for the minimal set of operations that compose into the system's behaviour — this is the candidate "essential machine." |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Identifying the *actual* computation primitives (entry-point traces) underneath the layers of code. The simplest mechanism that does the work is at the bottom of one of these traces. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Detecting whether the system's structure is universal (small core + dispatch) or special-purpose (many parallel implementations). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Hunting for the minimal set of operations that compose into the system's behaviour — this is the candidate "essential machine." |
 
 **Graceful degradation:** without MCP, identify the computational essence by code reading + diagrams; mark the essence as `derived: by-inspection`, not graph-verified.
 </codebase-intelligence>

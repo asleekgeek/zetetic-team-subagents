@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When experts in a domain are being forced to think like computers instead of like their domain"
 agent_topic: genius-hopper
 shapes: [compile-as-abstraction-barrier, debugging-as-first-class, make-abstract-tangible, anticipate-obsolescence, ask-forgiveness-not-permission]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -50,10 +50,10 @@ Parallel to the compile-as-barrier move was a second insight: *debugging is as i
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__cluster_graph` | Identifying the natural abstraction barriers (Leiden communities). If declared module boundaries don't match detected communities, the abstraction is leaking — name the leak. |
-| `mcp__ai-architect__get_processes` | Tracing a debugging scenario from entry point to failure site — the process trace is the debugger's static counterpart. |
-| `mcp__ai-architect__get_impact` | Before introducing a new abstraction, enumerate the call sites that would have to change. If the count is 1–2, the abstraction is premature; if it's 50+ at one barrier, the barrier is right. |
-| `mcp__ai-architect__search_codebase` | Domain-language audit: search for the domain term across the codebase. If it appears only in one community, the abstraction barrier holds. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Identifying the natural abstraction barriers (Leiden communities). If declared module boundaries don't match detected communities, the abstraction is leaking — name the leak. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Tracing a debugging scenario from entry point to failure site — the process trace is the debugger's static counterpart. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before introducing a new abstraction, enumerate the call sites that would have to change. If the count is 1–2, the abstraction is premature; if it's 50+ at one barrier, the barrier is right. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Domain-language audit: search for the domain term across the codebase. If it appears only in one community, the abstraction barrier holds. |
 
 **Graceful degradation:** without MCP, the abstraction-barrier audit reduces to inspection of imports + manual call-chain following. Mark the audit as `coverage: spot-check` rather than `coverage: graph-verified`.
 </codebase-intelligence>

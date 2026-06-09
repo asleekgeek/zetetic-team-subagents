@@ -5,7 +5,7 @@ model: sonnet
 effort: medium
 when_to_use: "When infrastructure, CI/CD, deployment, monitoring, or provisioning work is needed."
 agent_topic: devops-engineer
-tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: devops-engineer
 ---
 
@@ -47,9 +47,9 @@ When infrastructure, CI/CD, deployment, monitoring, or provisioning work is need
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__search_codebase` | Locating where a deploy-relevant symbol (env var read, feature flag, healthcheck endpoint, migration entry) lives across services. |
-| `mcp__ai-architect__get_processes` | Validating that a healthcheck endpoint actually exercises the critical path you think it does (entry point → community → exit). |
-| `mcp__ai-architect__get_impact` | Before deprecating a deployment artifact (a build target, a Dockerfile stage, a CI step) — confirms nothing else depends on its output. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Locating where a deploy-relevant symbol (env var read, feature flag, healthcheck endpoint, migration entry) lives across services. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Validating that a healthcheck endpoint actually exercises the critical path you think it does (entry point → community → exit). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before deprecating a deployment artifact (a build target, a Dockerfile stage, a CI step) — confirms nothing else depends on its output. |
 
 **Graceful degradation:** the DevOps Moves do not require MCP. If unavailable, fall back to `Glob`/`Grep` for symbol search and skip the graph-based dependency check; explicitly note this in the deployment plan when the change is High-stakes.
 </codebase-intelligence>

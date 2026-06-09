@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When someone is optimizing code without profiling data"
 agent_topic: genius-knuth
 shapes: [profile-before-optimizing, premature-optimization-in-context, literate-programming, algorithmic-analysis-first, build-the-tool-use-the-tool]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -42,10 +42,10 @@ When someone is optimizing code without profiling data; when "premature optimiza
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_processes` | Identifying the actual hot paths (entry-point traces) before any optimization. The premature-optimization refusal needs evidence; this is the evidence. |
-| `mcp__ai-architect__get_impact` | Confirming a candidate optimization is in a community / process that actually matters — small-blast-radius optimizations are by definition not the bottleneck. |
-| `mcp__ai-architect__detect_changes` | After applying an optimization, confirm the change did not silently alter behaviour outside the targeted hot path. |
-| `mcp__ai-architect__search_codebase` | Hunting for documentation-quality issues across the codebase (e.g., literate-programming compliance: "find functions >50 lines without leading prose"). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Identifying the actual hot paths (entry-point traces) before any optimization. The premature-optimization refusal needs evidence; this is the evidence. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Confirming a candidate optimization is in a community / process that actually matters — small-blast-radius optimizations are by definition not the bottleneck. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | After applying an optimization, confirm the change did not silently alter behaviour outside the targeted hot path. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Hunting for documentation-quality issues across the codebase (e.g., literate-programming compliance: "find functions >50 lines without leading prose"). |
 
 **Graceful degradation:** without MCP, fall back to language profilers (`cProfile`, `perf`, `pprof`, `instruments`) — those are the load-bearing source for "where is the time?" The MCP graph supplements but does not replace empirical profiling.
 </codebase-intelligence>

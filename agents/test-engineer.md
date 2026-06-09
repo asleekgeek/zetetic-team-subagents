@@ -5,7 +5,7 @@ model: sonnet
 effort: medium
 when_to_use: "When tests need to be written, updated, debugged, or triaged."
 agent_topic: test-engineer
-tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: test-engineer
 ---
 
@@ -48,11 +48,11 @@ When tests need to be written, updated, debugged, or triaged. Use after code cha
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_impact` | Building the invariant-to-test map. The blast-radius output enumerates every untested postcondition by listing callers without a covering test in the graph. |
-| `mcp__ai-architect__get_processes` | Designing integration tests. Each entry-point process becomes a candidate test scenario; pick the ones whose contracts are load-bearing. |
-| `mcp__ai-architect__detect_changes` | Diagnosing flaky tests. Compare the graph before/after the suspected commit; semantic-diff output identifies the actual behaviour change behind the flake. |
-| `mcp__ai-architect__get_symbol` | Verifying a test asserts against the symbol the author thinks it does (catches name-collision bugs in test fixtures). |
-| `mcp__ai-architect__search_codebase` | Finding missing assertions across the suite by hybrid search for postcondition phrases (e.g. "must not exceed", "is idempotent"). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Building the invariant-to-test map. The blast-radius output enumerates every untested postcondition by listing callers without a covering test in the graph. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Designing integration tests. Each entry-point process becomes a candidate test scenario; pick the ones whose contracts are load-bearing. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | Diagnosing flaky tests. Compare the graph before/after the suspected commit; semantic-diff output identifies the actual behaviour change behind the flake. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol` | Verifying a test asserts against the symbol the author thinks it does (catches name-collision bugs in test fixtures). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Finding missing assertions across the suite by hybrid search for postcondition phrases (e.g. "must not exceed", "is idempotent"). |
 
 **Graceful degradation:** if the MCP server is not configured, build the invariant-to-test map from `Read`-ing test files and the source-of-truth contracts, and mark the resulting coverage report as `bound: best-effort — no graph data`.
 </codebase-intelligence>

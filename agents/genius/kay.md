@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When a system must be changeable by its users, not just its developers"
 agent_topic: genius-kay
 shapes: [late-binding, messaging-over-procedure, medium-is-message, build-for-children, invent-the-future, runtime-malleability]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -41,10 +41,10 @@ When a system must be changeable by its users, not just its developers; when ear
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__cluster_graph` | Identifying message-passing boundaries (communities with sparse Calls edges between them = message-shaped; dense = procedure-shaped). |
-| `mcp__ai-architect__query_graph` | Counting dynamic-dispatch sites vs static-call sites: a system whose changeability depends on late binding will have many of the former. |
-| `mcp__ai-architect__get_impact` | Validating "the future is invented" claim — if a proposed change has small blast radius, the system is already malleable; large blast radius means brittle. |
-| `mcp__ai-architect__get_context` | Investigating whether a class/module behaves like a message receiver (rich relationships) or a procedure namespace (only calls inward). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Identifying message-passing boundaries (communities with sparse Calls edges between them = message-shaped; dense = procedure-shaped). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Counting dynamic-dispatch sites vs static-call sites: a system whose changeability depends on late binding will have many of the former. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Validating "the future is invented" claim — if a proposed change has small blast radius, the system is already malleable; large blast radius means brittle. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_context` | Investigating whether a class/module behaves like a message receiver (rich relationships) or a procedure namespace (only calls inward). |
 
 **Graceful degradation:** without MCP, audit messaging-vs-procedure shape by reading representative modules; mark the verdict as `evidence: spot-sample`.
 </codebase-intelligence>

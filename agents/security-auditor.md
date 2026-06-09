@@ -5,7 +5,7 @@ model: opus
 effort: high
 when_to_use: "When a change, system, or dependency has a security consequence."
 agent_topic: security-auditor
-tools: [Read, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: security-auditor
 ---
 
@@ -47,11 +47,11 @@ When a change, system, or dependency has a security consequence. Use for threat-
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__check_security_gates` | **Primary tool.** Runs S1–S5 gates (visibility, sink reachability, sanitization, lifetime, taint propagation) on a qualified symbol. Replaces ad-hoc grep for taint analysis. |
-| `mcp__ai-architect__get_impact` | After flagging a vulnerable symbol — enumerate every caller to determine exposure surface. The blast-radius output IS the impact section of the STRIDE delta. |
-| `mcp__ai-architect__get_processes` | Tracing trust boundaries by following execution flow from public entry points. A symbol in an "internal" community reachable from a public entry is a hidden boundary crossing. |
-| `mcp__ai-architect__search_codebase` | Hunting for known anti-patterns (hardcoded secrets, unsafe deserialization, SQL string concat) by hybrid search instead of regex-only sweep. |
-| `mcp__ai-architect__detect_changes` | Reviewing dependency bumps. Surfaces semantic shifts in transitive callers that a `package.json` diff cannot show. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__check_security_gates` | **Primary tool.** Runs S1–S5 gates (visibility, sink reachability, sanitization, lifetime, taint propagation) on a qualified symbol. Replaces ad-hoc grep for taint analysis. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | After flagging a vulnerable symbol — enumerate every caller to determine exposure surface. The blast-radius output IS the impact section of the STRIDE delta. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Tracing trust boundaries by following execution flow from public entry points. A symbol in an "internal" community reachable from a public entry is a hidden boundary crossing. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Hunting for known anti-patterns (hardcoded secrets, unsafe deserialization, SQL string concat) by hybrid search instead of regex-only sweep. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | Reviewing dependency bumps. Surfaces semantic shifts in transitive callers that a `package.json` diff cannot show. |
 
 **Graceful degradation:** if the MCP server is not configured, perform manual STRIDE + grep-based taint analysis and explicitly mark the audit report as `coverage: partial — graph intelligence unavailable`. Block ship on auth/billing/crypto paths until coverage is restored.
 </codebase-intelligence>

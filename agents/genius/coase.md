@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When deciding whether to build or buy, merge or split, monolith or microservice, in-house or outsource"
 agent_topic: genius-coase
 shapes: [transaction-cost-boundary, build-vs-buy-analysis, boundary-optimization, make-or-market, coordination-cost-accounting]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -46,9 +46,9 @@ When deciding whether to build or buy, merge or split, monolith or microservice,
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__cluster_graph` | Detecting the *actual* coordination clusters in the codebase (Leiden communities). Drawing a service boundary inside a tight community = high internal-coordination cost; drawing it between sparse communities = low cost. |
-| `mcp__ai-architect__get_impact` | Before extracting a module into a separate service, enumerate cross-boundary calls — each becomes an RPC + transaction-cost. |
-| `mcp__ai-architect__query_graph` | Counting cross-community edges as a coordination-cost proxy. Many edges = boundary is wrong; few edges = boundary is right. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Detecting the *actual* coordination clusters in the codebase (Leiden communities). Drawing a service boundary inside a tight community = high internal-coordination cost; drawing it between sparse communities = low cost. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before extracting a module into a separate service, enumerate cross-boundary calls — each becomes an RPC + transaction-cost. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Counting cross-community edges as a coordination-cost proxy. Many edges = boundary is wrong; few edges = boundary is right. |
 
 **Graceful degradation:** without MCP, estimate transaction cost from architecture diagrams + sample call traces; mark the boundary-cost estimate as `evidence: rough-order` rather than measured.
 </codebase-intelligence>

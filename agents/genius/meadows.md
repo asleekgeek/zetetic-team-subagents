@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When a complex system is misbehaving and the team is tweaking parameters instead of changing structure"
 agent_topic: genius-meadows
 shapes: [leverage-point-ranking, system-archetype, stock-flow-delay, feedback-dominance-shift, paradigm-transcendence]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -45,10 +45,10 @@ When a complex system is misbehaving and the team is tweaking parameters instead
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__cluster_graph` | Locating the structural leverage points (community centers — symbols that participate in many high-betweenness paths). Moving the leverage point reshapes the system. |
-| `mcp__ai-architect__get_impact` | Confirming a candidate leverage point is actually leverage — the blast radius is the leverage scope. Small blast radius = not leverage. |
-| `mcp__ai-architect__query_graph` | Hunting for stock/flow imbalances: queries that count buffers vs producers vs consumers across communities. |
-| `mcp__ai-architect__get_processes` | Identifying delays in the system (long process chains) where intervention has the highest leverage — short chains are robust, long chains are fragile. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Locating the structural leverage points (community centers — symbols that participate in many high-betweenness paths). Moving the leverage point reshapes the system. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Confirming a candidate leverage point is actually leverage — the blast radius is the leverage scope. Small blast radius = not leverage. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Hunting for stock/flow imbalances: queries that count buffers vs producers vs consumers across communities. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Identifying delays in the system (long process chains) where intervention has the highest leverage — short chains are robust, long chains are fragile. |
 
 **Graceful degradation:** without MCP, identify leverage points from architecture diagrams + interviews; mark the leverage estimate as `derived: from-diagram` rather than graph-measured.
 </codebase-intelligence>

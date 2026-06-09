@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a subtype/implementation breaks when substituted for its parent/interface"
 agent_topic: genius-liskov
 shapes: [substitutability-as-contract, behavioral-subtyping, data-abstraction, contract-is-interface, composition-correctness]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -41,10 +41,10 @@ When a subtype/implementation breaks when substituted for its parent/interface; 
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__query_graph` | Enumerating every implementer of an interface / trait / protocol: `MATCH (i:Trait)<-[:Implements]-(t) WHERE i.name = 'Foo' RETURN t`. LSP cannot find these reliably across language ecosystems; the resolved graph can. |
-| `mcp__ai-architect__get_context` | 360° view of an interface and all its implementations — the contract the supertype declares and the actual contracts each subtype provides, in one call. |
-| `mcp__ai-architect__get_impact` | Before adding a new method to a base type, enumerate every subtype that must implement it. The blast radius IS the substitutability cost. |
-| `mcp__ai-architect__detect_changes` | After tightening a precondition / weakening a postcondition, confirm no caller relies on the old contract. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Enumerating every implementer of an interface / trait / protocol: `MATCH (i:Trait)<-[:Implements]-(t) WHERE i.name = 'Foo' RETURN t`. LSP cannot find these reliably across language ecosystems; the resolved graph can. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_context` | 360° view of an interface and all its implementations — the contract the supertype declares and the actual contracts each subtype provides, in one call. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before adding a new method to a base type, enumerate every subtype that must implement it. The blast radius IS the substitutability cost. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | After tightening a precondition / weakening a postcondition, confirm no caller relies on the old contract. |
 
 **Graceful degradation:** without MCP, `grep -r 'class.*\(.*Foo' / 'impl.*for'` finds known direct subtypes but misses transitive ones. Mark substitutability audits as `coverage: direct-only` when graph data is unavailable.
 </codebase-intelligence>

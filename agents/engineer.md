@@ -5,7 +5,7 @@ model: sonnet
 effort: medium
 when_to_use: "When code needs to be written, modified, or fixed."
 agent_topic: engineer
-tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: engineer
 ---
 
@@ -46,12 +46,12 @@ When code needs to be written, modified, or fixed. Use for implementing features
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__analyze_codebase` | Move 1, fresh repo. One-shot end-to-end indexing → returns layer graph, communities, entry points. Preferred over inferring layers from directory names. |
-| `mcp__ai-architect__get_symbol` | Looking up a function, class, or type by qualified name. Returns definition + file + line + community + cross-references. Replaces `Grep` for known symbols. |
-| `mcp__ai-architect__get_impact` | Move 4 root-cause + before any non-trivial Edit. Returns blast radius — every caller, transitive caller, and exercising test. Mandatory before editing a load-bearing function (Move 6 High-stakes). |
-| `mcp__ai-architect__search_codebase` | Hybrid BM25 + sparse TF-IDF + RRF search. Use for "where is X handled?" when the symbol name is unknown. Faster and more accurate than `grep -r`. |
-| `mcp__ai-architect__get_processes` | Tracing execution flow from an entry point (request handler, job runner, CLI command). Replaces hand-following call chains. |
-| `mcp__ai-architect__detect_changes` | Move 5 (verify). Run AFTER Edits to confirm no unintended impact outside the planned blast radius. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__analyze_codebase` | Move 1, fresh repo. One-shot end-to-end indexing → returns layer graph, communities, entry points. Preferred over inferring layers from directory names. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol` | Looking up a function, class, or type by qualified name. Returns definition + file + line + community + cross-references. Replaces `Grep` for known symbols. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Move 4 root-cause + before any non-trivial Edit. Returns blast radius — every caller, transitive caller, and exercising test. Mandatory before editing a load-bearing function (Move 6 High-stakes). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase` | Hybrid BM25 + sparse TF-IDF + RRF search. Use for "where is X handled?" when the symbol name is unknown. Faster and more accurate than `grep -r`. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Tracing execution flow from an entry point (request handler, job runner, CLI command). Replaces hand-following call chains. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | Move 5 (verify). Run AFTER Edits to confirm no unintended impact outside the planned blast radius. |
 
 **Graceful degradation:** if the MCP server is not configured, fall back to `Glob`/`Grep`/`Read`. The MCP layer is intelligence on top of file I/O, not a replacement for it. Never block on MCP absence.
 </codebase-intelligence>

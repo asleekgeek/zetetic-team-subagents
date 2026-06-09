@@ -6,7 +6,7 @@ effort: medium
 when_to_use: "When a system has inputs and outputs and nobody has verified that the totals match"
 agent_topic: genius-lavoisier
 shapes: [mass-balance, conservation-accounting, residual-as-discovery, rename-to-clarify, sealed-system-experiment]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -40,9 +40,9 @@ When a system has inputs and outputs and nobody has verified that the totals mat
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_impact` | Tracing where the output of a function ends up — every caller is a downstream "output" sink. Missing sinks indicate an unaccounted residual. |
-| `mcp__ai-architect__get_processes` | Following data flow from an entry point — the process trace is the mass-balance ledger. Inputs at entry must equal outputs + drops + side effects at exit. |
-| `mcp__ai-architect__query_graph` | Hunting for orphan symbols: `MATCH (f:Function) WHERE NOT (f)<-[:Calls]-() AND NOT (f)<-[:EntryPointOf]-() RETURN f`. Orphans are mass that entered the codebase but has no outflow — name the new entity or remove it. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Tracing where the output of a function ends up — every caller is a downstream "output" sink. Missing sinks indicate an unaccounted residual. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Following data flow from an entry point — the process trace is the mass-balance ledger. Inputs at entry must equal outputs + drops + side effects at exit. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Hunting for orphan symbols: `MATCH (f:Function) WHERE NOT (f)<-[:Calls]-() AND NOT (f)<-[:EntryPointOf]-() RETURN f`. Orphans are mass that entered the codebase but has no outflow — name the new entity or remove it. |
 
 **Graceful degradation:** without MCP, perform mass-balance by hand-tracing entry → exit; mark the balance as `coverage: spot-trace`.
 </codebase-intelligence>

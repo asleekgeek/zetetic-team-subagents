@@ -6,7 +6,7 @@ effort: high
 when_to_use: "When a bug only appears under concurrency, load, or partial failure; when \"it works on my machine\" hides a race"
 agent_topic: genius-lamport
 shapes: [distributed-causality, proof-before-code, invariants-not-traces, spec-first, partial-failure-default]
-tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: genius
 ---
 
@@ -51,10 +51,10 @@ When a bug only appears under concurrency, load, or partial failure; when "it wo
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_processes` | Enumerating execution flows that share a critical section / lock / state. Each process is an interleaving candidate that the spec must cover. |
-| `mcp__ai-architect__query_graph` | Finding all callers of a synchronization primitive: `MATCH (f)-[:Calls]->(s {name: 'lock'}) RETURN f`. The spec must enumerate happens-before relationships for each. |
-| `mcp__ai-architect__get_impact` | Before relaxing a memory ordering — the blast radius enumerates every caller whose correctness argument depends on the current ordering. |
-| `mcp__ai-architect__cluster_graph` | Identifying the actor / community boundaries — communities are candidate boundaries for state-machine partitioning in TLA+. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes` | Enumerating execution flows that share a critical section / lock / state. Each process is an interleaving candidate that the spec must cover. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph` | Finding all callers of a synchronization primitive: `MATCH (f)-[:Calls]->(s {name: 'lock'}) RETURN f`. The spec must enumerate happens-before relationships for each. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Before relaxing a memory ordering — the blast radius enumerates every caller whose correctness argument depends on the current ordering. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__cluster_graph` | Identifying the actor / community boundaries — communities are candidate boundaries for state-machine partitioning in TLA+. |
 
 **Graceful degradation:** without MCP, the spec discipline still applies — write TLA+ / spec text, reason about invariants by hand. Note in the spec that caller enumeration is best-effort.
 </codebase-intelligence>

@@ -5,7 +5,7 @@ model: sonnet
 effort: medium
 when_to_use: "When a change set (PR, patch, staged diff) needs review before it merges."
 agent_topic: code-reviewer
-tools: [Read, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_ai-architect__query_graph, mcp__plugin_automatised-pipeline_ai-architect__get_context, mcp__plugin_automatised-pipeline_ai-architect__get_symbol, mcp__plugin_automatised-pipeline_ai-architect__search_codebase, mcp__plugin_automatised-pipeline_ai-architect__get_impact, mcp__plugin_automatised-pipeline_ai-architect__get_processes]
+tools: [Read, Bash, Glob, Grep, mcp__plugin_cortex_cortex__unified_search, mcp__plugin_cortex_cortex__recall, mcp__plugin_cortex_cortex__remember, mcp__plugin_cortex_cortex__navigate_memory, mcp__plugin_cortex_cortex__get_causal_chain, mcp__plugin_cortex_cortex__memory_stats, mcp__plugin_automatised-pipeline_automatised-pipeline__query_graph, mcp__plugin_automatised-pipeline_automatised-pipeline__get_context, mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol, mcp__plugin_automatised-pipeline_automatised-pipeline__search_codebase, mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact, mcp__plugin_automatised-pipeline_automatised-pipeline__get_processes]
 memory_scope: code-reviewer
 ---
 
@@ -44,11 +44,11 @@ When a change set (PR, patch, staged diff) needs review before it merges. Use to
 
 | Tool | Use when |
 |---|---|
-| `mcp__ai-architect__get_impact` | Reviewing any change to a load-bearing symbol. Returns every caller + every test that exercises the path. Use this to verify the PR's claimed scope matches reality. |
-| `mcp__ai-architect__detect_changes` | Reviewing the *whole* PR. Surfaces semantic-level changes (signature shifts, behaviour drift) that line-diff review misses. |
-| `mcp__ai-architect__check_security_gates` | Auth/billing/crypto/PII paths. Runs S1–S5 gates from the pipeline; hand off any flagged finding to **security-auditor**. |
-| `mcp__ai-architect__verify_semantic_diff` | When the diff looks innocuous but touches a contract boundary. Confirms whether the change is purely refactorive or alters observable behaviour. |
-| `mcp__ai-architect__get_symbol` | Verifying that a flagged identifier in the diff is the symbol the author thinks it is (catches name-collision bugs across modules). |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_impact` | Reviewing any change to a load-bearing symbol. Returns every caller + every test that exercises the path. Use this to verify the PR's claimed scope matches reality. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__detect_changes` | Reviewing the *whole* PR. Surfaces semantic-level changes (signature shifts, behaviour drift) that line-diff review misses. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__check_security_gates` | Auth/billing/crypto/PII paths. Runs S1–S5 gates from the pipeline; hand off any flagged finding to **security-auditor**. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__verify_semantic_diff` | When the diff looks innocuous but touches a contract boundary. Confirms whether the change is purely refactorive or alters observable behaviour. |
+| `mcp__plugin_automatised-pipeline_automatised-pipeline__get_symbol` | Verifying that a flagged identifier in the diff is the symbol the author thinks it is (catches name-collision bugs across modules). |
 
 **Graceful degradation:** if the MCP server is not configured, perform line-diff review with `Read`/`Grep` and explicitly note in the verdict comment that semantic-diff verification was unavailable — block High-stakes merges until either the MCP layer is enabled or the author runs the equivalent checks manually.
 </codebase-intelligence>
