@@ -10,6 +10,11 @@
 
 set -euo pipefail
 
+# Mechanics suite: locking/protocol behavior, not content semantics. The desc
+# gate has dedicated coverage in test-memory-e2e.sh I11; disable it here so
+# fixtures stay byte-minimal (MEMORY_NO_DESC_CHECK is the documented test escape).
+export MEMORY_NO_DESC_CHECK=1
+
 REPO_ROOT="$(cd "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 SERVER="$REPO_ROOT/tools/memory-mcp-server.py"
 
