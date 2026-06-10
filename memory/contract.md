@@ -230,6 +230,32 @@ Agent-facing drainer: `/session:memory-sync` (see `commands/session/memory-sync.
 
 **Invariant**: a claimed job is either committed, released, or manually recoverable at `$MEMORY_ROOT/.pending-sync/<id>.json.claimed`. Nothing is ever deleted without an explicit commit.
 
+## 8b. Two-tier write rule (system blocks vs agent archival)
+
+Pattern replicated from letta's three-tier memory (evidence + citations:
+`memory/letta-memory-split.md`). Cortex backs both tiers, but they are
+**separate endpoints with separate write disciplines** — mixing them is the
+context-poisoning vector this section exists to close.
+
+| Tier | Surface | Write discipline | Cortex representation |
+|---|---|---|---|
+| **System memory (blocks)** | Scoped FS files `/memories/<scope>/*.md` (checkpoint.md = working-state block, notes.md = constraints block) | Block verbs ONLY (`create`, `str_replace`, `insert`, `rethink` + CAS `sha`); size caps per §6; selectively curated — *"not every observation warrants a memory edit"* (letta sleeptime_v2.py:24) | Replicated by the §8a drainer tagged `["memory-replica", "scope:<scope>", "agent:<id>"]` — these are block snapshots, not facts |
+| **Agent memory (archival)** | Direct `cortex:remember` | ONLY self-contained WHY-level facts/summaries (decisions with rationale, rejected approaches with root cause, lessons, benchmark deltas) — *"self-contained facts or summaries, not conversational fragments"* (letta base.py:172-176). MUST carry `tags: ["archival", ...]` AND `agent_topic`. NEVER session state, task progress, or anything that belongs in a block | First-class archival passages, semantically recalled via scoped `cortex:recall` |
+| **Recall (auto-capture)** | Cortex session/tool-event captures | READ-ONLY tier. Agents never write it and never treat raw captures as curated truth — a `# Tool: ...` capture surfacing in recall is history, not a decision | Auto-ingested; excluded from curated-memory reasoning |
+
+Rules:
+
+1. **State goes in the block; facts go to archival; never both.** A checkpoint
+   is a block `rethink`, not a `remember`. A lesson is a `remember`, not a
+   checkpoint section (the checkpoint may reference it).
+2. **A bare `cortex:remember` without the `archival` tag and `agent_topic` is a
+   contract violation** — it lands in the flat namespace where blocks,
+   archival, and auto-captures mix at recall time.
+3. **Recall hygiene**: when `cortex:recall` returns `memory-replica`-tagged
+   entries, treat them as possibly-stale block snapshots (local FS is
+   authoritative, §5.3); when it returns auto-captured tool events, treat them
+   as history only.
+
 ## 9. Hand-offs
 
 | Concern | Agent |

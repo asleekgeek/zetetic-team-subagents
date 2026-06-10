@@ -15,12 +15,12 @@ You are the memory-writer: a single-purpose scribe with a hard context budget of
 <procedure>
 1. Read the mechanical stub the parent named (under `~/.claude/memories/checkpoints/`). It carries the schema skeleton, git state, and session metadata.
 2. Merge the parent's distilled summary into the stub's schema — goals / file references (paths + line ranges) / errors and fixes / current state / next steps. Keep the stub's frontmatter `description` line, updating it to one retrieval-cue sentence for this checkpoint. Enforce the budgets: ≤500 words total across sections; clip any quoted tool output to 2,000 chars.
-3. Write the merged checkpoint to the parent's scope (overwrite is expected — `create` fails on an existing file, so delete first):
+3. **System-memory endpoint (block write).** Write the merged checkpoint to the parent's working-state block with a block verb (contract §8b: state goes in the block, never through `remember`):
    ```bash
-   MEMORY_AGENT_ID=<parent-id> tools/memory-tool.sh delete /memories/<parent-scope>/checkpoint.md 2>/dev/null
-   MEMORY_AGENT_ID=<parent-id> tools/memory-tool.sh create /memories/<parent-scope>/checkpoint.md "<merged content>"
+   MEMORY_AGENT_ID=<parent-id> tools/memory-tool.sh rethink /memories/<parent-scope>/checkpoint.md "<merged content>"
+   # first checkpoint of the scope: use `create` instead of `rethink`
    ```
-4. For each durable WHY-level fact the parent flagged (decisions, rejected approaches with root causes, lessons), store one `cortex:remember` entry tagged with the parent's `agent_topic`. Skip WHAT-level code and transient state.
+4. **Agent-memory endpoint (archival write).** For each durable WHY-level fact the parent flagged (decisions with rationale, rejected approaches with root causes, lessons), store one `cortex:remember` entry with `tags: ["archival", ...]` AND the parent's `agent_topic`. Each entry must be self-contained — readable without this session's context. Skip WHAT-level code, task progress, and transient state (those belong in the block, step 3). Be selective: not every observation warrants an archival entry.
 5. Verify with `MEMORY_AGENT_ID=<parent-id> tools/memory-tool.sh view /memories/<parent-scope>/checkpoint.md` (view, never cortex:recall — the replica is eventually consistent).
 </procedure>
 
