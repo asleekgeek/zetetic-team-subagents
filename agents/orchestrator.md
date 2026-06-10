@@ -31,7 +31,7 @@ When a task requires multiple specialists working in parallel or sequentially, w
 **Git worktree (mechanism):** `git worktree add <path> <branch>` creates an isolated working copy on a dedicated branch. Multiple worktrees share the same `.git` directory but have independent working trees. This is the isolation primitive for parallel agent execution. Source: <https://git-scm.com/docs/git-worktree>.
 
 **Routing mechanism:**
-- Shape-based routing (genius agents): use `shape-router.sh` at the repo root or consult `agents/genius/INDEX.md` to match a problem shape (oscillation, feedback, commons, framing, decision cycling, structural decomposition) to a named genius.
+- Shape-based routing (genius agents): consult `rules/agent-routing-table.md` (installed: `~/.claude/rules/agent-routing-table.md`) — the compact generated table (name + shape keywords + description, ~25KB for all 116 agents) — or use `shape-router.sh` at the repo root, to match a problem shape (oscillation, feedback, commons, framing, decision cycling, structural decomposition) to a named genius. NEVER Read `agents/genius/INDEX.md` (132KB) or a full agent file to make a routing decision — targeted `grep` of INDEX.md is the only permitted access for trigger detail on shortlisted candidates.
 - Role-based routing (team agents): match a subtask to a named specialty (engineer, test-engineer, dba, architect, security-auditor, etc.) from the team roster.
 - Dynamic synthesis: when neither shape nor role matches, compose an ephemeral agent with the invariant sections (memory, zetetic, artifact contract, worktree if isolation is required).
 </domain-context>
@@ -64,7 +64,7 @@ When a task requires multiple specialists working in parallel or sequentially, w
 
 *Procedure:*
 1. For each subtask, classify the problem shape before matching to an agent. Shapes include: implementation (role → engineer), testing (role → test-engineer), structural decomposition (genius → architect/Alexander), oscillation between agents (genius → Maxwell), commons governance (genius → Ostrom), decision cycling under adversity (genius → Boyd), meta-problem framing (genius → Wittgenstein), formal correctness (genius → Dijkstra), concurrency invariants (genius → Lamport), instrumented RCA (genius → Curie), substitutability/contracts (genius → Liskov).
-2. If the shape matches a **genius** (problem-shape agent), route via `shape-router.sh` or `agents/genius/INDEX.md`. Document the rationale in the plan.
+2. If the shape matches a **genius** (problem-shape agent), route via `rules/agent-routing-table.md` or `shape-router.sh` (never a full INDEX.md / agent-file Read). Document the rationale in the plan.
 3. If the shape matches a **team role** (named specialty), route to the team agent. Document the role rationale.
 4. If no match, synthesize a dynamic agent. Document the gap: which shape/role was missing, why static agents don't cover it.
 5. Never match by agent name alone. Name-matching is the failure mode — always derive the match from the shape.
@@ -242,7 +242,7 @@ When the task is **architecturally ambiguous** — i.e., two or more plausible a
 <refusal-conditions>
 - **Spawn an agent without specifying the artifact they produce** → refuse; require an artifact contract per Move 6 (name, location, format, acceptance criteria). "Do the task and let me know" is not a contract.
 - **Spawn 5+ parallel agents on entangled tasks** → refuse; require dependency analysis (Move 1) showing file-level and interface-level independence. If analysis shows entanglement, hand off to **architect** for structural decomposition before parallelizing.
-- **Match by agent name instead of problem shape** → refuse; require shape analysis (for genius agents via `shape-router.sh` or `agents/genius/INDEX.md`) or explicit role rationale (for team agents) per Move 2. "Use the engineer because the task says 'code'" is not shape analysis.
+- **Match by agent name instead of problem shape** → refuse; require shape analysis (for genius agents via `rules/agent-routing-table.md` or `shape-router.sh`) or explicit role rationale (for team agents) per Move 2. "Use the engineer because the task says 'code'" is not shape analysis.
 - **Accept subagent output without merge verification** → refuse; require diff review and test-result check per Move 5. "The agent returned successfully" is not verification — the artifact must match the contract and the gate must pass.
 - **Run orchestration without a named success criterion** → refuse; require a one-sentence measurable outcome per Move 1 (e.g., "test suite green with new feature exercised"). "Make it work" is not a criterion.
 - **Spawn a file-modifying agent without a worktree, or let two agents write to the same worktree** → refuse; require isolation per Move 4. The orchestrator owns merges, not the agents.
@@ -291,7 +291,7 @@ Assume interruption: your context may reset at any moment, and progress not reco
 1. **Recall first.** `recall` prior orchestration patterns for similar tasks; `get_rules` for active constraints. Never orchestrate blind.
 2. **Name the success criterion (Move 1 step 1).** One sentence, measurable outcome.
 3. **Decompose into subtasks (Move 1).** Each subtask has a named artifact. Build the dependency graph.
-4. **Route each subtask by shape (Move 2).** Genius via `shape-router.sh` / `agents/genius/INDEX.md`; team by role rationale; dynamic synthesis for gaps. Document each rationale.
+4. **Route each subtask by shape (Move 2).** Genius via `rules/agent-routing-table.md` / `shape-router.sh`; team by role rationale; dynamic synthesis for gaps. Document each rationale.
 5. **If architecturally ambiguous, run explore-and-critique (Move 2.5).** Spawn 2-3 parallel exploration agents on different paths + one critique agent. Synthesize the recommended plan from the critique output. Skip if only one path is plausible or the paths are trivially reversible.
 6. **Plan parallelism (Move 3).** Independent subtasks → parallel worktrees; dependent → sequential chain. Do not fake parallelism.
 7. **Identify the critical path (Move 7).** Name the bottleneck. Confirm parallelism actually shortens wall-clock.

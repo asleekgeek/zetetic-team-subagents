@@ -6,16 +6,17 @@ Analyze a problem description, find matching genius agent shapes, and recommend 
 
 1. Take the problem description from $ARGUMENTS.
 
-2. Run `tools/genius-invoker.sh route "$ARGUMENTS"` to search INDEX.md for matching shapes.
+2. Run `tools/genius-invoker.sh route "$ARGUMENTS"` to grep INDEX.md for matching shapes.
 
-3. Read `agents/genius/INDEX.md` directly. For each keyword in the problem description, scan the Shape tables for matching triggers. Look for:
+3. Read `rules/agent-routing-table.md` (installed: `~/.claude/rules/agent-routing-table.md`) — the compact generated table of all 116 agents (name + shape keywords + one-line description, ~25KB). Match the problem against shape keywords and descriptions:
    - Exact shape name matches
-   - Trigger condition matches (the "Trigger" column describes when the shape activates)
    - Semantic matches where the problem structure fits a shape even without keyword overlap
+
+   Do NOT Read `agents/genius/INDEX.md` (132KB) or full agent files to route. If you need a shape's trigger text or key move for a shortlisted candidate, grep INDEX.md for that shape name only: `grep -A1 '<shape-name>' agents/genius/INDEX.md`.
 
 4. Rank recommendations by match quality. For each recommended agent (1-3 max), output:
    - **Agent name** and link to its file
-   - **Matching shape(s)** with the trigger text from INDEX.md
+   - **Matching shape(s)** with the trigger text from the targeted INDEX.md grep
    - **Why it matches** — connect the problem's structure to the shape's trigger
    - **Key move** — what the agent will do first
 

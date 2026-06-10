@@ -36,4 +36,12 @@ output=$("$TOOLS/zetetic-checker.sh" --staged 2>&1) || {
   echo "WARNING: Difficulty book has unaddressed hardest case." >&2
 }
 
+# Routing-table staleness: warn (don't block) when agent frontmatter changed
+# without regenerating rules/agent-routing-table.md (R2 contract).
+if [[ -x "$REPO_ROOT/scripts/generate-routing-table.py" ]]; then
+  python3 "$REPO_ROOT/scripts/generate-routing-table.py" --check 2>&1 | grep -q 'up to date' || {
+    echo "WARNING: rules/agent-routing-table.md is stale — run scripts/generate-routing-table.py and stage it." >&2
+  }
+fi
+
 exit 0
