@@ -114,6 +114,25 @@ Local-only verb for full-text retrieval across scope files. **Deterministic grep
 | Empty | Returns `"No matches for query in {root}."` |
 | Error — denied | `"Error: agent '{id}' is not permitted to read scope '/memories/{name}'"` |
 
+### 3.6b `rethink` (local extension — NOT in Anthropic `memory_20250818`)
+
+Atomic whole-file rewrite of an EXISTING file — the letta `memory_rethink` verb. `create` remains the verb for new files; `rethink` replaces an entire file's content in one durable operation, optionally guarded by compare-and-swap.
+
+| Aspect | Specification |
+|---|---|
+| Input | `rethink <path> <file_text> [expected_sha]` |
+| Precondition | path under `/memories`; file EXISTS; if `expected_sha` given, it equals sha256 of current content |
+| Postcondition | file contains exactly `file_text`; durable; sync job enqueued (op `rethink`, full post-state) |
+| Success return | `"File rewritten successfully at: {path} (sha256: {sha})"` |
+| Error — path missing | `"Error: The path {path} does not exist. Use create for new files."` |
+| Error — CAS mismatch | `"Error: compare-and-swap failed for {path} — expected sha256 {expected}, current is {actual}. ..."` |
+| Concurrency | exclusive scope lock + optional CAS (see §4.7) |
+| Atomicity | write-to-tmp + fsync + rename |
+
+### 3.6c `sha` (local extension)
+
+Returns the sha256 of a file's current content — the CAS token for `str_replace`/`rethink`. Read-ACL enforced. Error on missing path matches `view`.
+
 ### 3.6 `rename`
 
 | Aspect | Specification |
@@ -140,6 +159,10 @@ Local-only verb for full-text retrieval across scope files. **Deterministic grep
 5. **Error messages are verbatim.** Implementations MUST return the exact strings specified in §3. Claude is trained on these strings; paraphrase degrades model behavior.
 
 6. **No silent conversion.** If input violates precondition, return the defined error — never coerce (e.g., do not auto-create missing parent dirs on str_replace, do not trim `old_str` whitespace).
+
+7. **Conflict-aware writes (CAS).** `str_replace` and `rethink` accept an optional `expected_sha` (obtained from `sha <path>`). When supplied, the write MUST be rejected with the CAS-mismatch error if the file's current sha256 differs — no silent last-writer-wins between read and write across invocations. Per-scope `flock` already serializes individual operations; CAS protects the full read-modify-write cycle when parallel agents share a scope.
+
+8. **Frontmatter retrieval cue (mandatory).** Every `.md` file written via `create` or `rethink` MUST begin with YAML frontmatter carrying a non-empty `description:` line — the retrieval cue that makes two-tier/on-demand loading work. Violations are rejected with an instructive error before any byte is written (audit result `desc_missing`). `MEMORY_NO_DESC_CHECK=1` disables the gate for tests only. Non-`.md` files are exempt.
 
 ## 5. Substitutability rules (Liskov)
 
@@ -191,7 +214,7 @@ The memory tool pairs with `clear_tool_uses_20250919` context-editing strategy (
 
 ## 8a. Cortex replica queue (§5.3 implementation)
 
-Every successful mutation (`create`, `str_replace`, `insert`, `delete`, `rename`) enqueues a JSON job to `$MEMORY_ROOT/.pending-sync/<ts>-<rand>.json` describing the post-state (including base64-encoded file contents for non-delete ops and a `content_sha256` digest). Enqueue failures do NOT fail the parent operation.
+Every successful mutation (`create`, `str_replace`, `insert`, `rethink`, `delete`, `rename`) enqueues a JSON job to `$MEMORY_ROOT/.pending-sync/<ts>-<rand>.json` describing the post-state (including base64-encoded file contents for non-delete ops and a `content_sha256` digest). Enqueue failures do NOT fail the parent operation.
 
 Queue commands:
 

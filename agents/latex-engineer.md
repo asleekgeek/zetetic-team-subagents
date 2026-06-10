@@ -333,7 +333,7 @@ The 200K context window is the physical limit — the 170K cap leaves ~30K headr
 
 At the threshold, do exactly this:
 
-1. Write your checkpoint to `/memories/latex-engineer/checkpoint.md` via `memory-tool.sh create` — task, completed, in progress, remaining, key decisions, files modified, exact next action. Keep it under 50K; overwrite one checkpoint file per task as you progress.
+1. Write your checkpoint to `/memories/latex-engineer/checkpoint.md` via `memory-tool.sh create` (first write) or `rethink` (overwrite) — letta summary schema: goals, file references (paths + line ranges), errors and fixes, current state, next steps; ≤500 words total, quoted tool outputs clipped to 2K chars. Begin the file with `---` / `description: "<one-line retrieval cue>"` / `---` frontmatter — the tool rejects .md files without it. One checkpoint file per task, updated as you progress.
 2. End your response with exactly:
 
 ```

@@ -140,7 +140,9 @@ MEMORY_EXTENSIONS_TOOL = {
     "description": (
         "Extended memory backend operations not in the memory_20250818 schema. "
         "Commands: search, scopes, preamble, sync-status, drain-sync, "
-        "commit-sync, release-sync, ttl-sweep, audit."
+        "commit-sync, release-sync, ttl-sweep, audit, rethink (atomic "
+        "whole-file rewrite of an existing file, optional compare-and-swap via "
+        "expected_sha), sha (sha256 CAS token of current content)."
     ),
     "inputSchema": {
         "type": "object",
@@ -157,8 +159,26 @@ MEMORY_EXTENSIONS_TOOL = {
                     "release-sync",
                     "ttl-sweep",
                     "audit",
+                    "rethink",
+                    "sha",
                 ],
                 "description": "The extension operation to perform.",
+            },
+            "path": {
+                "type": "string",
+                "description": "Memory path (/memories/...). Required for rethink and sha.",
+            },
+            "file_text": {
+                "type": "string",
+                "description": "Full replacement content. Required for rethink.",
+            },
+            "expected_sha": {
+                "type": "string",
+                "description": (
+                    "Optional compare-and-swap token for rethink: sha256 of the "
+                    "content you last read (from command=sha). Write is rejected "
+                    "if the file changed since."
+                ),
             },
             "query": {
                 "type": "string",
@@ -341,6 +361,15 @@ def _map_extensions(params):
         if params.get("since"):
             args += ["--since", params["since"]]
         return args
+
+    if cmd == "rethink":
+        args = ["rethink", params.get("path", ""), params.get("file_text", "")]
+        if params.get("expected_sha"):
+            args.append(params["expected_sha"])
+        return args
+
+    if cmd == "sha":
+        return ["sha", params.get("path", "")]
 
     return None
 

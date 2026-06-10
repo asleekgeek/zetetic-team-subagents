@@ -24,36 +24,33 @@ The session budget is a conservative cap that keeps sessions focused and memory-
 
 When your running token estimate reaches the threshold:
 
-**Step 1 — Store state to memory**
+**Step 1 — Store state to memory** (letta summary schema — goals / file references / errors and fixes / current state / next steps; ≤500 words total, quoted tool outputs clipped to 2,000 chars)
 ```bash
 MEMORY_AGENT_ID=<agent-id> tools/memory-tool.sh create   /memories/<scope>/checkpoint.md "$(cat <<'CHECKPOINT'
+---
+description: "<one-line retrieval cue for this checkpoint — MANDATORY; the tool rejects .md files without it>"
+---
 ## Checkpoint <ISO-date>
 
-### Task
-<one sentence: what the overall task is>
+### Goals
+<what this session is trying to achieve, in priority order>
 
-### Completed
-- <item 1>
-- <item 2>
+### File references
+- <path>:<start>-<end> — <why the resumed session needs it>
 
-### In progress
-- <item and exact state>
+### Errors and fixes
+- <error hit this session> → <how it was fixed or worked around>
 
-### Remaining
-- <item 1>
-- <item 2>
+### Current state
+<one paragraph: where the work stands right now — completed, in progress, remaining>
 
-### Key decisions made
-- <decision and rationale>
-
-### Files modified
-- <path>: <what changed>
-
-### Next action
-<exact first thing to do on restart>
+### Next steps
+1. <exact first action on restart — executable without re-deriving anything>
+2. <subsequent ordered actions>
 CHECKPOINT
 )"
 ```
+Use `rethink` instead of `create` to overwrite an existing checkpoint (optionally with a CAS sha from `memory-tool.sh sha <path>` when your scope is shared).
 
 **Step 2 — Signal session end**
 
@@ -61,7 +58,7 @@ End your response with exactly:
 ```
 CHECKPOINT — context cleared.
 Resume from: /memories/<scope>/checkpoint.md
-Next action: <copy from checkpoint's "Next action" field>
+Next action: <copy from checkpoint's first "Next steps" entry>
 ```
 
 **Step 3 — On restart, recover before anything else**
@@ -71,12 +68,13 @@ MEMORY_AGENT_ID=<agent-id> tools/memory-tool.sh view /memories/<scope>/
 # Then load the checkpoint:
 MEMORY_AGENT_ID=<agent-id> tools/memory-tool.sh view /memories/<scope>/checkpoint.md
 ```
-Read the checkpoint fully before touching any file, tool, or search.
+**Resume contract:** read the checkpoint + ONE targeted, agent_topic-scoped `cortex:recall`. Do NOT re-read files or docs the checkpoint already summarizes — trust its file references; verify with targeted Reads only when editing.
 
 ### Memory store rules
 - Store **decisions and state**, not code. Code belongs in the repo.
-- Keep checkpoint files under 50K (the tool rejects >100K).
-- One checkpoint file per task; overwrite it as you progress.
+- Keep checkpoint files ≤500 words (hard tool cap is 100K bytes; the schema budget is the binding one).
+- Every memory `.md` file begins with frontmatter carrying `description:` — it is the retrieval cue; the tool rejects files without it.
+- One checkpoint file per task; `rethink` it as you progress.
 - Cross-session notes (rejected approaches, confirmed constraints) go in a separate `/memories/<scope>/notes.md`.
 
 ### Memory recover rules

@@ -7,10 +7,22 @@
 # Usage:
 #   memory-tool.sh view        <path> [view_range_start view_range_end]
 #   memory-tool.sh create      <path> <file_text>
-#   memory-tool.sh str_replace <path> <old_str> <new_str>
+#   memory-tool.sh str_replace <path> <old_str> <new_str> [expected_sha]
 #   memory-tool.sh insert      <path> <insert_line> <insert_text>
+#   memory-tool.sh rethink     <path> <file_text> [expected_sha]
+#                                                   — atomic whole-file rewrite of an
+#                                                     EXISTING file (create for new ones)
+#   memory-tool.sh sha         <path>               — sha256 of current content (CAS token)
 #   memory-tool.sh delete      <path>
 #   memory-tool.sh rename      <old_path> <new_path>
+#
+# Conflict-aware writes (lost-update protection for shared scopes): pass the
+# sha256 obtained from `sha <path>` (or a prior write's audit line) as the
+# optional [expected_sha]; the write is rejected if the file changed since.
+#
+# Frontmatter contract: every .md memory file MUST begin with YAML frontmatter
+# carrying a `description:` line — it is the retrieval cue for two-tier loading.
+# Enforced on create/rethink. (MEMORY_NO_DESC_CHECK=1 disables — tests only.)
 #   memory-tool.sh search      <query> [--scope <name>] [--limit N] [--regex]
 #   memory-tool.sh scopes                           — list scopes + sizes (no content)
 #   memory-tool.sh preamble                         — print Anthropic system-prompt preamble
@@ -443,6 +455,43 @@ sha256_of() {
   else sha256sum | awk '{print $1}'; fi
 }
 
+# R5 — frontmatter contract: .md memory files must carry a description: line
+# in YAML frontmatter (the retrieval cue that makes two-tier loading work).
+# Usage: _desc_gate <content> <cmd> <vpath>   (exits 1 on violation)
+_desc_gate() {
+  local content="$1" cmd="$2" vpath="$3"
+  [[ -n "${MEMORY_NO_DESC_CHECK:-}" ]] && return 0
+  [[ "$vpath" != *.md ]] && return 0
+  if printf '%s' "$content" | awk 'NR==1 && $0!="---" {exit 1}
+      NR>1 && $0=="---" {exit found?0:1}
+      /^description:[[:space:]]*[^[:space:]]/ {found=1}
+      END {exit found?0:1}'; then
+    return 0
+  fi
+  audit "$cmd" "$vpath" 0 desc_missing
+  cat <<'EOF'
+Error: memory .md files require YAML frontmatter with a description: line (the retrieval cue). Begin the file with:
+---
+description: "<one-line summary used to decide relevance during recall>"
+---
+then the content. (MEMORY_NO_DESC_CHECK=1 disables this check — tests only.)
+EOF
+  exit 1
+}
+
+# R6 — compare-and-swap guard for read-modify-write across invocations.
+# Usage: _cas_gate <real> <expected_sha> <cmd> <vpath>   (exits 1 on mismatch)
+_cas_gate() {
+  local real="$1" expected="$2" cmd="$3" vpath="$4"
+  [[ -z "$expected" ]] && return 0
+  local actual; actual=$(sha256_of < "$real")
+  if [[ "$actual" != "$expected" ]]; then
+    audit "$cmd" "$vpath" 0 cas_mismatch
+    echo "Error: compare-and-swap failed for $vpath — expected sha256 $expected, current is $actual. The file changed since you read it; re-read it (view / sha) and retry with the current sha."
+    exit 1
+  fi
+}
+
 # Human-readable size like 4.0K / 1.5K / 2.0M (matches Anthropic view format).
 human_size() {
   local bytes="$1"
@@ -528,6 +577,7 @@ cmd_create() {
     local bytes=${#file_text}
     size_check "$bytes" "$vpath" "$scope" "$scope"
     _pii_gate "$file_text" "create" "$vpath" "$bytes"
+    _desc_gate "$file_text" "create" "$vpath"
     atomic_write "$real" "$file_text"
     local sha; sha=$(printf '%s' "$file_text" | sha256_of)
     audit "create" "$vpath" "$bytes" ok "$sha"
@@ -538,7 +588,7 @@ cmd_create() {
 }
 
 cmd_str_replace() {
-  local vpath="$1" old_str="$2" new_str="$3"
+  local vpath="$1" old_str="$2" new_str="$3" expected_sha="${4:-}"
   local real
   resolve_path "$vpath" real || exit 1
   local scope; scope="$(scope_of "$vpath")"
@@ -553,6 +603,7 @@ cmd_str_replace() {
       audit "str_replace" "$vpath" 0 missing
       exit 1
     fi
+    _cas_gate "$real" "$expected_sha" "str_replace" "$vpath"
     local content; content="$(cat "$real")"
     # Count occurrences using awk (handles multi-line old_str via python for safety).
     local occ lines
@@ -608,6 +659,58 @@ PY
     awk '{ printf "%6d\t%s\n", NR, $0 }' "$real" | head -20
   }
   with_lock "$scope" _do_replace
+}
+
+# R6 — atomic whole-file rewrite of an EXISTING file (letta memory_rethink).
+# Optional expected_sha enables compare-and-swap against lost updates.
+cmd_rethink() {
+  local vpath="$1" file_text="$2" expected_sha="${3:-}"
+  local real
+  resolve_path "$vpath" real || exit 1
+  local scope; scope="$(scope_of "$vpath")"
+  if [[ "$(acl_check "$scope" write)" == "deny" ]]; then
+    acl_deny "$scope" write
+    audit "rethink" "$vpath" 0 acl_denied
+    exit 1
+  fi
+  _do_rethink() {
+    if [[ ! -f "$real" ]]; then
+      echo "Error: The path $vpath does not exist. Use create for new files."
+      audit "rethink" "$vpath" 0 missing
+      exit 1
+    fi
+    _cas_gate "$real" "$expected_sha" "rethink" "$vpath"
+    local bytes=${#file_text}
+    size_check "$bytes" "$vpath" "$scope"
+    _pii_gate "$file_text" "rethink" "$vpath" "$bytes"
+    _desc_gate "$file_text" "rethink" "$vpath"
+    atomic_write "$real" "$file_text"
+    local sha; sha=$(printf '%s' "$file_text" | sha256_of)
+    audit "rethink" "$vpath" "$bytes" ok "$sha"
+    enqueue_sync "rethink" "$vpath" "$scope"
+    echo "File rewritten successfully at: $vpath (sha256: $sha)"
+  }
+  with_lock "$scope" _do_rethink
+}
+
+# R6 — print the CAS token (sha256 of current content) for a file.
+cmd_sha() {
+  local vpath="$1"
+  local real
+  resolve_path "$vpath" real || exit 1
+  local scope; scope="$(scope_of "$vpath")"
+  if [[ "$(acl_check "$scope" read)" == "deny" ]]; then
+    acl_deny "$scope" read
+    audit "sha" "$vpath" 0 acl_denied
+    exit 1
+  fi
+  if [[ ! -f "$real" ]]; then
+    echo "Error: The path $vpath does not exist. Please provide a valid path."
+    audit "sha" "$vpath" 0 missing
+    exit 1
+  fi
+  sha256_of < "$real"
+  audit "sha" "$vpath" "$(wc -c < "$real")" ok
 }
 
 cmd_insert() {
@@ -1266,8 +1369,10 @@ cmd="${1:-}"; shift || true
 case "$cmd" in
   view)        cmd_view        "${1:?path}" "${2:-}" "${3:-}" ;;
   create)      cmd_create      "${1:?path}" "${2:?file_text}" ;;
-  str_replace) cmd_str_replace "${1:?path}" "${2:?old_str}" "${3:?new_str}" ;;
+  str_replace) cmd_str_replace "${1:?path}" "${2:?old_str}" "${3:?new_str}" "${4:-}" ;;
   insert)      cmd_insert      "${1:?path}" "${2:?insert_line}" "${3:?insert_text}" ;;
+  rethink)     cmd_rethink     "${1:?path}" "${2:?file_text}" "${3:-}" ;;
+  sha)         cmd_sha         "${1:?path}" ;;
   delete)      cmd_delete      "${1:?path}" ;;
   rename)      cmd_rename      "${1:?old_path}" "${2:?new_path}" ;;
   search)      cmd_search      "$@" ;;
@@ -1280,5 +1385,5 @@ case "$cmd" in
   ttl-sweep)   cmd_ttl_sweep   "$@" ;;
   audit)       cmd_audit       "$@" ;;
   -h|--help|"") grep -E '^#( |$)' "$0" | sed 's/^# \{0,1\}//' ;;
-  *) die "unknown command: $cmd (expected: view|create|str_replace|insert|delete|rename|search|scopes|preamble|sync-status|drain-sync|commit-sync|release-sync|ttl-sweep|audit)" ;;
+  *) die "unknown command: $cmd (expected: view|create|str_replace|insert|rethink|sha|delete|rename|search|scopes|preamble|sync-status|drain-sync|commit-sync|release-sync|ttl-sweep|audit)" ;;
 esac
