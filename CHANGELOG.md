@@ -6,6 +6,33 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.16.0] — Per-model context thresholds via shared config
+
+### Changed
+
+- **stop-context-guard.py re-vendored from
+  [session-optimizer](https://github.com/cdeust/session-optimizer) v1.1.0.**
+  Thresholds are now per-model and loaded from
+  `~/.claude/ctxguard-thresholds.json` (embedded fallback when the config
+  is absent or malformed; first substring match on the lowercased model id
+  wins): Fable 5 / Mythos warn 120K hard 160K (2x Opus rates — carrying
+  rent and the 5-min cache-expiry resume penalty bite twice as hard),
+  Haiku 4.5 warn 120K hard 170K (200K IS the window; leave headroom for
+  the checkpoint turn), Opus/Sonnet warn 180K hard 200K (cost discipline;
+  window is 1M). The hard-cap block message now reports the per-model
+  budget instead of a fixed 200K.
+- **`<token-budget>` model-limits table updated in all 117 agent docs.**
+  Adds the Claude Fable 5 row (160K hard cap, ~120K checkpoint), corrects
+  Haiku's cap to 170K, and points to `ctxguard-thresholds.json` as the
+  authoritative source shared with the statusline and the Stop guard.
+
+### Added
+
+- **`hooks/ctxguard-thresholds.json`** — vendored copy of the shared
+  threshold config. `session-start.sh` seeds it to
+  `~/.claude/ctxguard-thresholds.json` when absent (idempotent — never
+  overwrites user edits, so tuned thresholds survive plugin updates).
+
 ## [2.15.0] — Complete the plugin hook manifest
 
 ### Fixed

@@ -511,15 +511,16 @@ Zetetic standard for this agent:
 
 ### Model limits (authoritative)
 
-| Model | Context window | Max output | Session budget (soft cap) | Checkpoint threshold |
+| Model | Context window | Max output | Session budget (hard cap) | Checkpoint threshold |
 |---|---|---|---|---|
+| Claude Fable 5 | 1,000K | — | 160K | ~120K |
 | Claude Opus 4.8 | 1,000K | 128K | 200K | ~180K |
 | Claude Sonnet 4.6 | 1,000K | 64K | 200K | ~180K |
-| Claude Haiku 4.5 | 200K | 64K | 200K (= context limit) | ~120K |
+| Claude Haiku 4.5 | 200K | 64K | 170K | ~120K |
 
 **This agent runs on Opus 4.8.** Apply the corresponding threshold above.
 
-The 200K session budget is a conservative soft cap that keeps sessions focused and memory-checkpointed. It is not the model's physical context limit (except for Haiku, where they coincide).
+The session budget is a conservative cap that keeps sessions focused and memory-checkpointed; it is not the model's physical context limit (except for Haiku, whose window IS 200K — the 170K cap leaves headroom for the checkpoint turn itself). Fable 5 caps earlier (160K) because it pays ~2x Opus rates: carrying rent and the 5-minute cache-expiry resume penalty bite twice as hard. The authoritative per-model values live in `~/.claude/ctxguard-thresholds.json`, shared by the Stop guard hook and the session-optimizer statusline; this table mirrors it.
 
 ### Checkpoint procedure — trigger at threshold
 

@@ -560,11 +560,11 @@ When spawned in an isolated worktree, you are working on a dedicated branch. Aft
 
 ### Model limits (authoritative)
 
-| Model | Context window | Max output | Session budget | Checkpoint threshold |
+| Model | Context window | Max output | Session budget (hard cap) | Checkpoint threshold |
 |---|---|---|---|---|
-| Claude Haiku 4.5 | **200K** | **64K** | 200K (= context limit) | **~120K** |
+| Claude Haiku 4.5 | **200K** | **64K** | 170K (window is 200K) | **~120K** |
 
-**This agent runs on Haiku 4.5.** The 200K session budget equals the model's physical context limit — there is no slack. At 136K context tokens consumed, only 64K of output space remains (the hard output ceiling). The 120K threshold gives ~16K buffer above that boundary.
+**This agent runs on Haiku 4.5.** The 200K context window is the physical limit — there is no slack. The 170K hard cap leaves ~30K of headroom for the checkpoint turn itself; the 120K checkpoint threshold fires the save well before that boundary (at 136K context consumed, only 64K of output space remains — the hard output ceiling).
 
 ### Checkpoint procedure — trigger at ~120K tokens
 

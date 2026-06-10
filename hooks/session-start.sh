@@ -9,6 +9,14 @@ TOOLS="${PLUGIN_ROOT}/tools"
 [[ ! -d "$TOOLS" ]] && TOOLS="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/tools"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
+# --- Seed shared context-threshold config (consumed by stop-context-guard.py
+# and the session-optimizer statusline). Idempotent: never overwrites an
+# existing file, so user edits to thresholds survive plugin updates. ---
+CTXGUARD_CONFIG="${HOME}/.claude/ctxguard-thresholds.json"
+if [[ ! -f "$CTXGUARD_CONFIG" && -f "${PLUGIN_ROOT}/hooks/ctxguard-thresholds.json" ]]; then
+  cp "${PLUGIN_ROOT}/hooks/ctxguard-thresholds.json" "$CTXGUARD_CONFIG" 2>/dev/null || true
+fi
+
 # --- Colors (true color RGB — readable on dark backgrounds) ---
 TEAL="\033[1;38;2;127;187;179m"
 WHITE="\033[38;2;224;224;224m"
