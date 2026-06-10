@@ -28,7 +28,7 @@ See `memory/contract.md §5.3`. Local FS is authoritative; Cortex is an eventual
    - Base64-decode `content_b64` to get the post-op file contents (or skip for `op: "delete"`).
    - Call `mcp__plugin_cortex_cortex__remember` with:
      - `content`: the decoded contents (or a deletion marker `"__deleted__ <vpath>"` for deletes)
-     - `tags`: `["memory-replica", "scope:<scope>", "agent:<agent_id>"]`
+     - `tags`: `["memory-replica", "scope:<scope>", "agent:<agent_id>", "vpath:<vpath>"]` — the `vpath:` tag is the block's identity: Cortex upserts replica writes keyed on it (one memory row per block file, updated per drain), instead of appending a new near-duplicate snapshot each time (contract §8b; letta-code analog: one file, many commits)
      - `agent_topic`: `<scope>` — the job's `scope` field verbatim. This maps to `agent_context` in Cortex's DB (see `mcp_server/handlers/remember.py:351`), enabling `agent_briefing.py` to filter memories by agent at SubagentStart.
      - `source`: `"memory-tool:<op>"`
      - Include `vpath`, `content_sha256`, and `ts` in the metadata so Cortex can deduplicate.
