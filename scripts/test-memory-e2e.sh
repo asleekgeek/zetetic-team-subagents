@@ -48,10 +48,15 @@ mt() {
   fi
 }
 
+# Wrap content in the mandatory description frontmatter (memory/contract.md §3.6:
+# every .md memory file begins with a description: retrieval cue; the desc gate
+# rejects bare content). Denial-path tests stay bare — ACL fires before the gate.
+fm() { printf -- '---\ndescription: "e2e test fixture"\n---\n%s' "$1"; }
+
 # ── I1: own-scope write is durable across a fresh shell ──────────────────────
 test_i1() {
   local content="decision: use postgres"
-  local out; out=$(mt engineer -- create /memories/engineer/decision-1.md "$content" 2>&1) || true
+  local out; out=$(mt engineer -- create /memories/engineer/decision-1.md "$(fm "$content")" 2>&1) || true
   local exit_code=$?
 
   if [[ $exit_code -ne 0 ]] || ! echo "$out" | grep -q "File created successfully"; then
@@ -99,11 +104,11 @@ test_i3() {
 # ── I4: genius agents share scope; cross-genius write logged as policy gap ───
 test_i4() {
   # feynman writes under own subpath — allowed
-  local out1; out1=$(mt feynman -- create /memories/genius/feynman/lesson.md "feynman lesson" 2>&1)
+  local out1; out1=$(mt feynman -- create /memories/genius/feynman/lesson.md "$(fm "feynman lesson")" 2>&1)
   local e1=$?
 
   # pearl writes under feynman subpath — also allowed by ACL (owners=*)
-  local out2; out2=$(mt pearl -- create /memories/genius/feynman/stolen.md "pearl wrote here" 2>&1)
+  local out2; out2=$(mt pearl -- create /memories/genius/feynman/stolen.md "$(fm "pearl wrote here")" 2>&1)
   local e2=$?
 
   if [[ $e1 -ne 0 ]] || ! echo "$out1" | grep -q "File created successfully"; then
@@ -131,7 +136,7 @@ test_i4() {
 # ── I5: quarantine — any agent writes, only curator reads ────────────────────
 test_i5() {
   # engineer writes to quarantine — owners=* so allowed
-  local out1; out1=$(mt engineer -- create /memories/quarantine/pr-123-summary.md "summary" 2>&1)
+  local out1; out1=$(mt engineer -- create /memories/quarantine/pr-123-summary.md "$(fm "summary")" 2>&1)
   local e1=$?
   if [[ $e1 -ne 0 ]] || ! echo "$out1" | grep -q "File created successfully"; then
     fail 5 "engineer write to quarantine failed (should be allowed)" "$out1" ""
@@ -160,8 +165,8 @@ test_i5() {
 # ── I6: TTL sweep deletes expired files and nothing else ─────────────────────
 test_i6() {
   # Create two session files
-  mt _user -- create /memories/session/old.md "old content" >/dev/null 2>&1
-  mt _user -- create /memories/session/new.md "new content" >/dev/null 2>&1
+  mt _user -- create /memories/session/old.md "$(fm "old content")" >/dev/null 2>&1
+  mt _user -- create /memories/session/new.md "$(fm "new content")" >/dev/null 2>&1
 
   # Forcibly backdate old.md to 2 days ago (session TTL=1 day)
   local old_path="$MEMORY_ROOT/session/old.md"
@@ -193,7 +198,7 @@ test_i7() {
   # Temporarily enable sync so enqueue_sync runs
   MT_SYNC_ENABLED=1
 
-  mt engineer -- create /memories/engineer/sync-test.md "sync content" >/dev/null 2>&1
+  mt engineer -- create /memories/engineer/sync-test.md "$(fm "sync content")" >/dev/null 2>&1
 
   # Drain — get job id (mt now exports correct env)
   local drained; drained=$(mt engineer -- drain-sync --limit 1 2>&1)
@@ -295,7 +300,7 @@ test_i10() {
   fi
 
   # orchestrator create → allowed (curator_agents includes orchestrator)
-  local out2; out2=$(mt orchestrator -- create /memories/lessons/foo.md "orch lesson" 2>&1)
+  local out2; out2=$(mt orchestrator -- create /memories/lessons/foo.md "$(fm "orch lesson")" 2>&1)
   local e2=$?
   if [[ $e2 -ne 0 ]] || ! echo "$out2" | grep -q "File created successfully"; then
     fail 10 "orchestrator write to lessons failed (exit=$e2)" "$out2" ""
@@ -311,6 +316,20 @@ test_i10() {
     pass 10 "lessons scope: engineer denied, orchestrator allowed, both in audit"
   else
     fail 10 "audit entries missing (eng_denied=$eng_denied orch_ok=$orch_ok)" "$audit_out" ""
+  fi
+}
+
+# ── I11: desc gate — bare .md content rejected with desc_missing audit ───────
+test_i11() {
+  local out; out=$(mt engineer -- create /memories/engineer/bare.md "no frontmatter here" 2>&1)
+  local e=$?
+  local audit_out; audit_out=$(mt engineer -- audit 2>&1)
+  local gate_entries; gate_entries=$(echo "$audit_out" | grep -c "desc_missing" || true)
+
+  if [[ $e -ne 0 ]] && echo "$out" | grep -q "require YAML frontmatter" && [[ "$gate_entries" -ge 1 ]]; then
+    pass 11 "desc gate rejects bare .md content and audits desc_missing"
+  else
+    fail 11 "desc gate did not fire (exit=$e gate_entries=$gate_entries)" "$out" ""
   fi
 }
 
@@ -332,6 +351,7 @@ test_i7
 test_i8
 test_i9
 test_i10
+test_i11
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
