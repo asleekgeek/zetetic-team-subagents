@@ -62,3 +62,31 @@ flat `cortex:remember` so block-state, archival facts, and auto-captured tool
 events all rank together at recall time (observed 2026-06-10: raw `# Tool:
 Edit` captures surfacing beside curated decisions in session-start hot
 memories). The write rule is normative in `memory/contract.md §8b`.
+
+## Ecosystem correlation (audited 2026-06-10)
+
+Write-side status after the §8b sweep (file:line evidence from the audit run):
+
+| Repo / surface | Status |
+|---|---|
+| zetetic `agents/memory-writer.md`, `commands/session/memory-sync.md` | ✅ compliant (block verbs; replica tagged `memory-replica`/`scope:`/`agent:`; archival tagged) |
+| zetetic `commands/session/save.md`, `commands/research/session.md` | ✅ fixed — state → block `rethink`, facts → tagged archival (were bare remembers) |
+| automatised-pipeline `.claude/commands/{session/save,research/session}.md` | ✅ fixed (mirrors of the above, commit `fad06af`) |
+| `~/.claude/CLAUDE.md` Development Workflow REMEMBER template | ✅ fixed — two-endpoint template, bare remember declared a violation |
+| Cortex `post_tool_capture.py` auto-capture | ✅ already distinguishable: `source="post_tool_capture"`, tags `["auto-captured", "tool:*"]` (post_tool_capture.py:201-224,315) |
+| prd-spec-generator, neural-graph-visualizer, optimization-run, ai-architect, feedback-loop | ✅ no direct memory write sites found |
+
+Read-side gaps — these live in the **Cortex repo** (file:line from
+mcp_server/, audited at Cortex HEAD 2026-06-10):
+
+| # | Gap | Evidence | Needed |
+|---|---|---|---|
+| C1 | Hot-memory injection ignores tier: selects `heat_base >= 0.4` only, and auto-captures are born at heat 1.0 + surprise boost — raw tool events qualify as "hot" | session_start.py:178-203 (hot query, no tag predicate); remember.py:307 (initial_heat=1.0) | Exclude/demote `auto-captured` + `memory-replica` tags in hot + anchor + checkpoint-fusion selection; prefer `archival`-tagged and protected entries |
+| C2 | Recall has only negative tag filtering (`LOW_SIGNAL_TAGS` drops `auto-captured`, `tool:*`, `_backfill`, `imported`) — no positive filter ("archival only", "blocks only") | recall_helpers.py:152-212 | `tags_any`/`tags_all` recall parameter so callers can scope to a tier |
+| C3 | Block replicas append instead of upsert: every drained `rethink` of the same `/memories/<scope>/checkpoint.md` becomes a NEW memory row — block snapshots accumulate as near-duplicates; `try_curation` merges on vector similarity, not (scope, vpath) identity | remember_helpers.py:203-230, 391 | Upsert replica writes keyed on (scope, vpath) from the sync job — a block has identity, letta-code's git model: one file, many commits |
+| C4 | No tier field; `store_type` (episodic/semantic) is never set by auto-capture and `source` is gating-only, never consulted by ranking or consolidation — dream cycle decays/compresses/promotes all tiers identically | pg_schema.py:20-68; consolidate.py:35-155; cls.py:48-90 | Either a first-class `tier` column or make tags (`archival`/`memory-replica`/`auto-captured`) load-bearing in consolidation: blocks refresh-not-decay, auto-captures decay fastest, archival decays normally |
+
+C1 is the observed poisoning vector and the cheapest fix; C3 is the silent
+storage leak (every checkpoint drain duplicates the block). Both are
+read/storage-side Cortex changes — the write side is now uniform across the
+ecosystem.
