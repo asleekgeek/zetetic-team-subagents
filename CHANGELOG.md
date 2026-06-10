@@ -6,6 +6,47 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.18.0] — letta-code follow-up: lean genius corpus, compact routing, reflective checkpoints, memory contract hardening
+
+### Changed
+
+- **R1 completed for the genius corpus: all 97 genius agents split into lean
+  core + on-demand reference stubs** (same two-tier move 2.17.0 applied to the
+  19 team agents). Doc-covered protocol sections deleted; memory/token-budget/
+  worktree replaced by parameterized stubs keeping every safety-critical
+  invariant inline; uniform reference-docs index appended. 5,169,780 →
+  3,248,016 chars (37.2%, ~4.8K tokens saved per spawn per agent). Reasoning
+  sections byte-identical before/after, asserted by the rollout script.
+- **R2: routing never reads full files.** New generated
+  `rules/agent-routing-table.md` (~25KB, name + shape keywords + description
+  for all 116 agents, from frontmatter via
+  `scripts/generate-routing-table.py`) replaces full Reads of the 132KB
+  INDEX.md in genius:route, genius:index and the orchestrator (~30K tokens
+  saved per routing decision). pre-commit warns when the table is stale.
+- **R3: checkpoint stubs follow the letta summary schema** — goals / file
+  references (paths + line ranges) / errors and fixes / current state / next
+  steps, ≤500 words, tool outputs clipped to 2K chars, frontmatter
+  description retrieval cue. Resume contract: checkpoint + ONE targeted
+  recall, never re-reading what the checkpoint summarizes. All 116 agent
+  token-budget stubs and the shared token-budget.md doc teach the schema.
+- **R4: reflection at WARN, not at HARD.** stop-context-guard.py's WARN
+  firing is now a one-time blocking reflection (like letta's compaction
+  event): the model spawns the new budgeted **memory-writer** agent (haiku,
+  ≤16K context) to persist the semantic checkpoint + cortex:remember entries
+  while headroom remains, then resumes the task — the HARD block becomes a
+  formality.
+
+### Added
+
+- **R5: mandatory `description:` frontmatter on memory .md files**, enforced
+  at the memory-tool.sh chokepoint on create/rethink (instructive error,
+  `MEMORY_NO_DESC_CHECK=1` test escape hatch). Contract §4.8.
+- **R6: conflict-aware memory verbs** — `rethink <path> <text>
+  [expected_sha]` (atomic whole-file rewrite, letta memory_rethink) and
+  `sha <path>` (CAS token); `str_replace` gains optional compare-and-swap.
+  Contract §3.6b/§3.6c/§4.7; exposed via the memory_extensions MCP tool.
+- `agents/memory-writer.md` — single-purpose budgeted reflection scribe.
+
 ## [2.17.0] — Lean team agents: core + on-demand reference docs
 
 ### Changed
