@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.17.0] — Lean team agents: core + on-demand reference docs
+
+### Changed
+
+- **All 19 team agent definitions split into a lean core plus on-demand
+  reference docs.** Shared protocol detail (token budget, memory protocol
+  and architecture, worktree protocol, effort calibration, codebase
+  intelligence, dynamic workflows, mid-task system messages) moved to 8
+  docs under `rules/agent-reference/`, referenced from a uniform index
+  table in every agent. Definitions shrink 987,888 → 625,267 chars
+  (~36.7%, ~5.0K tokens saved per spawn per agent). Inline stubs remain
+  self-sufficient for safety-critical invariants (checkpoint thresholds,
+  memory scoping, worktree commit rules); reference docs are elaboration
+  and recovery material, validated via headless fresh-session runs.
+- Agent frontmatter parameterized (`agent_topic`, `memory_scope`,
+  `model`); Haiku agents carry 170K/~120K budgets plus an
+  escalate-to-orchestrator line, Opus agents 200K/~180K. Fixed
+  latex-engineer/professor `MEMORY_AGENT_ID=haiku` bug (now agent name)
+  and the orchestrator's dangling `<dynamic-workflows>` prose reference.
+
 ## [2.16.0] — Per-model context thresholds via shared config
 
 ### Changed
