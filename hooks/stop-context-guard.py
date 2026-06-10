@@ -24,12 +24,25 @@ Contract (source of truth: agents/orchestrator.md <token-budget>):
                  session_id, transcript_path, cwd, stop_hook_active.
   Postcondition:
     - below WARN            -> exit 0, no output, no side effects.
-    - WARN <= ctx < HARD    -> write a free mechanical checkpoint stub; emit a
-                               one-time non-blocking systemMessage. Never blocks.
+    - WARN <= ctx < HARD    -> write a free mechanical checkpoint stub (letta
+                               summary schema) AND block the stop exactly once:
+                               the model is instructed to spawn a budgeted
+                               memory-writer subagent (<=16K-token context) that
+                               persists the semantic checkpoint + cortex:remember
+                               entries while headroom remains, then RESUME the
+                               user's task in-session (reflection, not a stop).
     - ctx >= HARD           -> write the stub AND block the stop exactly once,
                                injecting the checkpoint-finalize procedure so the
                                model persists a scoped semantic checkpoint and
                                signals the user to clear + resume via recall.
+                               Because WARN already ran the reflection, the hard
+                               block is normally a formality, not a scramble.
+
+  Checkpoint schema (letta-code summary schema): goals / file references
+  (paths + line ranges) / errors and fixes / current state / next steps,
+  <=500 words total, any quoted tool output clipped to 2,000 chars. Resume
+  contract: read the checkpoint + ONE targeted recall; do NOT re-read files
+  or docs the checkpoint already summarizes.
 
   Re-entrancy / loop safety:
     - if stop_hook_active is true, exit 0 (we are already in a forced continuation).
@@ -249,27 +262,42 @@ def _write_stub(session_id: str, cwd: str, ctx: int, model_id: str, level: str) 
     modified = _git(cwd, "status", "--porcelain")
     iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    stub = f"""## Auto-checkpoint stub ({level}) — {iso}
+    stub = f"""---
+description: "Auto-checkpoint ({level}) at {ctx:,} tokens — session {session_id[:8]} on {branch or 'unknown branch'}"
+---
+## Auto-checkpoint stub ({level}) — {iso}
 
-> Mechanical state captured by stop-context-guard at {ctx:,} context tokens
-> (model: {model_id or 'unknown'}). The semantic checkpoint (task / decisions /
-> next action) must be filled in by the agent — this stub only records what the
-> hook can know without spending model tokens.
+> Mechanical state captured for free by stop-context-guard at {ctx:,} context
+> tokens (model: {model_id or 'unknown'}). The semantic fields below follow the
+> letta summary schema. Budget: <=500 words total across all sections; clip any
+> quoted tool output to 2,000 chars.
 
-### Session
+### Goals
+<to be filled: what this session is trying to achieve, in priority order>
+
+### File references
+(paths + line ranges the resumed session will need; seeded from git status —
+replace with the load-bearing files and add `path:start-end` line ranges)
+{os.linesep.join('- ' + l.strip() for l in modified.splitlines()) if modified else '- (working tree clean)'}
+
+### Errors and fixes
+<to be filled: each error hit this session and how it was fixed or worked around>
+
+### Current state
 - session_id: {session_id}
-- model: {model_id or 'unknown'}
-- context tokens at trigger: {ctx:,}
+- model: {model_id or 'unknown'} · context tokens at trigger: {ctx:,}
 - working dir: {cwd}
+- branch: {branch or '(unknown)'} · last commit: {last_commit or '(none)'}
+<to be filled: one paragraph — where the work stands right now>
 
-### Git state
-- branch: {branch or '(unknown)'}
-- last commit: {last_commit or '(none)'}
-- modified files:
-{os.linesep.join('  - ' + l for l in modified.splitlines()) if modified else '  (clean)'}
+### Next steps
+<to be filled: exact ordered actions for the resumed session; first one must be
+executable without re-deriving anything>
 
-### Task / Decisions / Next action
-<to be filled by the agent on checkpoint>
+### Resume contract
+Read this checkpoint + ONE targeted, agent_topic-scoped cortex:recall. Do NOT
+re-read files or docs this checkpoint already summarizes — trust the file
+references above and verify with targeted Reads only when editing.
 """
     per_session = os.path.join(root, f"{session_id}.md")
     latest = os.path.join(root, "latest.md")
@@ -301,26 +329,54 @@ def _save_level(session_id: str, level: str) -> None:
         pass
 
 
+SCHEMA = (
+    "goals / file references (paths + line ranges) / errors and fixes / "
+    "current state / next steps — <=500 words total, quoted tool outputs "
+    "clipped to 2,000 chars"
+)
+
+
+def _warn_reason(ctx: int, stub_path: str, warn: int, hard: int) -> str:
+    return (
+        f"⚠ CHECKPOINT THRESHOLD — {ctx:,} input tokens "
+        f"(≥ {warn:,} for this model; hard stop at {hard:,}).\n"
+        f"This is a reflection pause, NOT the end of the session. While you still "
+        f"have headroom, persist the semantic checkpoint via a budgeted subagent, "
+        f"then resume the user's task:\n\n"
+        f"1. Distill the session into the letta summary schema ({SCHEMA}).\n"
+        f"2. Spawn the memory-writer subagent (Agent tool, subagent_type "
+        f"\"memory-writer\", model haiku, ≤16K-token context). Pass it: your "
+        f"distilled summary, your memory scope + MEMORY_AGENT_ID, and the stub "
+        f"path {stub_path or 'n/a'}. It merges the summary into the stub schema at "
+        f"/memories/<your-scope>/checkpoint.md and stores durable WHY-level facts "
+        f"via cortex:remember (agent_topic-scoped). Do not write the checkpoint "
+        f"yourself unless the spawn fails.\n"
+        f"3. CONTINUE the user's task in this session. The hard cap at {hard:,} "
+        f"still applies; thanks to this reflection it should be a formality."
+    )
+
+
 def _block_reason(ctx: int, stub_path: str, hard: int) -> str:
     return (
         f"⚠ CONTEXT SOFT CAP REACHED — {ctx:,} input tokens "
         f"(≥ {hard:,} session budget for this model).\n"
         f"Continuing in this session now risks context poisoning, quota burn, and "
         f"escalating per-turn cost. Execute the checkpoint protocol before yielding:\n\n"
-        f"1. Write your scoped semantic checkpoint with the memory tool, e.g.:\n"
+        f"1. Write (or update) your scoped semantic checkpoint with the memory tool:\n"
         f"   MEMORY_AGENT_ID=<your-scope> tools/memory-tool.sh create "
-        f"/memories/<your-scope>/checkpoint.md \"<task · completed · in-progress · "
-        f"remaining · key decisions · files modified · exact next action>\"\n"
+        f"/memories/<your-scope>/checkpoint.md \"<{SCHEMA}>\"\n"
         f"   (Mechanical state was already captured for free at: {stub_path or 'n/a'} — "
-        f"copy its Git state in; you only need to add the semantic fields.)\n"
+        f"merge into its schema; if the WARN-time memory-writer already wrote the "
+        f"checkpoint, update only what changed since.)\n"
         f"2. If important decisions are not yet durable, persist them now "
         f"(cortex:remember, scoped to your agent_topic).\n"
         f"3. End your response with exactly:\n"
         f"   CHECKPOINT — context cleared.\n"
         f"   Resume from: /memories/<your-scope>/checkpoint.md\n"
         f"   Next action: <exact first thing to do on restart>\n"
-        f"Then instruct the user to run /clear and resume — the next session must "
-        f"recall the checkpoint before touching any file or tool.\n"
+        f"Then instruct the user to run /clear and resume. Resume contract: the "
+        f"next session reads the checkpoint + ONE targeted recall — it must NOT "
+        f"re-read files or docs the checkpoint already summarizes.\n"
         f"Do NOT start new substantive work in this session."
     )
 
@@ -369,13 +425,16 @@ def main():
                 f"session continues."
             ),
         })
-    else:  # warn — non-blocking nudge, no model tokens spent
+    else:  # warn — one-time reflection block: persist memory while headroom remains
         _exit({
+            "decision": "block",
+            "reason": _warn_reason(ctx, stub_path, warn, hard),
             "systemMessage": (
                 f"[context-guard] {ctx:,} tokens ≥ {warn:,} checkpoint threshold "
-                f"({(model_id or 'model')}). Mechanical state saved to {stub_path or 'n/a'}. "
-                f"Plan to checkpoint and start a fresh session soon; hard stop at {hard:,}."
-            )
+                f"({(model_id or 'model')}) — spawning a budgeted memory-writer to "
+                f"persist the semantic checkpoint, then the session continues. "
+                f"Mechanical stub: {stub_path or 'n/a'}. Hard stop at {hard:,}."
+            ),
         })
 
 
