@@ -64,6 +64,17 @@
       "ttl_days": 1,
       "max_file_kb": 100
     },
+    "checkpoints": {
+      "description": "Context-cap / compaction checkpoints written by the harness hooks and main sessions (token-budget protocol). Any agent may checkpoint at its threshold; files are session-scoped state, replicated to Cortex via the sync queue.",
+      "owners": [
+        "*"
+      ],
+      "readers": [
+        "*"
+      ],
+      "ttl_days": 30,
+      "max_file_kb": 100
+    },
     "project": {
       "description": "Per-project durable context (decisions, architecture notes, open questions).",
       "owners": [
