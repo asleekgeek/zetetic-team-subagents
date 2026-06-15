@@ -6,6 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.19.1] — fix Release workflow test paths
+
+### Fixed
+
+- **Release workflow no longer references a non-existent `tests/run-all.sh`.**
+  The tag-time `release.yml` invoked `bash tests/run-all.sh`, which has never
+  existed, so every tagged release failed at the test step with exit 127. It
+  now runs the same suite as `ci.yml` (the `scripts/test-memory-*.sh` and
+  `scripts/test-agent-id-propagation.sh` suites) plus the structural auditor.
+- **Corrected the zetetic-checker invocation** from the unsupported `--tree`
+  flag to `--full`; valid modes are `--staged`, `--files`, and `--full`.
+- Added `jq` to the release job's apt dependencies (required by the memory
+  suites, matching CI).
+
 ## [2.19.0] — genius corpus inherits the full tool set
 
 ### Changed

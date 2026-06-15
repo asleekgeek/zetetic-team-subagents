@@ -22,18 +22,28 @@ jobs:
       - name: Install runtime dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ripgrep python3
+          sudo apt-get install -y ripgrep jq python3
 
       - name: Run full test suite
-        run: bash tests/run-all.sh
+        run: |
+          bash scripts/test-memory-e2e.sh
+          bash scripts/test-memory-concurrency.sh
+          bash scripts/test-memory-stale-lock.sh
+          bash scripts/test-memory-mcp.sh
+          bash scripts/test-agent-id-propagation.sh
+          bash scripts/test-memory-pii.sh
+          bash scripts/test-memory-pii-expanded.sh
+
+      - name: Run structural auditor
+        run: bash tools/agent-definition-auditor.sh
 
       - name: Run zetetic-checker on the source tree
         run: |
-          # Strict profile must pass on a release tag (no MAGIC_NUMBER /
+          # Strict profile on a release tag (no MAGIC_NUMBER /
           # UNSOURCED / TODO_NO_REF in the codebase itself).
-          ZETETIC_PROFILE=strict bash tools/zetetic-checker.sh --tree || true
-          # Note: tree mode doesn't fail the build; --staged mode is the
-          # commit-time gate. Tag-time check is informational.
+          ZETETIC_PROFILE=strict bash tools/zetetic-checker.sh --full || true
+          # Note: --full mode is informational here; --staged mode is the
+          # commit-time gate. Tag-time check is advisory.
 
       - name: Extract release notes from CHANGELOG
         id: changelog
