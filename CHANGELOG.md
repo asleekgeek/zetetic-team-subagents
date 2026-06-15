@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.19.0] — genius corpus inherits the full tool set
+
+### Changed
+
+- **All 97 genius agents drop the explicit `tools:` front-matter line.** Each
+  genius now inherits the full session tool set instead of pinning a hardcoded
+  allow-list that had drifted from the live tool registry; pinning silently
+  starved an agent of any tool the list omitted. Single uniform change — 97
+  files, 97 deletions, reasoning sections untouched.
+- Validated by a full isolation sweep before release: with the plugin disabled
+  and an un-namespaced clone live, all 97 genius agents spawned and responded,
+  each confirming file/search tools visible — 97/97, zero failures.
+
 ## [2.18.0] — letta-code follow-up: lean genius corpus, compact routing, reflective checkpoints, memory contract hardening
 
 ### Changed
