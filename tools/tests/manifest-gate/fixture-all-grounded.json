@@ -1,0 +1,23 @@
+{
+  "entry": {
+    "query": "What is a focused crawler?",
+    "query_id": "focused-crawler",
+    "intent": "ingest",
+    "domain": "information-retrieval",
+    "status": "fresh",
+    "summary": "A focused crawler selectively fetches pages relevant to a topic.",
+    "facts": [
+      {
+        "claim": "A focused crawler seeks pages relevant to a predefined set of topics.",
+        "source": "https://en.wikipedia.org/wiki/Focused_crawler"
+      },
+      {
+        "claim": "The term was introduced by Chakrabarti, van den Berg and Dom (1999).",
+        "source": "HTTPS://EN.Wikipedia.ORG:443/wiki/Focused_crawler/#History -> \"introduced the focused crawler\""
+      }
+    ]
+  },
+  "manifest": [
+    "https://en.wikipedia.org/wiki/Focused_crawler"
+  ]
+}

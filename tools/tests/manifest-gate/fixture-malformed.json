@@ -1,0 +1,11 @@
+{
+  "entry": {
+    "query_id": "focused-crawler",
+    "facts": [
+      {
+        "claim": "manifest key is missing entirely — the gate must refuse, not assume.",
+        "source": "https://en.wikipedia.org/wiki/Focused_crawler"
+      }
+    ]
+  }
+}
