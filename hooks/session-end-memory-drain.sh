@@ -30,4 +30,14 @@ if (( PENDING > 0 )); then
   printf '[memory-drain] Run /session:memory-sync at the start of the next session to sync.\n\n'
 fi
 
+# Semantic layer: if a research session worked a topic, remind to record the
+# learn signal (facts + gaps) so the topic is cheaper to recall next time.
+# Non-blocking hint only — bash cannot speak MCP or know the topic.
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [[ -f "$REPO_ROOT/research/.session.json" && -x "$PLUGIN_ROOT/tools/semantic-layer.sh" ]]; then
+  printf '[semantic-layer] Research session active: record what you learned so the topic is\n'
+  printf '[semantic-layer] recallable next time —\n'
+  printf "[semantic-layer]   echo '<entry-json>' | tools/semantic-layer.sh record   (see semantic-ingest-loop skill)\n\n"
+fi
+
 exit 0

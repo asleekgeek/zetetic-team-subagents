@@ -1,0 +1,81 @@
+version: 1
+entries:
+- query: How does firecrawl-mcp-server work and how do we replicate auto-ingest/auto-learn?
+  query_id: firecrawl-mcp-replication
+  aliases:
+  - firecrawl mcp reverse engineering
+  - auto-ingest auto-learn semantic layer
+  - firecrawl feedback loop replication
+  intent: ingest
+  domain: mcp-architecture
+  status: fresh
+  confidence: high
+  summary: 'firecrawl-mcp-server is a stateless proxy over api.firecrawl.dev; its ''learning'' is the
+    search-feedback loop (rating+valuableSources+missingContent+querySuggestions) which improves the index
+    service-side. We replicated it locally: Cortex (owned index) + query-keyed YAML semantic layer (table
+    of contents) carrying gaps+outcome as the local learn signal. Built across 4 phases (P1 tool, P2 skill,
+    P3 hooks, P4 agent steer).'
+  facts:
+  - claim: The MCP server holds no knowledge; all crawl/search/index happens server-side at Firecrawl.
+      Value is tool-surface + embedded workflow playbooks + feedback loop.
+    confidence: high
+    source: firecrawl-mcp-server src/index.ts:337-377,564-715
+  - claim: firecrawl_search_feedback's missingContent[] is 'the most important field' — aggregated to
+      decide what to index next. First feedback refunds 1 credit; zero-effort rejected; 2-min window;
+      terminal on 4xx.
+    confidence: high
+    source: src/index.ts:1060-1241
+  - claim: Research tools encode search -> citation-graph expand (related_papers) -> read_paper verify-before-accept.
+    confidence: high
+    source: src/research.ts:230-484
+  - claim: 'P1 built: tools/semantic_layer.py (data layer, validates source-on-every-fact per §8) + tools/semantic-layer.sh
+      (CLI) + memory/semantic-layer.{schema.,}yaml. Verbs: init/query/record/feedback/revalidate/validate.'
+    confidence: high
+    source: tools/semantic_layer.py:1-271
+  - claim: 'P2 built: skills/research/semantic-ingest-loop.md — the 5-step recall->ingest->distill->persist->feedback
+      loop, composed into autoresearch-loop Phase 0/4.'
+    confidence: high
+    source: skills/research/semantic-ingest-loop.md
+  - claim: 'P3 built: session-start-research.sh surfaces indexed-topic count + revalidation backlog; session-end-memory-drain.sh
+      reminds to record the learn signal when a research session is active.'
+    confidence: high
+    source: hooks/session-start-research.sh:52-66; hooks/session-end-memory-drain.sh:34-44
+  - claim: 'P4 built: semantic layer added as 4th retrieval surface in memory-protocol.md with a recall-before-ingest
+      / record-after protocol binding all team agents.'
+    confidence: high
+    source: rules/agent-reference/memory-protocol.md
+  sources:
+  - ref: github.com/firecrawl/firecrawl-mcp-server@main
+    kind: code
+    accessed: '2026-06-22'
+    valuable: true
+  gaps:
+  - topic: 'P2: semantic-ingest-loop skill'
+    status: closed
+  - topic: 'P3: hook wiring'
+    status: closed
+  - topic: 'P4: agent steer paragraph'
+    status: closed
+  - topic: 'Optional: a close-gap verb on the CLI'
+    description: Closing a gap currently requires re-recording the entry; a targeted gap-status verb would
+      be ergonomic.
+    status: open
+  outcome:
+    rating: good
+    valuable_sources:
+    - src/index.ts
+    - src/research.ts
+    query_suggestions: When reverse-engineering an MCP server, read index.ts tool registrations + the
+      server instructions field first; that is where the workflow intelligence lives.
+  pointers:
+    cortex_memories: []
+    files:
+    - /tmp/firecrawl-reverse-engineering/01-how-firecrawl-mcp-works.md
+    - /tmp/firecrawl-reverse-engineering/02-replication-design.md
+    notebook: null
+  freshness:
+    ttl_days: 180
+    revalidate_after: '2026-12-19'
+    watch: false
+  updated: '2026-06-22'
+  created: '2026-06-22'

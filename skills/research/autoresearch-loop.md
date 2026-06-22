@@ -27,7 +27,7 @@ zetetic_gate:
   critical: "Baseline is measured before any change; same conditions for every iteration"
   rational: "Each iteration changes exactly one variable — no confounded experiments"
   essential: "Diminishing returns are detected and the loop stops; no infinite tinkering"
-composes: [benchmark, lab-notebook]
+composes: [benchmark, lab-notebook, semantic-ingest-loop]
 aliases: [research-loop, optimize-loop, iterate]
 hand_off:
   stuck_no_improvement: "/deep-research — literature review for new hypotheses"
@@ -39,6 +39,9 @@ hand_off:
 
 ### Phase 0: Define (shannon + curie)
 
+0. **Recall first (semantic-ingest-loop Phase 1).** `tools/semantic-layer.sh query "<objective>"` —
+   a prior run may already hold the baseline, the leaderboard summary, and which hypotheses failed.
+   Load those before defining anything; do not re-derive what is already indexed.
 1. **shannon: define the objective function.** What metric? What units? What direction is better?
    Information-theoretic grounding: is the metric measuring what we think it measures?
 2. **curie: instrument.** How is the metric measured? What is the noise floor? What is the
@@ -95,6 +98,10 @@ hand_off:
     result, kept/reverted, commit SHA.
 20. **Best-known summary.** The current main branch state with its metric value.
 21. **Lessons learned.** What worked, what did not, what surprised us, what to try next.
+22. **Persist to the semantic layer (semantic-ingest-loop Phases 4–5).** Record the best-known config,
+    the failed hypotheses (as sourced facts citing their commit SHAs), and the open questions (as
+    `gaps`) so the next run starts from this leaderboard instead of zero:
+    `… | tools/semantic-layer.sh record`.
 
 ## Output Format
 

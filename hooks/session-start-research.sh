@@ -54,4 +54,16 @@ echo "## Research Difficulty Books"
 "$TOOLS/difficulty-book-manager.sh" status 2>/dev/null || echo "(none)"
 echo ""
 
+# Semantic layer: query-indexed topic memory (recall before re-ingesting)
+LAYER_FILE="$REPO_ROOT/memory/semantic-layer.yaml"
+if [[ -f "$LAYER_FILE" && -x "$TOOLS/semantic-layer.sh" ]]; then
+  entry_count=$(grep -c '^  query_id:' "$LAYER_FILE" 2>/dev/null || true)
+  echo "## Semantic Layer"
+  echo "Indexed topics: ${entry_count:-0}"
+  echo "Recall before ingesting a topic: tools/semantic-layer.sh query \"<topic>\""
+  stale=$("$TOOLS/semantic-layer.sh" revalidate 2>/dev/null | grep -c '^## ' || true)
+  [[ "${stale:-0}" -gt 0 ]] && echo "Topics needing revalidation: $stale (run: tools/semantic-layer.sh revalidate)"
+  echo ""
+fi
+
 echo "Reminder: use /research-session resume to reload full context with Cortex."
