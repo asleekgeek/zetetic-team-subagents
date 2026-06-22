@@ -138,6 +138,25 @@ Each chain is a procedure. Each step is sourced. Each output declares what it wa
 
 ---
 
+## Autonomous build loop — draft, gate, and iterate on any repository
+
+Beyond reasoning chains, the plugin ships a **closed-loop autonomous build** ([`.claude/workflows/autonomous-build-loop.js`](.claude/workflows/autonomous-build-loop.js)) that drives a build task to a candidate under a *deterministic acceptance gate* — on **any git repository, invoked from any working directory**, not just this one.
+
+```
+refine → plan → verify-plan → orchestrator build (isolated worktree)
+       → deterministic gate + independent reviews → merge-on-green, else iterate
+```
+
+- **Repo-generic.** Pass `repoPath` (the target repo), `gateRunner`, and an optional base `gateConfig`; the loop branches, builds, and gates *that* repo and leaves its own working tree untouched. The gate tool (`tools/acceptance_gate.py`) gates any repo via `--root`, and evaluates the **committed** iteration tip via `--rev` (a throwaway detached worktree) — so the verdict reflects what was committed, never a stray working tree.
+- **The gate is external and deterministic.** A criterion passes iff its shell command exits 0 — no model grading its own output ([arXiv:2310.01798](https://arxiv.org/abs/2310.01798)). The loop *drafts and converges* a candidate; it does **not** self-certify. Two gate runners are cross-checked, reviewers are independent agent types, and an empty diff fails closed.
+- **Fails closed; never touches `main`; never pushes.** Each iteration is isolated on its own branch + worktree; a rejected iteration is discarded with its gaps persisted to cross-session memory. The *authoritative* gate is a real exec **outside** the loop — a human or CI re-running the gate on the integration branch (against a pinned base SHA) — before anything merges to `main`.
+
+The acceptance gate is independently unit-tested (`tools/tests/acceptance-gate/`, including external-repo-from-a-foreign-cwd and fail-closed cases), and the loop has converged end-to-end on an external repository with the result independently re-gated.
+
+**Honest limit:** git worktrees isolate *files*, not *runtime* — spawned build sub-agents inherit the session's working directory, so the multi-agent build is most reliable when the loop is run **from the target repository's directory**. The deterministic gate, git operations, and branch isolation are fully cwd-independent; the file-writing build step is mitigated (dedicated worktree + absolute-path briefs) but not fully enforced by git alone.
+
+---
+
 ## The Zetetic Standard
 
 Every agent, skill, and hook inherits the same epistemic gates. Not optional.
