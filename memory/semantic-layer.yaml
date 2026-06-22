@@ -79,3 +79,72 @@ entries:
     watch: false
   updated: '2026-06-22'
   created: '2026-06-22'
+- query: What loop does the Claude Code creator recommend, and does our autonomous-build-loop match it?
+  query_id: claude-code-creator-loop-template
+  aliases:
+  - claude code best practices loop
+  - explore plan code verify iterate
+  - give claude a way to verify its work
+  intent: verify
+  domain: agentic-workflows
+  status: fresh
+  confidence: high
+  summary: 'Claude Code''s official best-practices loop = give Claude a pass/fail check, then work->run
+    check->read result->iterate until it passes; explore(plan mode)->plan->implement(verify vs plan)->commit;
+    plus an adversarial review subagent in a fresh context. Our autonomous-build-loop matches all of it.
+    Key refinement it surfaces: the truly-external deterministic gate is a Stop HOOK running the check
+    as a script (real exec, blocks the turn; ends after 8 blocks) — the idiomatic fix for a Workflow''s
+    inability to exec.'
+  facts:
+  - claim: 'The loop: give Claude a check that returns pass/fail; it does the work, runs the check, reads
+      the result, and iterates until the check passes — without a runnable check, ''looks done'' is the
+      only signal and the human becomes the verification loop.'
+    source: https://code.claude.com/docs/en/best-practices
+    confidence: high
+  - claim: 'Four ways to gate the stop: (1) in one prompt; (2) a /goal condition a separate evaluator
+      re-checks each turn until it holds; (3) a Stop HOOK that runs the check as a script and blocks the
+      turn until it passes (Claude Code ends the turn after 8 consecutive blocks); (4) a verification
+      subagent/dynamic workflow where a fresh model tries to refute the result so the worker isn''t the
+      grader.'
+    source: https://code.claude.com/docs/en/best-practices
+    confidence: high
+  - claim: 'Recommended workflow is four phases: Explore (plan mode, read-only) -> Plan (detailed) ->
+      Implement (code, verifying against the plan, run tests) -> Commit/PR; skip planning when the diff
+      fits one sentence.'
+    source: https://code.claude.com/docs/en/best-practices
+    confidence: high
+  - claim: 'Adversarial review step: a subagent reviews the diff in a FRESH context seeing only the diff
+      + criteria (not the reasoning that produced it), grading on its own terms; tell it to flag only
+      correctness/requirement gaps to avoid over-engineering, since a gap-seeking reviewer always reports
+      some.'
+    source: https://code.claude.com/docs/en/best-practices
+    confidence: high
+  - claim: 'Failure pattern ''trust-then-verify gap'': plausible code that misses edge cases; fix = always
+      provide verification (tests/scripts/screenshots) and ''if you can''t verify it, don''t ship it''.'
+    source: https://code.claude.com/docs/en/best-practices
+    confidence: high
+  sources:
+  - ref: https://code.claude.com/docs/en/best-practices
+    kind: docs
+    accessed: '2026-06-22'
+    valuable: true
+  gaps:
+  - topic: Our loop should add a Stop-hook deterministic gate (the doc's idiomatic real-exec external
+      gate) to replace the in-loop agent-mediated gate
+    status: open
+  outcome:
+    rating: good
+    valuable_sources:
+    - code.claude.com/docs/en/best-practices
+    query_suggestions: Compare every new agent-loop design against this page before building.
+  pointers:
+    cortex_memories: []
+    files:
+    - /tmp/loop-research/docs-en-best-practices.md
+    notebook: null
+  freshness:
+    ttl_days: 120
+    revalidate_after: '2026-10-20'
+    watch: true
+  updated: '2026-06-22'
+  created: '2026-06-22'
