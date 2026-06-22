@@ -1,15 +1,9 @@
 export const meta = {
   name: 'autonomous-build-loop',
-  description:
-    'Closed-loop autonomous build: refine -> plan -> verify-plan -> orchestrator build on an isolated ' +
-    'iteration branch -> best-effort in-loop acceptance checks -> iterate until they are green or the ' +
-    'budget is spent. The loop DRAFTS and converges a candidate on the integration branch; it does not ' +
-    'self-certify. The AUTHORITATIVE external gate is a real exec OUTSIDE the loop: a human/CI re-running ' +
-    'tools/acceptance-gate.sh on the integration branch and reading the real exit code before merging to ' +
-    'main. Fails closed; does not push; does not modify main.',
-  whenToUse:
-    'A non-trivial build task you want drafted and iterated to a candidate under acceptance checks, with ' +
-    'per-iteration branch isolation, for a human/CI to certify and merge.',
+  // meta must be a PURE LITERAL for the Workflow runtime — no string concatenation here (BinaryExpression
+  // is rejected at load), so description/whenToUse are single string literals even though they run long.
+  description: 'Closed-loop autonomous build on ANY target repository: refine -> plan -> verify-plan -> orchestrator build on an isolated iteration branch -> best-effort in-loop acceptance checks -> iterate until green or the budget is spent. The target repo (args.repoPath), the deterministic gate runner (args.gateRunner) and an optional base gate config (args.gateConfig) are inputs, so the loop runs from any working directory against a repo that need not contain this tooling. The loop DRAFTS and converges a candidate on the integration branch; it does not self-certify. The AUTHORITATIVE external gate is a real exec OUTSIDE the loop: a human/CI re-running the gate runner against the target repo and reading the real exit code before merging. Fails closed; does not push; does not modify main.',
+  whenToUse: 'A non-trivial build task you want drafted and iterated to a candidate under acceptance checks in a chosen target repository, with per-iteration branch isolation, for a human/CI to certify and merge.',
   phases: [
     { title: 'Refine', detail: 'compile the verifiable acceptance contract' },
     { title: 'Setup', detail: 'create the integration branch off an explicit base ref' },
@@ -23,22 +17,15 @@ export const meta = {
 }
 
 // ---------------------------------------------------------------------------
-// EXTERNALITY — read this; it is the design's load-bearing limit.
-// A Workflow script CANNOT exec a subprocess or read a file — only agents run
-// Bash. So everything the loop "checks" in-loop (the gate verdict, the changed
-// files, the merge result) is ultimately reported BY AN AGENT. The JS hardens
-// this as far as possible — it parses the tool's raw stdout rather than a model
-// boolean, runs two gate runners, checks internal consistency, and derives
-// reviewer lenses from the reported diff — but two copies of the same model are
-// NOT independent oracles (arXiv:2310.01798), so the in-loop signals are
-// BEST-EFFORT / ADVISORY, not a guarantee. This loop's job is to DRAFT and
-// converge a candidate, not to certify it.
-//
-// The AUTHORITATIVE external gate lives OUTSIDE this loop and really execs:
-//   tools/acceptance-gate.sh --config memory/acceptance-gates.loop.yaml \
-//     --diff-base <baseRef> --diff-head <integrationBranch>
-// run by a human or CI, reading the real exit code, before merging to main.
-// The loop returns the integration branch for exactly that certification.
+// EXTERNALITY (load-bearing): a Workflow script cannot exec or read files — only
+// agents run Bash, so every in-loop "check" (gate verdict, changed files, merge) is
+// reported BY AN AGENT. The JS hardens this (parses raw tool stdout not a model
+// boolean, two gate runners cross-checked, lenses derived from the diff), but two
+// copies of one model are NOT independent oracles (arXiv:2310.01798) — in-loop
+// signals are BEST-EFFORT. The AUTHORITATIVE gate is a real exec OUTSIDE the loop
+// against the target: <gateRunner> [--config <gateConfig>] --root <repoPath>
+// --diff-base <baseRef> --diff-head <integrationBranch>, run by a human/CI before
+// merging. The loop only DRAFTS/converges + returns the target+branch to certify.
 // ---------------------------------------------------------------------------
 
 const CONTRACT_SCHEMA = {
@@ -69,8 +56,31 @@ const READY_BRANCH_SCHEMA = {
   required: ['ready', 'current_branch'],
   properties: {
     ready: { type: 'boolean' },
-    current_branch: { type: 'string', description: 'git rev-parse --abbrev-ref HEAD after the step' },
+    current_branch: { type: 'string', description: 'git -C <repoPath|worktree> rev-parse --abbrev-ref HEAD after the step' },
     head: { type: 'string' },
+    worktree_path: { type: 'string', description: 'absolute path of the iteration worktree (Branch step only)' },
+  },
+}
+// Setup resolves EVERY path-shaped input to an absolute, verified form (the loop's
+// composition root): the target repo, the immutable base commit, the gate runner,
+// the optional base gate config, and the optional operator semantic layer. The loop
+// refuses to start if a required one is missing — fail closed before branching,
+// rather than emitting a confusing gate error mid-iteration.
+const SETUP_SCHEMA = {
+  type: 'object',
+  required: ['ready', 'current_branch', 'repo_path', 'gate_runner_abs', 'gate_runner_ok', 'gate_config_ok'],
+  properties: {
+    ready: { type: 'boolean' },
+    current_branch: { type: 'string' },
+    head: { type: 'string' },
+    repo_path: { type: 'string', description: 'absolute git toplevel of the target repo the loop builds in' },
+    base_sha: { type: 'string', description: 'immutable SHA the integration branch was forked from (rev-parse of baseRef)' },
+    gate_runner_abs: { type: 'string', description: 'absolute path to the acceptance-gate runner' },
+    gate_runner_ok: { type: 'boolean', description: 'true iff the gate runner exists and is executable' },
+    gate_config_abs: { type: ['string', 'null'], description: 'absolute path to the base gate config, or null if none requested' },
+    gate_config_ok: { type: 'boolean', description: 'true iff no base config was requested, or it resolved to a readable file' },
+    semantic_layer_abs: { type: ['string', 'null'], description: 'absolute path to the operator semantic-layer tool, or null if none requested' },
+    semantic_layer_ok: { type: 'boolean', description: 'true iff no semantic layer was requested, or it resolved to an executable file' },
   },
 }
 const PLAN_SCHEMA = {
@@ -126,7 +136,7 @@ const MERGE_SCHEMA = {
   required: ['merged', 'current_branch'],
   properties: {
     merged: { type: 'boolean', description: 'true iff the iteration branch actually merged into the integration branch' },
-    current_branch: { type: 'string', description: 'git rev-parse --abbrev-ref HEAD when the merge ran (must be the integration branch)' },
+    current_branch: { type: 'string', description: 'git -C <repoPath> rev-parse --abbrev-ref HEAD when the merge ran (must be the integration branch)' },
     integration_head: { type: 'string' },
     conflicts: { type: 'array', items: { type: 'string' } },
   },
@@ -171,19 +181,36 @@ function reviewLenses(files1, files2) {
 }
 
 // --- inputs ---------------------------------------------------------------
-const rawTask = typeof args === 'string' ? args : (args && args.task)
+// args may arrive as an object OR a JSON STRING (launch-dependent). Normalize, so a
+// stringified args is not mistaken for a bare task — which would drop repoPath/
+// gateRunner and silently build in the cwd instead of the requested target repo.
+let A = args
+if (typeof A === 'string') { try { const p = JSON.parse(A); if (p && typeof p === 'object') A = p } catch (e) { /* bare task string */ } }
+const rawTask = typeof A === 'string' ? A : (A && A.task)
 if (!rawTask) {
   log('autonomous-build-loop: no task provided. Pass args.task (or a task string). Nothing to build.')
   return { accepted: false, error: 'missing args.task' }
 }
-const rawMax = args && args.maxIterations
+const rawMax = A && A.maxIterations
 const maxIterations = Number.isInteger(rawMax) ? rawMax : DEFAULT_MAX_ITERATIONS
 if (maxIterations < 1) {
   log('maxIterations must be >= 1 (got ' + maxIterations + ')')
   return { accepted: false, error: 'maxIterations must be >= 1' }
 }
-const integrationBranch = (args && args.integrationBranch) || 'abl/integration'
-const baseRef = (args && args.baseRef) || 'HEAD'
+const integrationBranch = (A && A.integrationBranch) || 'abl/integration'
+const baseRef = (A && A.baseRef) || 'HEAD'
+
+// Path-shaped inputs. Defaults are HOME-REPO-RELATIVE (valid only when cwd is this
+// repo). For an EXTERNAL target (repoPath set), base gate config + semantic layer
+// default OFF — their home-relative commands would run in the FOREIGN repo (127, or
+// worse a lying green from same-named foreign scripts); the contract's checks are
+// the gate. hasArg distinguishes an explicit null (force off) from "use the default".
+const hasArg = (k) => A && typeof A === 'object' && Object.prototype.hasOwnProperty.call(A, k)
+const repoPathArg = (A && A.repoPath) || null
+const isExternal = !!repoPathArg
+const gateRunner = (A && A.gateRunner) || 'tools/acceptance-gate.sh'
+const gateConfig = hasArg('gateConfig') ? A.gateConfig : (isExternal ? null : 'memory/acceptance-gates.loop.yaml')
+const semanticLayer = hasArg('semanticLayer') ? A.semanticLayer : (isExternal ? null : 'tools/semantic-layer.sh')
 
 // --- Refine: the acceptance contract is the spec everything else is judged against ---
 phase('Refine')
@@ -193,23 +220,68 @@ const contract = await agent(
   'one acceptance criterion. For each criterion choose kind: "deterministic" WITH a non-null ' +
   'checkable_cmd shell line that exits 0 iff the criterion is met (prefer these — they are ' +
   'machine-checkable); "review" when an independent reviewer must judge it; "manual" otherwise. If you ' +
-  'cannot write a checkable_cmd, use kind=review. Resolve every vague reference to a concrete ' +
-  'artifact.\n\nTASK:\n' + rawTask,
+  'cannot write a checkable_cmd, use kind=review. CRITICAL: the gate runs each checkable_cmd with its ' +
+  'working directory set to the TARGET REPOSITORY ROOT (which is NOT your current directory), so write ' +
+  'every path RELATIVE to the repo root (e.g. test -f GREETING.md, cat GREETING.md) — NEVER an absolute ' +
+  'path and NEVER cd anywhere. Resolve vague references to concrete REPO-RELATIVE artifacts.\n\nTASK:\n' + rawTask,
   { schema: CONTRACT_SCHEMA, phase: 'Refine' }
 )
 if (!contract) return { accepted: false, error: 'refine produced no contract' }
 log('contract goal: ' + contract.goal)
 
-// --- Setup: the integration branch must exist before the first iteration branches off it ---
+// --- Setup: resolve+verify the target repo and gate tooling (composition root),
+//     then create the integration branch in it before the first iteration branches off. ---
 phase('Setup')
 const setup = await agent(
-  'Prepare the loop integration branch. If ' + integrationBranch + ' does not already exist, create it ' +
-  'at ' + baseRef + ' (git branch ' + integrationBranch + ' ' + baseRef + '). Do NOT check it out over ' +
-  'uncommitted work, do NOT touch main, do NOT push. Report ready=true, the integration branch head SHA ' +
-  'as head, and the current branch (git rev-parse --abbrev-ref HEAD) as current_branch.',
-  { schema: READY_BRANCH_SCHEMA, phase: 'Setup' }
+  '<role>You prepare the autonomous build loop on its target repository. Use only explicit paths; never ' +
+  'assume the process working directory is the target.</role>\n' +
+  '<target_repo_path>' + (repoPathArg || 'the current directory') + '</target_repo_path>\n' +
+  '<rules>Do not check out over uncommitted work. Do not touch main. Do not push.</rules>\n' +
+  '<steps>\n' +
+  '1. REPO = the git toplevel of <target_repo_path>: ' + (repoPathArg
+    ? 'REPO=$(git -C "' + repoPathArg + '" rev-parse --show-toplevel); if that fails, set ready=false.'
+    : 'REPO=$(git -C . rev-parse --show-toplevel).') +
+  ' Confirm git -C "$REPO" rev-parse --is-inside-work-tree.\n' +
+  '2. If ' + integrationBranch + ' is absent in REPO, create it at ' + baseRef + ' (git -C "$REPO" branch ' +
+  integrationBranch + ' ' + baseRef + '). Capture base_sha = git -C "$REPO" rev-parse ' + baseRef +
+  ' (immutable SHA, stable whatever HEAD points at later).\n' +
+  '3. GATE = absolute path of "' + gateRunner + '" (resolve a relative path against your cwd); verify ' +
+  'test -x "$GATE".\n' +
+  '4. ' + (gateConfig
+    ? 'GATE_CONFIG = absolute path of "' + gateConfig + '"; gate_config_abs=GATE_CONFIG, gate_config_ok=(test -r).'
+    : 'No base config: gate_config_abs=null, gate_config_ok=true.') + '\n' +
+  '5. ' + (semanticLayer
+    ? 'SEM = absolute path of "' + semanticLayer + '"; semantic_layer_abs=SEM, semantic_layer_ok=(test -x).'
+    : 'No semantic layer: semantic_layer_abs=null, semantic_layer_ok=true.') + '\n' +
+  '</steps>\n' +
+  '<report>ready (iff steps 1-2 ok), current_branch (git -C "$REPO" rev-parse --abbrev-ref HEAD), head (' +
+  integrationBranch + ' head SHA), repo_path=REPO (absolute), base_sha, gate_runner_abs=GATE, gate_runner_ok, ' +
+  'gate_config_abs, gate_config_ok, semantic_layer_abs, semantic_layer_ok.</report>',
+  { schema: SETUP_SCHEMA, phase: 'Setup' }
 )
-if (!setup || !setup.ready) return { accepted: false, error: 'could not prepare integration branch ' + integrationBranch }
+if (!setup || !setup.ready || !setup.repo_path) return { accepted: false, error: 'could not prepare target repo / integration branch ' + integrationBranch }
+// Backstop: a requested external target MUST be what Setup resolved — never the cwd. An agent that resolves
+// the wrong toplevel (or a dropped repoPath) would otherwise build in the WRONG repo. Basename compare is
+// robust to /tmp vs /private/tmp symlinks and to relative repoPath inputs. Fail closed on any mismatch.
+const baseName = (p) => String(p || '').replace(/\/+$/, '').split('/').pop()
+if (repoPathArg && baseName(setup.repo_path) !== baseName(repoPathArg)) return { accepted: false, error: 'requested repoPath ' + repoPathArg + ' but Setup resolved ' + setup.repo_path + ' — refusing to build the wrong repository' }
+if (!setup.gate_runner_ok) return { accepted: false, error: 'gate runner not found/executable at ' + (setup.gate_runner_abs || gateRunner) + ' — pass an absolute args.gateRunner when running outside the loop home repo' }
+if (!setup.gate_config_ok) return { accepted: false, error: 'base gate config not readable at ' + (setup.gate_config_abs || gateConfig) + ' — pass an absolute args.gateConfig, or null for contract-only gating' }
+// Cross-field invariant: a REQUESTED base config that Setup could not resolve to an absolute path must
+// fail closed, not silently degrade to contract-only gating (a strictly weaker gate). The controller
+// re-derives this from the known request rather than trusting gate_config_ok alone (arXiv:2310.01798).
+if (gateConfig && !setup.gate_config_abs) return { accepted: false, error: 'base gate config was requested (' + gateConfig + ') but Setup resolved no absolute path — refusing to gate without it' }
+// Absolute, verified handles every later step uses instead of cwd-relative paths.
+const REPO = setup.repo_path
+const GATE = setup.gate_runner_abs
+const BASE_SHA = setup.base_sha || baseRef  // pinned SHA for the human re-run; falls back to the symbolic ref
+const SEMLAYER = setup.semantic_layer_abs || null  // resolved operator semantic layer, or null to skip persistence
+const baseCfgFlag = setup.gate_config_abs ? ('--config "' + setup.gate_config_abs + '" ') : ''
+// Deterministic contract checks the gate will enforce. When there are none AND no base config, the gate
+// would be invoked with an empty gate set (exit 2 = config error); a sentinel keeps the empty-diff
+// rejection in force and lets a review-only contract still pass through reviewers + compare-to-contract.
+const detCount = (contract.acceptance_criteria || []).filter((c) => c.kind === 'deterministic' && c.checkable_cmd).length
+const needSentinel = detCount === 0 && !setup.gate_config_abs
 
 let backlog = []
 let residual = []
@@ -225,20 +297,26 @@ while (!accepted && iter < maxIterations) {
   const iterBranch = 'abl/iter-' + iter
   log('=== iteration ' + iter + '/' + maxIterations + ' (' + iterBranch + ') ===')
 
-  // --- Branch: the LOOP creates + checks out the iteration branch, so branch creation is not
-  //     delegated to the orchestrator (whose Moves do not describe a two-level integration->iter model). ---
+  // --- Branch: the LOOP creates a DEDICATED, ISOLATED WORKTREE for the iteration at an absolute path, so the
+  //     build has one unambiguous absolute root distinct from the session cwd (a spawned specialist cannot
+  //     drift to the home repo) and the target repo's own working tree is left untouched. ---
   phase('Branch')
   const branch = await agent(
-    'Create and CHECK OUT a fresh iteration branch ' + iterBranch + ' off ' + integrationBranch +
-    ' (git checkout -B ' + iterBranch + ' ' + integrationBranch + '). Do NOT touch main, do NOT push. ' +
-    'Report ready=true and the current branch (git rev-parse --abbrev-ref HEAD) as current_branch.',
+    '<target_repo>' + REPO + '</target_repo>\n' +
+    '<task>Create a dedicated, isolated git WORKTREE for this iteration so the build never touches the ' +
+    'target repo\'s own working tree. Choose an absolute path WT OUTSIDE ' + REPO + ' (e.g. ' +
+    'WT="$(mktemp -d)/' + iterBranch.replace('/', '-') + '"), then run: git -C "' + REPO + '" worktree add ' +
+    '-B ' + iterBranch + ' "$WT" ' + integrationBranch + '. Do not touch main, do not push.</task>\n' +
+    '<report>ready=true iff the worktree exists with ' + iterBranch + ' checked out; worktree_path=WT ' +
+    '(absolute); current_branch = git -C "$WT" rev-parse --abbrev-ref HEAD.</report>',
     { schema: READY_BRANCH_SCHEMA, phase: 'Branch' }
   )
-  if (!branch || !branch.ready || branch.current_branch !== iterBranch) {
-    backlog = ['could not check out iteration branch ' + iterBranch + ' (on ' + ((branch && branch.current_branch) || '?') + ')']
-    log('branch setup failed — fail closed this iteration: ' + backlog[0])
+  if (!branch || !branch.ready || branch.current_branch !== iterBranch || !branch.worktree_path) {
+    backlog = ['could not create iteration worktree for ' + iterBranch + ' (on ' + ((branch && branch.current_branch) || '?') + ')']
+    log('worktree setup failed — fail closed this iteration: ' + backlog[0])
     continue
   }
+  const WT = branch.worktree_path  // absolute worktree root; the build/gate/reviews use this, not REPO's tree
 
   phase('Plan')
   const plan = await agent(
@@ -265,15 +343,17 @@ while (!accepted && iter < maxIterations) {
 
   phase('Build')
   const build = await agent(
-    'You are the orchestrator, already on the checked-out iteration branch ' + iterBranch + '. Build ' +
-    'exactly what this plan specifies to satisfy the contract: decompose, route to specialists in ' +
-    'isolated worktrees branched OFF ' + iterBranch + ', and merge each subtask back into ' + iterBranch +
-    ' as COMMITS only when its own gate is green (Move 5). Do NOT create or merge into ' + integrationBranch +
-    ', do NOT touch main, do NOT push, and do NOT rely on the staging area — COMMIT your work to ' +
-    iterBranch + ' so the acceptance gate can scope to the commit range ' + integrationBranch + '...' +
-    iterBranch + '. Report the branch you committed to as built_branch and the subtasks you merged/' +
-    'rejected.\n\nCONTRACT:\n' + JSON.stringify(contract) + '\n\nPLAN:\n' + JSON.stringify(plan) +
-    (backlog.length ? '\n\nFIX THESE FROM LAST ITERATION:\n- ' + backlog.join('\n- ') : ''),
+    '<role>You are the orchestrator; build exactly what the plan specifies to satisfy the contract.</role>\n' +
+    '<workdir>' + WT + '</workdir>  <working_branch>' + iterBranch + '</working_branch>\n' +
+    '<rules>ALL build work happens inside <workdir> — an isolated worktree with ' + iterBranch + ' already ' +
+    'checked out. Treat <workdir> as the repository root: cd "' + WT + '" before shell commands, and use ' +
+    'ABSOLUTE paths under <workdir> for every file you create or edit. NEVER write outside <workdir> (it is ' +
+    'distinct from your process cwd). If you spawn specialists, give each the SAME <workdir> and absolute-path ' +
+    'rule. COMMIT all work to ' + iterBranch + ' (git -C "' + WT + '" add -A && commit) so the gate can scope ' +
+    integrationBranch + '...' + iterBranch + '. Do not touch main, do not push.</rules>\n' +
+    '<contract>' + JSON.stringify(contract) + '</contract>\n<plan>' + JSON.stringify(plan) + '</plan>\n' +
+    (backlog.length ? '<fix_from_last_iteration>- ' + backlog.join('\n- ') + '</fix_from_last_iteration>\n' : '') +
+    '<report>built_branch = the branch you committed to; subtasks merged/rejected.</report>',
     { agentType: 'zetetic-team-subagents:orchestrator', schema: BUILD_SCHEMA, phase: 'Build' }
   )
   const builtBranch = (build && build.built_branch) || iterBranch
@@ -284,17 +364,26 @@ while (!accepted && iter < maxIterations) {
   }
 
   phase('Accept')
-  // (1) DETERMINISTIC gate — two runners; the JS parses each tool output (not a model boolean) and
-  //     requires agreement + consistency. Best-effort (see EXTERNALITY): catches transcription drift,
-  //     not adversarial collusion. The authoritative read is the human re-run on the integration branch.
+  // The worktree WT already has iterBranch checked out with the build's committed output — the gate runs
+  // --root WT and evaluates exactly that (the empty-diff rejection still requires the build to have COMMITTED).
+  // (1) DETERMINISTIC gate — two runners; JS parses each tool output (not a model boolean) and requires
+  //     agreement + consistency. Best-effort (EXTERNALITY): catches transcription drift, not collusion.
   const detRun = (n) => () => agent(
     'Run the deterministic acceptance gate for this iteration and return its RAW output — do not judge, ' +
-    'summarize, or alter it.\nSteps: (a) copy memory/acceptance-gates.loop.yaml to a temp file; (b) for ' +
-    'each acceptance criterion with kind="deterministic" and a non-null checkable_cmd, append a gate ' +
-    '{name:"contract:<id>", cmd:<checkable_cmd>, mandatory:true, origin:contract}; (c) run exactly: ' +
-    'tools/acceptance-gate.sh --config <temp> --diff-base ' + integrationBranch + ' --diff-head ' +
-    iterBranch + ' ; (d) return raw_stdout = the EXACT stdout the tool printed, and exit_code = the ' +
-    'process exit code. Transcribe both precisely.\n\nCONTRACT:\n' + JSON.stringify(contract),
+    'summarize, or alter it.\nSteps:\n' +
+    '(a) Write the contract\'s deterministic checks to an absolute temp JSON file (C="$(mktemp)"): a JSON ' +
+    'object {"version":1,"gates":[ ... ]} with ONE gate per acceptance criterion whose kind="deterministic" ' +
+    'and checkable_cmd is non-null — each {"name":"contract:<id>","cmd":<checkable_cmd>,"mandatory":true,' +
+    '"origin":"contract"}. ' + (needSentinel
+      ? 'If there are none, include EXACTLY one sentinel gate {"name":"build:nonempty-diff","cmd":"true",' +
+        '"mandatory":true,"origin":"loop"} so the gate still enforces the empty-diff rejection.'
+      : 'If there are none, write {"version":1,"gates":[]} (the base config supplies the mandatory gates).') + '\n' +
+    '(b) Run EXACTLY this one line. The gate evaluates the COMMITTED tip of ' + iterBranch + ' in its own ' +
+    'throwaway worktree (--rev), so it is immune to working-tree state; --root only locates the refs: "' +
+    GATE + '" ' + baseCfgFlag + '--config "$C" --root "' + REPO + '" --rev ' + iterBranch + ' --diff-base ' +
+    integrationBranch + ' --diff-head ' + iterBranch + '\n' +
+    '(c) Return raw_stdout = the EXACT stdout the tool printed, and exit_code = the process exit code. ' +
+    'Transcribe both precisely.\n\nCONTRACT:\n' + JSON.stringify(contract),
     { schema: DET_RAW_SCHEMA, label: 'gate:deterministic#' + n, phase: 'Accept' }
   )
   const [draw1, draw2] = await parallel([detRun(1), detRun(2)])
@@ -306,10 +395,11 @@ while (!accepted && iter < maxIterations) {
   const lenses = reviewLenses(dv1.files || [], dv2.files || [])
   const reviews = await parallel(lenses.map((l) => () =>
     agent(
-      'You are reviewing code you did NOT write. Read the diff of the commit range ' + integrationBranch +
-      '...' + iterBranch + ' (run: git diff ' + integrationBranch + '...' + iterBranch + ') and review it ' +
-      'for: ' + l.dimension + '. Approve ONLY if you read the diff and found no blocking issue; cite ' +
-      'file:line evidence for your verdict.\n\nCONTRACT GOAL: ' + contract.goal,
+      'You are reviewing code you did NOT write, in the target repo at ' + REPO + '. Read the diff of the ' +
+      'commit range ' + integrationBranch + '...' + iterBranch + ' (run: git -C "' + REPO + '" diff ' +
+      integrationBranch + '...' + iterBranch + ') and review it for: ' + l.dimension + '. Approve ONLY if you ' +
+      'read the diff and found no blocking issue; cite file:line evidence for your verdict.\n\nCONTRACT GOAL: ' +
+      contract.goal,
       { agentType: l.agentType, schema: REVIEW_SCHEMA, phase: 'Accept', label: 'review:' + l.dimension }
     )
   ))
@@ -317,11 +407,12 @@ while (!accepted && iter < maxIterations) {
   // (3) COMPARE-TO-CONTRACT — an INDEPENDENT reviewer-type agent (not the builder's default lineage)
   //     judges the review/manual criteria a command cannot check, against the actual diff, with evidence.
   const compare = await agent(
-    'You are reviewing code you did NOT write. Read the diff of ' + integrationBranch + '...' + iterBranch +
-    ' (git diff) and compare it to the acceptance contract. For every criterion with kind=review or ' +
-    'manual, decide whether the implementation satisfies it and cite file:line evidence. Return the ' +
-    'unmet criteria (id + why). Judge against the contract AS WRITTEN; do not invent requirements.\n\n' +
-    'CONTRACT:\n' + JSON.stringify(contract),
+    'You are reviewing code you did NOT write, in the target repo at ' + REPO + '. Read the diff of ' +
+    integrationBranch + '...' + iterBranch + ' (git -C "' + REPO + '" diff ' + integrationBranch + '...' +
+    iterBranch + ') and compare it to the acceptance contract. For every criterion with kind=review or ' +
+    'manual, decide whether the implementation satisfies it and cite file:line evidence. Return the unmet ' +
+    'criteria (id + why). Judge against the contract AS WRITTEN; do not invent requirements.\n\nCONTRACT:\n' +
+    JSON.stringify(contract),
     { agentType: 'zetetic-team-subagents:code-reviewer', schema: COMPARE_SCHEMA, phase: 'Accept', label: 'compare-to-contract' }
   )
 
@@ -345,11 +436,13 @@ while (!accepted && iter < maxIterations) {
     // the reported current_branch is the integration branch. The AUTHORITATIVE ancestry/exit check is the
     // human re-run on the integration branch (see EXTERNALITY + the return note).
     const merge = await agent(
-      'Check out ' + integrationBranch + ' and merge the iteration branch ' + iterBranch + ' into it ' +
-      '(git checkout ' + integrationBranch + ' && git merge --no-ff ' + iterBranch + '). Do NOT push and ' +
-      'do NOT touch main. If the merge conflicts, abort it cleanly (git merge --abort) and report ' +
-      'merged=false with the conflicting paths. Report merged, the current branch (git rev-parse ' +
-      '--abbrev-ref HEAD) as current_branch, and the new integration head SHA as integration_head.',
+      'In the target repo at ' + REPO + ', check out ' + integrationBranch + ' and merge the iteration ' +
+      'branch ' + iterBranch + ' into it (git -C "' + REPO + '" checkout ' + integrationBranch + ' && ' +
+      'git -C "' + REPO + '" merge --no-ff ' + iterBranch + '). Do NOT push and do NOT touch main. If the ' +
+      'merge conflicts, abort it cleanly (git -C "' + REPO + '" merge --abort) and report merged=false with ' +
+      'the conflicting paths. On a successful merge, remove the now-merged iteration worktree (git -C "' +
+      REPO + '" worktree remove --force "' + WT + '"). Report merged, the current branch (git -C "' + REPO +
+      '" rev-parse --abbrev-ref HEAD) as current_branch, and the new integration head SHA as integration_head.',
       { schema: MERGE_SCHEMA, phase: 'Converge', label: 'integrate-on-green' }
     )
     if (merge && merge.merged === true && merge.current_branch === integrationBranch && merge.integration_head) {
@@ -370,11 +463,16 @@ while (!accepted && iter < maxIterations) {
   if (!accepted && !greenButUnmerged) {
     // Rejected iteration: the controller owns the branch lifecycle — discard the branch, persist the backlog.
     await agent(
-      'Housekeeping for a rejected iteration: check out ' + integrationBranch + ', then delete the ' +
-      'iteration branch ' + iterBranch + ' and its worktree if present (it is discarded). Do NOT touch ' +
-      'main. Then record these unmet acceptance items as gaps in the semantic layer (cross-session ' +
-      'memory) keyed by the task "' + contract.goal + '", via tools/semantic-layer.sh.\nItems:\n- ' +
-      residual.join('\n- '),
+      'Housekeeping for a rejected iteration: remove the iteration worktree and branch (discarded). Run: ' +
+      'git -C "' + REPO + '" worktree remove --force "' + WT + '"; git -C "' + REPO + '" branch -D ' + iterBranch +
+      '. Do NOT touch main, do NOT push.' +
+      (SEMLAYER
+        ? ' Then record these unmet acceptance items as gaps in the OPERATOR\'s cross-session semantic layer ' +
+          '(not the target repo), keyed by the task "' + contract.goal + '", via the resolved absolute tool "' +
+          SEMLAYER + '" (if it is not reachable, report that and continue — persistence is best-effort, not ' +
+          'gating).'
+        : '') +
+      '\nItems:\n- ' + residual.join('\n- '),
       { phase: 'Converge', label: 'cleanup+persist' }
     )
   }
@@ -386,12 +484,15 @@ if (!accepted) {
 return {
   accepted,
   iterations: iter,
+  repoPath: REPO,
   integrationBranch,
   residual: accepted ? [] : residual,
   note: accepted
-    ? 'in-loop checks green and abl/iter-' + iter + ' merged into ' + integrationBranch + ' (reported). ' +
-      'AUTHORITATIVE step before shipping: run tools/acceptance-gate.sh --config ' +
-      'memory/acceptance-gates.loop.yaml --diff-base ' + baseRef + ' --diff-head ' + integrationBranch +
-      ' yourself (real exit code), review the diff, then merge ' + integrationBranch + ' to main.'
+    ? 'in-loop checks green and abl/iter-' + iter + ' merged into ' + integrationBranch + ' in ' + REPO +
+      ' (reported). AUTHORITATIVE step before shipping: re-run the gate yourself against the target — "' +
+      GATE + '" ' + baseCfgFlag + '--root "' + REPO + '" --diff-base ' + BASE_SHA + ' --diff-head ' +
+      integrationBranch + ' (the pinned base SHA is stable regardless of the checked-out branch; append the ' +
+      'contract checkable_cmds as an extra --config to reproduce the full gate) — read the real exit code, ' +
+      'review the diff, then merge ' + integrationBranch + ' to main.'
     : 'fail closed: budget/iterations exhausted without a merged green — integration NOT certified',
 }

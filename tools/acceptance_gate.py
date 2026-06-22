@@ -15,6 +15,12 @@ and REJECTS an empty diff (a build that changed nothing cannot be accepted).
 This keeps the scope deterministic and tool-owned instead of letting the builder
 choose what the judge sees by staging.
 
+Repo & config: --root sets the directory the gates and the diff run in, so this
+tool can gate ANY repository, not just the one it lives in. --config is
+repeatable; the gates of every config file are merged in order, which lets a
+caller compose a committed base config with a contract-derived one without either
+file editing the other.
+
 The agent-based gates (code-reviewer, security-auditor, architect, refactorer)
 and the residual non-deterministic compare-to-contract live in the controlling
 workflow; this tool is the deterministic, unit-testable core they build on.
@@ -30,6 +36,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -63,6 +70,21 @@ def load_config(path: Path) -> dict:
     if not isinstance(data, dict):
         raise ValueError("gate config must be a mapping with a 'gates' list")
     return data
+
+
+def load_and_merge(paths: list[Path]) -> dict:
+    """Merge one or more gate configs into a single {gates} document.
+
+    Gates are concatenated in file order, so a caller can compose a committed base
+    config with a contract-derived one without either file editing the other.
+    """
+    gates: list = []
+    for path in paths:
+        cfg = load_config(path)
+        file_gates = cfg.get("gates")
+        if file_gates:  # a non-list lands as a single element so validate_config flags it, not extend()
+            gates.extend(file_gates if isinstance(file_gates, list) else [file_gates])
+    return {"gates": gates}
 
 
 def validate_config(cfg: dict) -> list[str]:
@@ -166,10 +188,33 @@ def _empty_diff_verdict(base: str, head: str) -> dict:
     }
 
 
-def run(config_path: Path, root: Path, timeout: int,
-        diff_base: str | None = None, diff_head: str | None = None) -> tuple[dict, int]:
-    """Load config, scope to the diff if requested, run every gate, return (verdict, exit)."""
-    cfg = load_config(config_path)
+def _gate_worktree(root: Path, rev: str) -> str:
+    """Create a throwaway DETACHED worktree of `rev` so gate commands evaluate its
+    COMMITTED tree, not whatever is checked out in root. Returns the worktree path."""
+    wt = tempfile.mkdtemp(prefix="abl-gate-")
+    proc = subprocess.run(
+        ["git", "-C", str(root), "worktree", "add", "--detach", wt, rev],
+        capture_output=True, text=True, timeout=GIT_TIMEOUT_S,
+    )
+    if proc.returncode != 0:
+        raise ValueError(f"git worktree add {rev} failed: {proc.stderr.strip()}")
+    return wt
+
+
+def _remove_gate_worktree(root: Path, wt: str) -> None:
+    subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", wt],
+                   capture_output=True, text=True, timeout=GIT_TIMEOUT_S)
+
+
+def run(config_paths: list[Path], root: Path, timeout: int,
+        diff_base: str | None = None, diff_head: str | None = None,
+        rev: str | None = None) -> tuple[dict, int]:
+    """Load config(s), scope to the diff, run every gate, return (verdict, exit).
+
+    With `rev`, gate commands run in a throwaway detached worktree of that committed
+    rev (the diff is still computed in root, whose object store the worktree shares),
+    so the verdict reflects committed content regardless of root's working tree."""
+    cfg = load_and_merge(config_paths)
     errors = validate_config(cfg)
     if errors:
         raise ValueError("invalid gate config:\n  " + "\n  ".join(errors))
@@ -183,23 +228,35 @@ def run(config_path: Path, root: Path, timeout: int,
         if not files:
             return _empty_diff_verdict(diff_base, diff_head), EXIT_REJECTED
         gates = [_substitute(g, files) for g in gates]
-    verdict = evaluate([run_gate(g, root, timeout) for g in gates])
+    gate_cwd, wt = root, None
+    try:
+        if rev:
+            wt = _gate_worktree(root, rev)
+            gate_cwd = Path(wt)
+        verdict = evaluate([run_gate(g, gate_cwd, timeout) for g in gates])
+    finally:
+        if wt:
+            _remove_gate_worktree(root, wt)
     verdict["changed_files"] = files
     return verdict, (EXIT_ACCEPTED if verdict["accepted"] else EXIT_REJECTED)
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="acceptance_gate", description=__doc__)
-    parser.add_argument("--config", required=True, help="path to the gate-config YAML")
-    parser.add_argument("--root", default=".", help="working dir gates run from (default: cwd)")
+    parser.add_argument("--config", action="append", required=True, metavar="FILE",
+                        help="gate-config YAML; repeatable — every file's gates are merged in "
+                             "order (e.g. a committed base config + a contract-derived config)")
+    parser.add_argument("--root", default=".", help="working dir gates + diff run from (default: cwd)")
     parser.add_argument("--timeout", type=int, default=DEFAULT_GATE_TIMEOUT_S,
                         help="per-gate timeout in seconds")
     parser.add_argument("--diff-base", help="scope gates to files changed since this ref")
     parser.add_argument("--diff-head", help="head ref of the diff range (with --diff-base)")
+    parser.add_argument("--rev", help="run gate commands in a throwaway detached worktree of this committed "
+                                      "rev, so the verdict reflects committed content not root's working tree")
     args = parser.parse_args(argv)
     try:
-        verdict, code = run(Path(args.config), Path(args.root), args.timeout,
-                            args.diff_base, args.diff_head)
+        verdict, code = run([Path(c) for c in args.config], Path(args.root), args.timeout,
+                            args.diff_base, args.diff_head, args.rev)
     except (OSError, ValueError, yaml.YAMLError, subprocess.TimeoutExpired) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_USAGE
