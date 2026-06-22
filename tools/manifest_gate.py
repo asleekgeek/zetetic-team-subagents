@@ -7,7 +7,7 @@ URLs that were fetched, pass the entry only if every fact is grounded in a
 fetched page. This is the *membership* check that the semantic layer's
 *presence* check cannot make — semantic_layer.validate_entry only asserts that a
 `source` string exists (semantic_layer.py:70); it cannot tell a real fetched URL
-from a plausible-but-never-fetched one. The two run in series: membership here,
+from a plausible-but-unfetched one. The two run in series: membership here,
 presence there.
 
 It imports neither web_ingest nor semantic_layer — it is a pure stdin->stdout
@@ -21,7 +21,7 @@ STDOUT : pass    -> the entry           (pipe to: semantic-layer.sh record)
 Exit codes: 0 pass (or --drop survivor), 2 usage/malformed input,
             3 grounding failure (>=1 ungrounded fact).
 
-Fails closed: anything not provably grounded is rejected, never passed through.
+Fails closed: anything not provably grounded is rejected, not passed through.
 """
 from __future__ import annotations
 

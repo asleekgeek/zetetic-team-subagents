@@ -10,7 +10,7 @@
 #   (c) --drop keeps grounded facts and demotes ungrounded ones to gaps -> exit 0,
 #       survivor has exactly the grounded fact + a gap naming the ungrounded source.
 #   (d) an empty manifest grounds nothing -> exit 3 (fail closed).
-#   (e) malformed stdin (manifest key missing) -> exit 2 (refuse, never assume).
+#   (e) malformed stdin (manifest key missing) -> exit 2 (refuse, do not assume).
 set -euo pipefail
 cd "$(dirname "$0")"
 GATE="../../manifest-gate.sh"
