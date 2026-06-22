@@ -1,0 +1,47 @@
+# acceptance-gates.yaml — CONFIG for tools/acceptance-gate.sh
+#
+# The deterministic half of the autonomous build loop's whole-task acceptance
+# gate. Each entry is a command whose EXIT CODE is the gate: pass iff it exits 0.
+# The gate runner (tools/acceptance_gate.py) makes no judgement of its own — this
+# is what keeps the loop's convergence decision external rather than the model
+# re-grading itself (arXiv:2310.01798).
+#
+# Schema:
+#   version: 1
+#   gates:                       # non-empty list; an empty set fails closed
+#     - name:      string        # stable label shown in the verdict (required)
+#       cmd:       string        # shell command line, run from the repo root (required)
+#       mandatory: bool          # default true; a failed mandatory gate -> rejected
+#       origin:    base|contract # provenance; the loop appends origin:contract checks
+#
+# Accept iff >=1 mandatory gate exists AND every mandatory gate exits 0.
+# The loop runs this BASE set, then appends contract-derived checks (origin:
+# contract) translated from the refined acceptance contract, and scopes
+# zetetic-checker to the task's staged diff.
+
+version: 1
+gates:
+  - name: zetetic-sources
+    # §8 source discipline over the task's staged diff (not the whole tree, so it
+    # judges only this iteration's changes). Empty stage -> clean exit 0.
+    cmd: "ZETETIC_PROFILE=standard bash tools/zetetic-checker.sh --staged"
+    mandatory: true
+    origin: base
+
+  - name: agent-definitions
+    # Structural auditor for agent definitions; CI runs it as a blocking job.
+    cmd: "bash tools/agent-definition-auditor.sh"
+    mandatory: true
+    origin: base
+
+  - name: tests-manifest-gate
+    # A->B membership gate regression suite (milestone 1 bridge).
+    cmd: "bash tools/tests/manifest-gate/run-tests.sh"
+    mandatory: true
+    origin: base
+
+  # --- Example contract-derived check (the loop appends entries like this) ---
+  # - name: "contract:cli-help-exits-0"
+  #   cmd: "tools/new-thing.sh --help"
+  #   mandatory: true
+  #   origin: contract

@@ -1,0 +1,8 @@
+version: 1
+gates:
+  - name: ok
+    cmd: "true"
+    mandatory: true
+  - name: bad
+    cmd: "sh -c 'exit 3'"
+    mandatory: true

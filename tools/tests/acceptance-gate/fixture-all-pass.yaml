@@ -1,0 +1,8 @@
+version: 1
+gates:
+  - name: ok-1
+    cmd: "true"
+    mandatory: true
+  - name: ok-2
+    cmd: "sh -c 'exit 0'"
+    mandatory: true

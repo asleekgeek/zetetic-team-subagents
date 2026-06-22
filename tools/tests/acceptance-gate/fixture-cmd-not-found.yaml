@@ -1,0 +1,5 @@
+version: 1
+gates:
+  - name: missing-binary
+    cmd: "definitely-not-a-real-cmd-zxqw-9999"
+    mandatory: true

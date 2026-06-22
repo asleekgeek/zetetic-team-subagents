@@ -1,0 +1,36 @@
+# acceptance-gates.loop.yaml — diff-scoped gate config for the autonomous build loop.
+#
+# Same schema as memory/acceptance-gates.yaml, but the gates use the {files} token
+# and the loop runs them with --diff-base <integration> --diff-head <iter-N>. The
+# tool computes the changed files of that commit range, substitutes {files}, and
+# REJECTS an empty diff — so a no-op iteration cannot pass vacuously, and the gate
+# scope is tool-owned (computed from git) rather than chosen by the builder via
+# staging. The loop appends the contract's deterministic checkable_cmd criteria as
+# origin:contract gates before running this config.
+#
+# Why a separate file from acceptance-gates.yaml: that one is for standalone/manual
+# runs (scopes to the staged diff); this one is for the loop (scopes to a commit
+# range). Both are committed and deterministic; neither is assembled by a model.
+
+version: 1
+gates:
+  - name: zetetic-sources
+    # §8 source discipline over exactly the files this iteration changed.
+    cmd: "ZETETIC_PROFILE=standard bash tools/zetetic-checker.sh --files {files}"
+    mandatory: true
+    origin: base
+
+  - name: agent-definitions
+    cmd: "bash tools/agent-definition-auditor.sh"
+    mandatory: true
+    origin: base
+
+  - name: tests-manifest-gate
+    cmd: "bash tools/tests/manifest-gate/run-tests.sh"
+    mandatory: true
+    origin: base
+
+  - name: tests-acceptance-gate
+    cmd: "bash tools/tests/acceptance-gate/run-tests.sh"
+    mandatory: true
+    origin: base

@@ -1,0 +1,6 @@
+version: 1
+gates:
+  # Passes iff the diff-scoped {files} substitution produced a non-empty file list.
+  - name: files-nonempty
+    cmd: "test -n \"{files}\""
+    mandatory: true

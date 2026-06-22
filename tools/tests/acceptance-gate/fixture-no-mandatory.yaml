@@ -1,0 +1,5 @@
+version: 1
+gates:
+  - name: advisory-only
+    cmd: "true"
+    mandatory: false

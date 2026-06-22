@@ -1,0 +1,8 @@
+version: 1
+gates:
+  - name: mandatory-ok
+    cmd: "true"
+    mandatory: true
+  - name: advisory-bad
+    cmd: "false"
+    mandatory: false
