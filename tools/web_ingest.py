@@ -28,7 +28,7 @@ import urllib.request
 import urllib.robotparser
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import web_extract
 
@@ -56,6 +56,9 @@ DEFAULT_DEPTH = 2  # bounded so crawl output cannot overflow agent context (Fire
 DEFAULT_LIMIT = 20
 DEFAULT_MAX_AGE_S = 86_400  # serve cache without re-fetch for 1 day; operational default.
 MAX_INDEX_SITEMAPS = 10  # cap child-sitemap fan-out in a sitemap index.
+# Bound on chained redirects we follow manually (urllib auto-follows 301/302/303/307 but not 308).
+# source: RFC 9110 §15.4 advises a limit; 10 matches urllib's own default (HTTPRedirectHandler.max_redirections).
+MAX_REDIRECTS = 10
 
 
 def now_epoch() -> float:
@@ -82,8 +85,14 @@ def _decode_body(raw: bytes, headers) -> str:
     return raw.decode(charset, errors="replace")
 
 
-def fetch(url: str, etag: str | None = None, last_mod: str | None = None) -> dict:
-    """Conditional GET. Returns {status, headers, body} (body='' on 304)."""
+def fetch(url: str, etag: str | None = None, last_mod: str | None = None,
+          _redirects: int = 0) -> dict:
+    """Conditional GET. Returns {status, headers, body, final_url} (body='' on 304).
+
+    urllib auto-follows 301/302/303/307; it does NOT follow 308 (RFC 7538), so we
+    follow 307/308 ourselves with a bounded count and the same method (a redirected
+    moved page is the canonical source — final_url records where the body came from).
+    """
     headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "gzip"}
     if etag:
         headers["If-None-Match"] = etag
@@ -93,10 +102,13 @@ def fetch(url: str, etag: str | None = None, last_mod: str | None = None) -> dic
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_S, context=_SSL_CTX) as resp:
             body = _decode_body(resp.read(MAX_BYTES), resp.headers)
-            return {"status": resp.status, "headers": resp.headers, "body": body}
+            return {"status": resp.status, "headers": resp.headers, "body": body, "final_url": resp.geturl()}
     except urllib.error.HTTPError as exc:
         if exc.code == 304:
-            return {"status": 304, "headers": exc.headers, "body": ""}
+            return {"status": 304, "headers": exc.headers, "body": "", "final_url": url}
+        if exc.code in (307, 308) and _redirects < MAX_REDIRECTS and exc.headers.get("Location"):
+            target = urljoin(url, exc.headers["Location"])
+            return fetch(target, etag=etag, last_mod=last_mod, _redirects=_redirects + 1)
         raise FetchError(f"HTTP {exc.code} for {url}") from exc
     except (urllib.error.URLError, TimeoutError, ValueError) as exc:
         raise FetchError(f"fetch failed for {url}: {exc}") from exc
@@ -151,10 +163,11 @@ def _cache_load(url: str) -> dict | None:
         return None
 
 
-def _cache_save(record: dict) -> None:
+def _cache_save(key_url: str, record: dict) -> None:
+    """Cache under the REQUESTED url (key_url); record['url'] may be the post-redirect final url."""
     root = _cache_root()
     root.mkdir(parents=True, exist_ok=True)
-    _cache_path(record["url"]).write_text(json.dumps(record, indent=2))
+    _cache_path(key_url).write_text(json.dumps(record, indent=2))
 
 
 # --- scrape (use-case) -----------------------------------------------------
@@ -173,11 +186,12 @@ def scrape(url: str, max_age_s: int = DEFAULT_MAX_AGE_S, main_only: bool = True)
         cached["fetched_epoch"] = now_epoch()
         cached["fetched_at"] = iso_now()
         cached["from_cache"] = True
-        _cache_save(cached)
+        _cache_save(url, cached)
         return cached
-    extracted = web_extract.extract(result["body"], base_url=url, main_only=main_only)
+    final_url = result.get("final_url", url)
+    extracted = web_extract.extract(result["body"], base_url=final_url, main_only=main_only)
     record = {
-        "url": url,
+        "url": final_url,  # the canonical post-redirect source, for accurate manifest grounding
         "title": extracted["title"],
         "markdown": extracted["markdown"],
         "links": extracted["links"],
@@ -187,7 +201,7 @@ def scrape(url: str, max_age_s: int = DEFAULT_MAX_AGE_S, main_only: bool = True)
         "last_modified": result["headers"].get("Last-Modified"),
         "from_cache": False,
     }
-    _cache_save(record)
+    _cache_save(url, record)  # cache key = requested url; record['url'] = final url
     return record
 
 
