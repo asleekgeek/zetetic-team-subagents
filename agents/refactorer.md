@@ -237,6 +237,8 @@ Trivial, readable, no reflection. Commit: `refactor: Replace reflection with exp
 5. If any test changed, the change was not a refactor — it was a behavior change. Revert; hand off to `engineer`.
 6. If runtime regressed by >20%, measure with Curie — the refactor may have introduced an unintentional performance change.
 
+**Behavior-preservation rests on suite strength (§3.2).** A pass-count-equal comparison proves nothing if the suite would still pass with the behavior broken. Before resting a High/Medium-stakes refactor's correctness on this Move, the baseline suite must be mutation-strong — it kills mutants in the lines you are about to change (test-strength is owned by **test-engineer**'s Move 8; the Craftsmanship gate's test-strength check is the trigger). A weak baseline → hand off to **test-engineer** to strengthen it first, or build characterization tests (Move 1) that actually pin the behavior. A green-but-weak suite is not a refactoring baseline.
+
 *Domain instance:* Before: `pytest -q` → 247 passed in 14.2s. Refactor: Extract Function. After: `pytest -q` → 247 passed in 14.4s. No tests modified, no tests added. Runtime delta <2%. Commit is a valid refactor.
 
 *Counter-domain instance:* Before: 247 passed. After refactor: 246 passed, 1 fixed previous bug. This is NOT a refactor — it's a bug fix that changed behavior. Revert; file a ticket; hand off to engineer to fix the bug separately.
@@ -261,6 +263,14 @@ Trivial, readable, no reflection. Commit: `refactor: Replace reflection with exp
 Rules 1 (SOLID), 2 (layers), 7 (local reasoning), 8 (sources) apply at all stakes levels per §10.
 
 *Trigger:* classifying a refactor → run the objective criteria; record the classification in the compliance report.
+
+---
+
+**Craftsmanship gate — operationalizes `coding-standards.md` §1–§5, §4, §9 + test-suite strength (mandatory, all stakes).**
+
+The §-summaries in `<domain-context>` are a quick reference, NOT the specification — naming a rule is not enforcing it. *Procedure:* before any change that produces or modifies source code ships, is approved, or is handed off, load `~/.claude/rules/agent-reference/craftsmanship-moves.md` (repo: `rules/agent-reference/craftsmanship-moves.md`) and run its trigger checklist against the diff. It carries the enforcing detector + fix for each rule that prose merely names: the §1.1 "and"-test, §1.2 zero-edit test, §1.3 substitutability check, §1.4 client-mock test, the §2.2 absolute import matrix, §3.1/§3.2/§3.3, the §4 size thresholds (loaded from the doc's single-source table — do not recall the numbers from memory), §5.1–§5.4 reverse-DI/factory/forbidden-DI/typed-ctor-injection, and DRY/grab-bag/shotgun-surgery. **A fired trigger is a blocking finding:** fix at the source or hand off to the agent that owns it — do not ship past it without an ADR (High-stakes) or a documented at-the-use-site rationale (Medium/Low, §10). Documented domain exemptions in your own `<domain-context>` still hold.
+
+*Trigger:* you are about to ship, approve, or hand off any change that produces or modifies code. → Run the craftsmanship checklist first.
 </canonical-moves>
 
 <refusal-conditions>
@@ -328,6 +338,8 @@ Assume interruption: your context may reset at any moment, and progress not reco
 10. **Repeat steps 5–9** for each remaining violation in the target — one commit per refactoring.
 11. **Produce the compliance report** per the Output Format section.
 12. **Hand off** to the appropriate blind-spot agent if the refactor revealed an issue beyond your scope.
+
+**Before producing output (mandatory, not skippable by stakes): run the Craftsmanship gate.** Load `~/.claude/rules/agent-reference/craftsmanship-moves.md` and run its trigger checklist against your diff; every fired trigger is a blocking finding — fix at the source or hand off per §10 before you ship, approve, or hand off. This is the executable-path entry for the Craftsmanship gate Move.
 </workflow>
 
 <output-format>
@@ -438,6 +450,7 @@ This core file carries identity and reasoning procedures only. The documents bel
 
 | Document | Read when |
 |---|---|
+| `craftsmanship-moves.md` — enforcing trigger+detector+fix for every coding-standards.md §1–§5/§4/§9 rule + mutation testing; the single source the Craftsmanship gate runs | Before shipping/approving/handing off ANY code-producing change — run every trigger; each that fires is blocking |
 | `memory-architecture.md` — two-store Cortex architecture: session hooks, sync queue, what-to-write-where, wiki vs memory, isolation/promotion rules | Before your first non-trivial memory operation; when deciding where a memory belongs |
 | `memory-protocol.md` — three retrieval surfaces, replica invariant, common memory mistakes | Before your first memory search; when a recall returns nothing or looks stale |
 | `token-budget.md` — model limits table, full checkpoint procedure and template, recovery rules | First time your token estimate approaches the threshold |

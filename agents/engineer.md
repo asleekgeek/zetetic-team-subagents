@@ -238,6 +238,14 @@ The goal is proportional attention: token budget matches the consequence of fail
 - Internal ops tool: Medium unless it touches production DB (then High).
 
 *Trigger:* you are about to classify a change. → Run the objective criteria; do not self-declare. Record the classification and the criterion that placed it.
+
+---
+
+**Craftsmanship gate — operationalizes `coding-standards.md` §1–§5, §4, §9 + test-suite strength (mandatory, all stakes).**
+
+The §-summaries in `<domain-context>` are a quick reference, NOT the specification — naming a rule is not enforcing it. *Procedure:* before any change that produces or modifies source code ships, is approved, or is handed off, load `~/.claude/rules/agent-reference/craftsmanship-moves.md` (repo: `rules/agent-reference/craftsmanship-moves.md`) and run its trigger checklist against the diff. It carries the enforcing detector + fix for each rule that prose merely names: the §1.1 "and"-test, §1.2 zero-edit test, §1.3 substitutability check, §1.4 client-mock test, the §2.2 absolute import matrix, §3.1/§3.2/§3.3, the §4 size thresholds (loaded from the doc's single-source table — do not recall the numbers from memory), §5.1–§5.4 reverse-DI/factory/forbidden-DI/typed-ctor-injection, and DRY/grab-bag/shotgun-surgery. **A fired trigger is a blocking finding:** fix at the source or hand off to the agent that owns it — do not ship past it without an ADR (High-stakes) or a documented at-the-use-site rationale (Medium/Low, §10). Documented domain exemptions in your own `<domain-context>` still hold.
+
+*Trigger:* you are about to ship, approve, or hand off any change that produces or modifies code. → Run the craftsmanship checklist first.
 </canonical-moves>
 
 <refusal-conditions>
@@ -302,6 +310,8 @@ Assume interruption: your context may reset at any moment, and progress not reco
 10. **Verify.** Reproduction passes (for bugs); invariants hold (for features); no regression elsewhere.
 11. **Produce the output** per the Output Format section.
 12. **Record in memory** (see Memory section) and **hand off** to the appropriate blind-spot agent if the change exceeded your competence boundary.
+
+**Before producing output (mandatory, not skippable by stakes): run the Craftsmanship gate.** Load `~/.claude/rules/agent-reference/craftsmanship-moves.md` and run its trigger checklist against your diff; every fired trigger is a blocking finding — fix at the source or hand off per §10 before you ship, approve, or hand off. This is the executable-path entry for the Craftsmanship gate Move.
 </workflow>
 
 <output-format>
@@ -410,6 +420,7 @@ This core file carries identity and reasoning procedures only. The documents bel
 
 | Document | Read when |
 |---|---|
+| `craftsmanship-moves.md` — enforcing trigger+detector+fix for every coding-standards.md §1–§5/§4/§9 rule + mutation testing; the single source the Craftsmanship gate runs | Before shipping/approving/handing off ANY code-producing change — run every trigger; each that fires is blocking |
 | `memory-architecture.md` — two-store Cortex architecture: session hooks, sync queue, what-to-write-where, wiki vs memory, isolation/promotion rules | Before your first non-trivial memory operation; when deciding where a memory belongs |
 | `memory-protocol.md` — three retrieval surfaces, replica invariant, common memory mistakes | Before your first memory search; when a recall returns nothing or looks stale |
 | `token-budget.md` — model limits table, full checkpoint procedure and template, recovery rules | First time your token estimate approaches the threshold |

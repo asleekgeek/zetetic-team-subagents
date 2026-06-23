@@ -80,7 +80,7 @@ Standard layer roles:
 ### 3.1 Readability
 - Descriptive names over terse. `normalizePaymentAmount` > `nrm`.
 - Logic flows top-down within a function.
-- No magic numbers. Every numeric constant has a name or a source comment (see §7).
+- No magic numbers. Every numeric constant has a name or a source comment (see §8).
 - Comments only when the *why* is non-obvious. Never explain *what* — well-named code does that.
 
 ### 3.2 Reliability
@@ -89,6 +89,7 @@ Standard layer roles:
 - Handle errors at the appropriate layer — don't catch-and-log in core.
 - No `any` / `unknown` / untyped `dict` / `interface{}` in consumer code.
 - Follow the language's error-handling idiom: exceptions in Python/Java, Result in Rust, error returns in Go, try/catch with typed Error unions in TypeScript.
+- **Test-suite strength is measured by mutation, not coverage.** Line/branch coverage proves a line *executed*, not that a test would *fail* if the code were wrong — a high-coverage suite that kills no mutants tests nothing. For High- and Medium-stakes code, the suite must kill injected mutants: every mutant in the changed lines is killed, or explicitly marked equivalent with a written rationale. Coverage gates the floor; mutation score gates the strength. Source: DeMillo, Lipton & Sayward (1978). *"Hints on Test Data Selection: Help for the Practicing Programmer."* IEEE Computer 11(4); Jia & Harman (2011). *"An Analysis and Survey of the Development of Mutation Testing."* IEEE TSE 37(5).
 
 ### 3.3 Reusability
 - Extract shared logic into the common/shared layer (pure functions, no I/O).
@@ -222,6 +223,7 @@ Applies to every coding claim, every algorithm, every constant.
 - Adding a conditional for a special case when the special case should be a separate strategy / implementation.
 - Defending "clever" code by the author's claim to understand it — §7.3 failure.
 - Tests as the primary correctness argument for code whose failure modes they cannot exercise (concurrency, numerical, adversarial input) — see Dijkstra.
+- Treating line/branch coverage as evidence of test adequacy — a high-coverage suite that kills no mutants tests nothing; strength is measured by mutation, not execution (§3.2).
 - Adding docstrings, comments, or type annotations to code you did not change.
 - Band-aid fixes at the throw site without root-cause analysis (§6).
 
@@ -258,6 +260,8 @@ When referenced by an agent's `<domain-context>`, the agent:
 - Martin, R. C. (2017). *Clean Architecture.* Prentice Hall.
 - Liskov, B. (1987). "Data Abstraction and Hierarchy." *OOPSLA '87.*
 - Dijkstra, E. W. (1968). "Go To Statement Considered Harmful." *CACM* 11(3), 147–148.
+- DeMillo, R. A., Lipton, R. J., & Sayward, F. G. (1978). "Hints on Test Data Selection: Help for the Practicing Programmer." *IEEE Computer* 11(4), 34–41.
+- Jia, Y., & Harman, M. (2011). "An Analysis and Survey of the Development of Mutation Testing." *IEEE TSE* 37(5), 649–678.
 - Fowler, M. (2018). *Refactoring: Improving the Design of Existing Code,* 2nd ed. Addison-Wesley.
 - Feathers, M. (2004). *Working Effectively with Legacy Code.* Prentice Hall.
 - Evans, E. (2003). *Domain-Driven Design: Tackling Complexity in the Heart of Software.* Addison-Wesley.
