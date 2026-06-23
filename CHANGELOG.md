@@ -6,6 +6,52 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.23.0] — CAP-2 reviewer-prefs, history seeding, and doc/count refresh
+
+### Added
+
+- **CAP-2 — adapt to a demanding team lead.** New `reviewer-prefs` memory scope
+  (`memory/scope-registry.json`) holding a lead's standing review preferences.
+  Owners are the lead (`_user`) and the orchestrator/curator; the reviewed agents
+  (`engineer`, `refactorer`, `code-reviewer`) are readers only, so an agent cannot
+  invent its own prefs. The three agents read the scope at the top of their workflow
+  with a fixed precedence — a `coding-standards.md` blocking rule always outranks a
+  preference — and a graceful fallback when the scope is absent.
+- **`tools/seed-reviewer-prefs.sh`** — bootstraps a lead's prefs from evidence of how
+  they already work (their `gh` review comments + merged PRs), emitting a
+  provenance-tagged `status: inferred` draft. It presents raw evidence only;
+  abstracting it into confirmed preferences is the lead/orchestrator's judgment step
+  (§9 — no faked judgment). Injection-safe, owner-only writes, deterministic exit
+  codes. 19-case test suite under `tools/tests/seed-reviewer-prefs/`.
+
+### Changed
+
+- README badge, `assets/banner.svg`, `CONTRIBUTING.md`, and the marketplace plugin
+  description refreshed to the current reproducible counts: 64 skills, 18 hooks,
+  35 tools, 25 commands, 97 reasoning patterns + 20 team agents (117 total),
+  288 tests.
+
+### Fixed
+
+- `memory/scope-coverage.md` miscount: the `checkpoints` systemic scope was never
+  tabulated. Reconciled to 26 scopes (7 systemic + 17 team + 1 research + 1 genius);
+  the doc's embedded verification command now matches.
+
+## [2.22.0] — mutation-test suites for the gate cores + gate-integrity fix
+
+### Added
+
+- In-process pytest suites for `manifest_gate.py` (90.6% mutation score) and
+  `semantic_layer.py` (97.4%), wiring both critical zones into the mutation policy.
+  `acceptance_gate.py` mutation coverage at 77.6% (residual = documented equivalents).
+
+### Fixed
+
+- `.craftsmanship.conf` size-gate scoping: a test suite had set `FILE_MAX=2000`
+  globally, weakening the production 500-line gate. Now test-scoped
+  (`TEST_FILE_MAX`/`TEST_FILE_RE`); production stays `FILE_MAX=500`.
+- Routing table regenerated to include the `memory-writer` agent.
+
 ## [2.21.0] — mechanical craftsmanship enforcement + hook-layer correctness
 
 ### Added
