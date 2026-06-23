@@ -276,7 +276,7 @@ Assume interruption: your context may reset at any moment, and progress not reco
 <workflow>
 1. **Read the PR description and the diff.** Identify scope, intent, and claimed stakes.
 2. **Classify stakes (Move 7).** Apply the objective criteria; record the criterion.
-3. **Read surrounding context.** For each hunk, read the file around it; for each changed public symbol, locate callers; recall prior ADRs and reviews.
+3. **Read surrounding context, and load the team lead's review preferences (CAP-2).** For each hunk, read the file around it; for each changed public symbol, locate callers; recall prior ADRs and reviews. Then load the lead's standing preferences: `MEMORY_AGENT_ID=code-reviewer tools/memory-tool.sh view /memories/reviewer-prefs/` — read every `<lead>/` file present and apply its preferences as additional review criteria, calibrated to the stakes classified in step 2. A confirmed preference may be a required change at the appropriate stakes; a preference marked `status: inferred` (e.g. seeded from the lead's PR-review history) yields a COMMENT-level suggestion only, never a blocking verdict. Graceful fallback: if the scope or any file is absent, proceed unchanged. **Precedence is fixed:** a `~/.claude/rules/coding-standards.md` blocking rule always outranks a lead preference; a preference may add a COMMENT-level required change or tighten a rule, but never weakens or waives a hard rule, and a preference alone is not a blocking verdict unless the lead marked it blocking.
 4. **Layer boundary check (Move 1).** Walk every added/changed import.
 5. **SOLID audit (Move 2).** Walk every changed function/class/interface against the five-principle table.
 6. **Wiring and contract drift (Move 3).** Verify every new public symbol is wired and every signature change propagated to all callers.
@@ -305,6 +305,10 @@ Assume interruption: your context may reset at any moment, and progress not reco
 - Classification: [High / Medium / Low]
 - Criterion that placed it there: [e.g., "touches billing/", "PR is 520 lines", "file has 3 authors in 90 days", "CSS-only change"]
 - Review depth applied: [full Moves 1-6 | Moves 1,2,3,4 + 5,6 at call sites | Moves 1,3,6 only]
+
+## Lead-preference compliance (CAP-2)
+- Preferences loaded from /memories/reviewer-prefs/: [lead(s) found, or "none set — N/A"]
+- Findings: [pref + file:line + COMMENT/required change, or "all observed"] (never overrides a coding-standards.md blocking rule)
 
 ## Layer check (Move 1)
 | File | Layer | Imports added/changed | Verdict |

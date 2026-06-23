@@ -19,6 +19,8 @@
 | `quarantine` | `*` | `_user`, `_curator` | Untrusted-source writes. Triage-only reads. |
 | `session` | `*` | `*` | Ephemeral scratch. TTL 1 day. |
 | `project` | `*` | `*` | Per-project durable context. TTL 90 days. |
+| `checkpoints` | `*` | `*` | Context-cap / compaction checkpoints (token-budget protocol). Any agent may checkpoint. TTL 30 days. |
+| `reviewer-prefs` | `_user`, `orchestrator` | `engineer`, `refactorer`, `code-reviewer` | Team lead's standing review preferences (CAP-2). Lead/curator-only writes so agents can't invent prefs; never overrides a coding-standards.md blocking rule. Per-lead subpath `/memories/reviewer-prefs/<lead>/`. No TTL; 50 KB/file. |
 
 ## Team agents — per-agent scopes (17 entries)
 
@@ -96,7 +98,28 @@ All genius agents share scope `genius`. Per-agent isolation is by **mandatory su
 | Team agents (excl. genius) | 19 | 19 / 19 = 100% |
 | Genius agents | 97 | 97 / 97 = 100% |
 | **Total agents** | **116** | **100%** |
-| Distinct registry scopes | 24 | (5 systemic + 17 team + 1 research + 1 genius) |
+| Distinct registry scopes | 26 | (7 systemic + 17 team + 1 research + 1 genius) |
+
+## Seeding `reviewer-prefs` from a lead's history (CAP-2)
+
+A lead need not hand-author their preferences from scratch. The orchestrator/curator
+(an owner of the scope) MAY bootstrap `/memories/reviewer-prefs/<lead>/` from
+**evidence of how the lead already works** — their prior PR review comments and their
+merged PRs (`gh pr list --state merged --author <lead>`, `gh pr view <n> --comments`,
+`gh api .../pulls/<n>/comments`). This gives a first-pass glimpse the lead can then
+correct, rather than a blank file.
+
+Discipline (zetetic §8 — every pref traces to evidence):
+- **Owner-only writes.** Seeding is done by `_user` or `orchestrator`, never by a
+  reviewed agent (engineer/refactorer/code-reviewer are readers only). The ACL
+  guarantees this; seeding does not relax it.
+- **Provenance per pref.** Each seeded preference cites the PR number / review comment
+  it was inferred from. An unsourced "preference" is a guess, not a pref.
+- **Mark inferred vs. confirmed.** Seeded prefs are `status: inferred` until the lead
+  confirms them; a reviewed agent applies a confirmed pref as binding and an inferred
+  pref as a COMMENT-level suggestion. Inference never escalates to a blocking rule.
+- **Never overrides coding-standards.md.** A mined pattern that conflicts with a hard
+  rule is discarded, not encoded.
 
 ## Refactorer checklist
 
@@ -121,4 +144,4 @@ For every agent file under `agents/`:
 python3 -c 'import json; d=json.load(open("memory/scope-registry.json")); print("scopes=", len(d["scopes"]), "strict=", d["strict_unknown_scope"], "curators=", d["curator_agents"])'
 ```
 
-Expected: `scopes= 24 strict= True curators= ['_user', 'orchestrator']`
+Expected: `scopes= 26 strict= True curators= ['_user', 'orchestrator']`
