@@ -105,9 +105,13 @@ All genius agents share scope `genius`. Per-agent isolation is by **mandatory su
 A lead need not hand-author their preferences from scratch. The orchestrator/curator
 (an owner of the scope) MAY bootstrap `/memories/reviewer-prefs/<lead>/` from
 **evidence of how the lead already works** — their prior PR review comments and their
-merged PRs (`gh pr list --state merged --author <lead>`, `gh pr view <n> --comments`,
-`gh api .../pulls/<n>/comments`). This gives a first-pass glimpse the lead can then
-correct, rather than a blank file.
+merged PRs. The tool `tools/seed-reviewer-prefs.sh <lead>` does the gathering: it
+collects the lead's review comments and merged PRs via `gh` and emits a
+provenance-tagged `status: inferred` draft (dry-run by default; `--write` persists it
+as an owner). This gives a first-pass glimpse the lead can then correct, rather than a
+blank file. The tool deliberately does NOT invent abstract preferences (§9 — faking
+judgment): it presents the raw evidence; abstracting it into stated, confirmed
+preferences is the orchestrator/lead's judgment step.
 
 Discipline (zetetic §8 — every pref traces to evidence):
 - **Owner-only writes.** Seeding is done by `_user` or `orchestrator`, never by a

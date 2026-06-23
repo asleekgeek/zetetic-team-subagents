@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# gh stub for seed-reviewer-prefs tests. Branches on the gh subcommand and returns
+# canned, already-formatted output (the real --jq formatting is gh's responsibility,
+# not this tool's — we test our orchestration around gh, not gh itself).
+# Env knobs: GH_AUTH=fail -> 'gh auth status' fails; GH_EMPTY=1 -> sources return empty.
+set -euo pipefail
+case "${1:-}" in
+  auth)
+    [ "${GH_AUTH:-ok}" = fail ] && exit 1
+    exit 0 ;;
+  pr)   # `gh pr list ...`
+    [ "${GH_EMPTY:-0}" = 1 ] && exit 0
+    printf -- '- PR #12: Fix the retry loop\n  https://example.test/pr/12\n' ;;
+  api)  # `gh api ... pulls/comments`
+    [ "${GH_EMPTY:-0}" = 1 ] && exit 0
+    printf -- '- on `core/retry.py` (https://example.test/c/1):\n  > prefer Result over exceptions for expected control flow\n' ;;
+  *) exit 0 ;;
+esac
