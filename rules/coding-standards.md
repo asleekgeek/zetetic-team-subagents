@@ -253,6 +253,53 @@ When referenced by an agent's `<domain-context>`, the agent:
 
 ---
 
+## 12. Mutation Testing — tests must kill mutants (mandatory on changed code)
+
+Source: DeMillo, Lipton & Sayward (1978); Jia & Harman (2011) — see Primary Sources.
+
+Line/branch coverage proves code *ran*, not that a test would *fail* if the code were wrong. A green suite on one backend can hide a real defect on another. (2026-06-23: a `recall` handler returned `numpy.float32`/`datetime` values; the MCP host could not build `structuredContent` from them and rejected the call on **PostgreSQL**, while **SQLite**-backed tests — which return `float`/`str` — stayed green. Coverage was 100%; the bug shipped.) Mutation testing is the objective check that a test SUITE can detect a regression: inject a small change (a *mutant*); a test must fail (*kill* it). A surviving mutant is a behaviour no test pins.
+
+### 12.1 Rule
+- **Every change to load-bearing logic runs mutation testing on the changed files before it ships** — the touched modules and their tests (a scoped run), not the whole repo.
+- Each surviving mutant is one of: (a) a missing test → add it; (b) a provable **equivalent** mutant (no observable behaviour change — e.g. a case-insensitive codec name) → document it at the use site or in the run notes. There is no third option ("ignore") without a written rationale.
+- Mutation testing routinely surfaces **dead code** (every mutant of an unreachable branch survives) — remove it (§9), don't test it.
+
+### 12.2 Tooling per language (decided; wire concretely per repo)
+| Language | Tool | Config |
+|---|---|---|
+| Python | **mutmut** (3.x) | `[tool.mutmut]` in `pyproject.toml`: `source_paths`, `only_mutate` (scope to changed files), `pytest_add_cli_args_test_selection`, `also_copy` (mutmut copies `tests/`/`test/` but **not** `tests_py/`); set `use_setproctitle = false` on macOS |
+| TypeScript / JS | **StrykerJS** (`@stryker-mutator/core`) | `stryker.conf.json` — template at `templates/mutation/stryker.conf.json` |
+| Rust | **cargo-mutants** | `cargo mutants --in-place -f <changed-file>` |
+| Kotlin / JVM | **PIT** (`gradle-pitest-plugin`) | plugin id `info.solidsoft.pitest` in `build.gradle(.kts)`; `./gradlew pitest`; scope per-change via `targetClasses`; survivors are `status="SURVIVED"` in `build/reports/pitest/mutations.xml`. Source: gradle-pitest-plugin.solidsoft.info |
+| Swift | **Muter** | `muter.conf.json` (`muter init`); `muter --files-to-mutate <files> --format json`; a mutant survives when its `testSuiteOutcome` is `passed`. Source: github.com/muter-mutation-testing/muter |
+
+The portable dispatcher is `tools/mutation_check.sh` — it detects the language by
+extension and runs the row's tool (`--list` shows the table; `--discover` reports
+the current repo's language + tool + readiness for an agent on an unfamiliar repo).
+Adding a language is one registry row + one `run_<lang>` (§1.2 Open/Closed), so
+the supported set grows without editing the dispatch — an agent landing on a
+Kotlin/Gradle or Swift/SwiftUI repo is not limited to a hardcoded few.
+
+Concrete-wiring status: **Cortex** (Python) wired + demonstrated (`scripts/mutation_check.sh`); dispatcher + per-language runners delivered in `tools/mutation_check.sh`. Deferred (per-repo config, tools not yet installed): **prd-spec-generator** (TS → Stryker), **automatised-pipeline** (Rust → cargo-mutants), and any Kotlin/Swift repo (PIT / Muter).
+
+### 12.3 Cross-backend / cross-config discipline
+When a module serves more than one backend or runtime (PostgreSQL vs SQLite, two serializers, …), the regression tests mutation testing relies on must encode the **backend-agnostic contract** — assert the property directly, or feed each backend's representative shape. A mutation run against only the "easy" backend will not kill the bug that hides in the other. Pin the contract at the one boundary every path crosses.
+
+### 12.4 Threshold
+No blunt percentage gate (equivalent mutants make 100% unattainable). The standard is **0 surviving non-equivalent mutants on changed code**: track the score, triage every survivor (killed, or documented-equivalent).
+
+### 12.5 Two-tier enforcement — a blocking narrow gate AND a non-blocking wide sweep
+Mutation enforcement is split, because the two jobs have opposite failure costs:
+
+| Tier | Scope | Blocking? | Tool | Cadence |
+|---|---|---|---|---|
+| **Per-commit** | changed files only | **yes** | `tools/mutation_check.sh` (scoped), via the git pre-commit hook | every commit |
+| **Critical-zone sweep** | the whole project's load-bearing zones, run **by scope** | **no** | `tools/mutation-sweep.sh` (reads `memory/critical-zones.conf`) | CI / periodic |
+
+- The **per-commit** tier is blocking but narrow: it only mutates the lines this change touched, so it stays fast and never punishes a change for a pre-existing gap elsewhere (§12.1).
+- The **sweep** tier is wide but report-only: a broad mutation run surfaces a long tail of survivors at once, and gating commits on it would freeze the team for months. It **always exits 0** and emits a per-zone report; we ratchet coverage up **one zone per iteration**, triaging that zone's survivors with evidence. Making the wide sweep block by default would repeat the product-safety anti-pattern (heavy/broad automation must be report-only unless explicitly opted in).
+- A surviving mutant migrates from the sweep's backlog into the blocking tier organically: once a critical zone is wired and clean, any later change to it is gated per-commit.
+
 ## Primary Sources
 
 - Martin, R. C. (2000). "Design Principles and Design Patterns." *Object Mentor.*

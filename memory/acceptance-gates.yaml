@@ -40,6 +40,27 @@ gates:
     mandatory: true
     origin: base
 
+  - name: tests-matrix-selftest
+    # Regression suite for tools/test-matrix.sh (the cross-backend test runner).
+    # Gates the gate component itself, like tests-manifest-gate above.
+    cmd: "bash tools/tests/test-matrix/run-tests.sh"
+    mandatory: true
+    origin: base
+
+  # --- Cross-backend test gate template (rules/coding-standards.md §12.3) ---
+  # A suite green on one backend can hide a defect on another (numpy.float32 on PG
+  # vs float on SQLite — green coverage, shipped bug). tools/test-matrix.sh runs the
+  # SAME suite under EACH backend and fails closed on any red. Wire it as the repo's
+  # `tests` gate where the code serves more than one backend (NOT a blind base gate —
+  # this repo has no dual-backend suite, so it stays a template):
+  # - name: tests-cross-backend
+  #   cmd: "bash tools/test-matrix.sh
+  #           --backend sqlite
+  #           --backend 'pg:DATABASE_URL=postgresql://localhost:5432/cortex_test;CORTEX_BACKEND=pg'
+  #           -- pytest tests_py/"
+  #   mandatory: true
+  #   origin: base
+
   # --- Example contract-derived check (the loop appends entries like this) ---
   # - name: "contract:cli-help-exits-0"
   #   cmd: "tools/new-thing.sh --help"
