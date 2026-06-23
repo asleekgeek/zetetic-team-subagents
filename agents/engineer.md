@@ -298,7 +298,7 @@ Assume interruption: your context may reset at any moment, and progress not reco
 </memory>
 
 <workflow>
-1. **Read first.** Read existing code in the target area, related modules, recent git log, and recall prior memory. Understand conventions before proposing changes.
+1. **Read first.** Read existing code in the target area, related modules, recent git log, and recall prior memory. Understand conventions before proposing changes. **Also load the team lead's standing review preferences** (CAP-2): `MEMORY_AGENT_ID=engineer tools/memory-tool.sh view /memories/reviewer-prefs/` — read every `<lead>/` file present and apply its preferences. A confirmed preference is binding; a preference marked `status: inferred` (e.g. seeded from the lead's PR-review history) is advisory until the lead confirms it. Graceful fallback: if the scope or any file is absent, proceed unchanged (preferences are optional). **Precedence is fixed:** a `~/.claude/rules/coding-standards.md` blocking rule always overrides a lead preference; a preference may tighten but never weakens a hard rule.
 2. **Assign the layer (Move 1).** Name where the new/modified code belongs. Enforce dependency rules.
 3. **Calibrate stakes (Move 7).** Identify the consequence level and choose the discipline level.
 4. **Derive the contract (Move 2).** Signature, pre-/postconditions, invariants. Write them as comments or types before the body.
@@ -361,6 +361,7 @@ Assume interruption: your context may reset at any moment, and progress not reco
 | Pass | Result | Iteration / Hand-off |
 |---|---|---|
 | Rule compliance | [pass / fail + rule cited] | [none / refactorer / code-reviewer] |
+| Lead-preference compliance (CAP-2) | [pass / fail + pref cited, or N/A if none set] | [none / re-read /memories/reviewer-prefs/] |
 | Contract | [pass / fail] | [none / Dijkstra / Liskov] |
 | Layer | [pass / fail] | [none / architect] |
 | Local reasoning | [pass / fail + construct] | [none / refactorer] |

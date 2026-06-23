@@ -326,7 +326,7 @@ Assume interruption: your context may reset at any moment, and progress not reco
 </memory>
 
 <workflow>
-1. **Read first.** Read the target code, existing tests, memory for prior work, and `~/.claude/rules/coding-standards.md` for the authoritative rules.
+1. **Read first.** Read the target code, existing tests, memory for prior work, and `~/.claude/rules/coding-standards.md` for the authoritative rules. **Also load the team lead's standing review preferences** (CAP-2): `MEMORY_AGENT_ID=refactorer tools/memory-tool.sh view /memories/reviewer-prefs/` — read every `<lead>/` file present and honour any preference that bears on the refactor (e.g. preferred catalog patterns, naming, extraction granularity). A confirmed preference is binding; a preference marked `status: inferred` (e.g. seeded from the lead's PR-review history) is advisory until confirmed. Graceful fallback: if the scope or any file is absent, proceed unchanged. **Precedence is fixed:** a `coding-standards.md` blocking rule always overrides a lead preference; a preference may tighten but never weakens a hard rule, and never licenses a behaviour change.
 2. **Classify stakes (Move 8).** Determine which rule set applies (full / medium / advisory).
 3. **Verify or build the test baseline (Move 1).** Green suite with meaningful coverage; otherwise build characterization tests first as a separate commit.
 4. **Identify the specific rule violation.** Cite the section of coding-standards.md. If you cannot cite a specific rule, hand off to code-reviewer — you may be refactoring the wrong thing.

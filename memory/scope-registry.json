@@ -134,6 +134,20 @@
       "ttl_days": 30,
       "max_file_kb": 100
     },
+    "reviewer-prefs": {
+      "description": "A team lead's standing review preferences (CAP-2: 'adapt to a demanding team lead'). Per-lead files live under /memories/reviewer-prefs/<lead>/. These are PREFERENCES, never rule overrides: a coding-standards.md blocking rule always wins over a lead preference. Owners (writers) are the lead (_user) and the orchestrator/curator, so agents under review cannot invent their own prefs; readers are the agents that must comply (engineer, refactorer, code-reviewer).",
+      "owners": [
+        "_user",
+        "orchestrator"
+      ],
+      "readers": [
+        "engineer",
+        "refactorer",
+        "code-reviewer"
+      ],
+      "ttl_days": null,
+      "max_file_kb": 50
+    },
     "code-reviewer": {
       "description": "code-reviewer team agent's working memory.",
       "owners": [
