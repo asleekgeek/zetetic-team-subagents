@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — native git commit gate (contributor-facing).
+#
+# Why this exists: hooks/pre-commit-zetetic.sh is a Claude Code PreToolUse hook —
+# it only fires when Claude issues `git commit` via Bash. A human contributor
+# running `git commit` directly at the CLI bypasses it entirely. This native git
+# hook closes that gap so the zetetic standard is enforced on EVERY commit,
+# regardless of who (or what) runs it.
+#
+# It mirrors the exact check contract of hooks/pre-commit-zetetic.sh, minus the
+# Claude-specific stdin/JSON command parsing (a git pre-commit hook receives no
+# args and only runs at commit time, so no command guard is needed).
+#
+# Activation is per-clone: run tools/install-git-hooks.sh once after cloning
+# (git does not auto-trust a versioned hooksPath). See that script for details.
+#
+# Exit codes: 0 = allow commit; non-zero = block.
+# Rule provenance: rules/coding-standards.md §8 (zetetic) and §4 (craftsmanship).
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+TOOLS="$REPO_ROOT/tools"
+
+# Graceful degradation: if the checkers are absent, do not block commits.
+if [[ ! -x "$TOOLS/zetetic-checker.sh" ]]; then
+  echo "WARNING: tools/zetetic-checker.sh not found — skipping pre-commit checks." >&2
+  exit 0
+fi
+
+# 1. Zetetic source discipline (UNSOURCED is blocking under profile=standard).
+output=$("$TOOLS/zetetic-checker.sh" --staged 2>&1) || {
+  echo "BLOCKED: Zetetic violations in staged files." >&2
+  echo "$output" >&2
+  exit 1
+}
+
+# 2. Craftsmanship gate (coding-standards §4 sizes + structural rules on staged
+#    files). Block on real violations (rc=1); fail OPEN on a checker/config
+#    error (rc=2 or other) so a typo in .craftsmanship.conf does not stop every
+#    commit.
+if [[ -x "$TOOLS/craftsmanship-checker.sh" ]]; then
+  craft_rc=0
+  craft_output=$("$TOOLS/craftsmanship-checker.sh" --staged 2>&1) || craft_rc=$?
+  if [[ $craft_rc -eq 1 ]]; then
+    echo "BLOCKED: Craftsmanship violations (coding-standards §4) in staged files." >&2
+    echo "$craft_output" >&2
+    exit 1
+  elif [[ $craft_rc -ne 0 ]]; then
+    echo "WARNING: craftsmanship-checker error (rc=$craft_rc) — skipping (fail-open). Check .craftsmanship.conf." >&2
+    echo "$craft_output" >&2
+  fi
+fi
+
+# 3. Informational warnings — surfaced only, non-blocking by design.
+if [[ -x "$TOOLS/difficulty-book-manager.sh" ]]; then
+  "$TOOLS/difficulty-book-manager.sh" check 2>&1 || {
+    echo "WARNING: Difficulty book has an unaddressed hardest case." >&2
+  }
+fi
+
+if [[ -x "$REPO_ROOT/scripts/generate-routing-table.py" ]]; then
+  python3 "$REPO_ROOT/scripts/generate-routing-table.py" --check 2>&1 | grep -q 'up to date' || {
+    echo "WARNING: rules/agent-routing-table.md is stale — regenerate it and stage the result." >&2
+  }
+fi
+
+exit 0
