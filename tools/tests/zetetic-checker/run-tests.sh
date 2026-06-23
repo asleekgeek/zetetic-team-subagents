@@ -102,6 +102,31 @@ else
   PASS=$((PASS + 1))
 fi
 
+# 8. Behavioral comments ("never blocks", "always exits 0") MUST NOT fire UNSOURCED.
+#    Absolute word with no paired claim word = description of code, not a claim.
+output=$(bash "$CHECKER" --files fixture-behavioral-negative.py 2>&1 || true)
+if echo "$output" | grep -q 'UNSOURCED'; then
+  echo "  FAIL: behavioral comment fired UNSOURCED (false positive)"
+  echo "$output" | grep 'UNSOURCED' | sed 's/^/        /'
+  FAIL=$((FAIL + 1))
+else
+  echo "  PASS: behavioral comments not flagged (no claim-word pairing)"
+  PASS=$((PASS + 1))
+fi
+
+# 9. Every self-evidence phrase + a forward assert+claim MUST fire — exactly 7.
+#    A count (not just "match") so dropping any single regex branch is caught.
+output=$(bash "$CHECKER" --files fixture-selfevident-claim.py 2>&1 || true)
+n9=$(echo "$output" | grep -c 'UNSOURCED' || true)
+if [[ "$n9" -eq 7 ]]; then
+  echo "  PASS: self-evidence + assert+claim fixture fires exactly 7 UNSOURCED"
+  PASS=$((PASS + 1))
+else
+  echo "  FAIL: expected 7 UNSOURCED in fixture-selfevident-claim.py, got $n9"
+  echo "$output" | grep 'UNSOURCED' | sed 's/^/        /'
+  FAIL=$((FAIL + 1))
+fi
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 [[ $FAIL -eq 0 ]] || exit 1

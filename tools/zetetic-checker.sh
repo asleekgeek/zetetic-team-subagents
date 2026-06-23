@@ -7,12 +7,14 @@
 #   tools/zetetic-checker.sh --full                # recursively scan tracked files (audit sweep)
 #
 # Checks:
-#   - UNSOURCED (error): absolute claims ("always", "never", "obviously", "clearly") without a citation
+#   - UNSOURCED (error): an absolute word ("always"/"never") or self-evidence appeal
+#       paired with an evaluative word (works/correct/best/...), or a bare rhetorical
+#       appeal (an "everyone-knows" style assertion), uncited. Behavioral comments excluded.
 #   - MAGIC_NUMBER (warning): floats with ≥3 decimals without a `# source:` / `// source:` annotation
 #   - TODO_NO_REF (warning): TODO/FIXME/HACK without a difficulty-book or issue reference
 #
 # Severity model:
-#   - UNSOURCED is always blocking (near-zero false-positive rate; matches explicit epistemic overreach).
+#   - UNSOURCED is always blocking. Claim-pairing keeps the false-positive rate near zero (see check_line).
 #   - MAGIC_NUMBER / TODO_NO_REF are warnings by default. They block only when ZETETIC_PROFILE=strict.
 #   - ZETETIC_PROFILE must be declared in .zetetic.conf (committed, auditable) — no silent env override.
 #
@@ -161,8 +163,40 @@ WARNINGS=0
 check_line() {
   local file="$1" line_num="$2" line="$3"
 
-  # UNSOURCED — absolute claims without citation. Always an error.
-  if echo "$line" | grep -qiE '(#|//|/\*|\*|"|'"'"').*\b(always|never|obviously|clearly|everyone knows)\b' 2>/dev/null; then
+  # UNSOURCED — unsourced claims of correctness or universality. Always an error.
+  #
+  # Fires only inside comments / string literals. Two shapes are flagged:
+  #   1. an absolute quantifier or self-evidence adverb, paired (same comment,
+  #      within ~40 chars) with an evaluative word from the claim group below;
+  #   2. a bare rhetorical appeal from the self-evidence group below.
+  # The pairing is what turns it into a *claim about the world* rather than a
+  # *description of code*. Behavioral comments are deliberately NOT flagged,
+  # because the absolute word stands alone with no claim word nearby:
+  #   "this hook never blocks", "permissive always exits 0", instruction prose.
+  # source: measured on 2026-06-23 against a full-repo --full scan — the prior
+  #   bare-absolute-word trigger produced 64 findings, all 64 false positives
+  #   (behavioral comments); claim-pairing drops that to 0 while the
+  #   true-positive fixture still fires. Regression fixtures live in
+  #   tools/tests/zetetic-checker/fixture-behavioral-negative.py and
+  #   fixture-selfevident-claim.py.
+  # Known limitation (precision over recall — a commit gate must not cry wolf):
+  #   claims phrased with ambiguous words are NOT caught, e.g. "always faster",
+  #   "clearly the best", "never deadlocks", "clearly O(1)". A noisy gate gets
+  #   bypassed; review/PR is the backstop for those. Widen only with new fixtures.
+  local _u_mark='(#|//|/\*|\*|"|'"'"')'
+  local _u_assert='(always|never|obviously|clearly)'
+  # Claim group = words that are unambiguously quality judgments. Direction /
+  # category / superlative words (right, safe, best, optimal, fastest, secure,
+  # guaranteed, identical, ...) are EXCLUDED: in code they name nouns
+  # ("right child", "fast path", "safe list", "guaranteed delivery"), not claims.
+  # source: adversarial review 2026-06-23 — 22 benign idioms across py/sh/rs/ts
+  #   fired on those words; restricting to judgment words drops that to 0.
+  local _u_claim='(works?|correct|incorrect|wrong|buggy|broken|flawless|foolproof|bulletproof|infallible)'
+  local _u_evident='(everyone knows|everybody knows|goes without saying|needless to say|well[ -]known fact|trivially (true|correct|obvious))'   # see: provenance comment above
+  # Forward only (assert THEN claim, within ~24 chars). The reverse order is
+  # almost a hedged conditional ("correct only when ... is held") and is not matched.
+  local _u_pattern="${_u_mark}.*(\\b${_u_assert}\\b.{0,24}\\b${_u_claim}\\b|\\b${_u_evident}\\b)"
+  if echo "$line" | grep -qiE "$_u_pattern" 2>/dev/null; then
     if ! echo "$line" | grep -qiE 'source:|ref:|see:|citation:|cite:' 2>/dev/null; then
       echo "UNSOURCED   (error)    $file:$line_num: $(echo "$line" | head -c 80)"
       ERRORS=$((ERRORS + 1))
