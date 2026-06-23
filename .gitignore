@@ -5,3 +5,8 @@ __pycache__/
 *.pyc
 .web-ingest-cache/
 .abl-gate.json
+
+# Python tooling artifacts (mutation testing + venvs)
+.venv/
+mutants/
+.mutmut-cache

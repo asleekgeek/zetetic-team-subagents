@@ -1,0 +1,19 @@
+# pyproject.toml — Python tooling config for zetetic-team-subagents.
+#
+# This repo's payload is agents + shell tools; the only Python is the gate cores
+# under tools/ (acceptance_gate.py, manifest_gate.py, semantic_layer.py). This
+# file exists to wire mutation testing (rules/coding-standards.md §12) and pytest
+# for those cores. There is no installable package.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Mutation testing — mutmut 3.x (boxed.gg/mutmut). The two keys below
+# (only_mutate, pytest_add_cli_args_test_selection) are REWRITTEN in place by
+# tools/mutation_check.sh for a scoped run, then restored; their committed values
+# are the wide-sweep default (the whole acceptance-gate core against its full
+# pytest suite). source_paths bounds what mutmut copies into its sandbox.
+[tool.mutmut]
+source_paths = ["tools"]
+only_mutate = ["tools/acceptance_gate.py"]
+pytest_add_cli_args_test_selection = ["tests/test_acceptance_gate.py"]

@@ -56,6 +56,13 @@ set -euo pipefail
 # source: rules/coding-standards.md §4 (Martin 2008, Clean Code Ch.3 & Ch.10).
 # A committed .craftsmanship.conf overrides any of these (fully tunable).
 FILE_MAX="${FILE_MAX:-500}"    # §4.1
+# §4.1 test-file exception (test-engineer agent domain-context): test files may
+# exceed §4.1 when organized by fixture grouping (sharding would duplicate shared
+# fixtures across files, raising coupling). Applied ONLY to files matching
+# TEST_FILE_RE — production source stays bound by FILE_MAX. Advisory ceiling kept
+# to still catch a runaway test file; no published numeric source, so tunable.
+TEST_FILE_MAX="${TEST_FILE_MAX:-2000}"
+TEST_FILE_RE="${TEST_FILE_RE:-(^|/)(tests?/|test_|conftest\.py$)|_test\.[a-z]+$|\.spec\.[a-z]+$|\.test\.[a-z]+$}"
 FUNC_MAX="${FUNC_MAX:-50}"     # §4.2
 CLASS_MAX="${CLASS_MAX:-300}"  # §4.3
 PARAM_MAX="${PARAM_MAX:-4}"    # §4.4
@@ -260,9 +267,10 @@ SEV___ADVISE_BAND__="advise"
 
 # ── Per-file driver ────────────────────────────────────────────────────
 check_file() {
-  local f="$1" lang
+  local f="$1" lang file_max="$FILE_MAX"
   lang="$(craft_lang_of "$f")"
-  craft_d1_file_too_long      "$f" "$FILE_MAX"  "$SIZE_FLEX_BAND"
+  [[ "$f" =~ $TEST_FILE_RE ]] && file_max="$TEST_FILE_MAX"
+  craft_d1_file_too_long      "$f" "$file_max"  "$SIZE_FLEX_BAND"
   craft_d2_nesting_too_deep   "$f" "$NEST_MAX"  "$lang"
   craft_d3_function_too_long  "$f" "$FUNC_MAX"  "$SIZE_FLEX_BAND" "$lang"
   craft_d4_class_too_long     "$f" "$CLASS_MAX" "$SIZE_FLEX_BAND" "$lang"
