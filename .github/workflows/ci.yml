@@ -141,6 +141,12 @@ jobs:
       - name: Install ripgrep and jq
         run: sudo apt-get update && sudo apt-get install -y ripgrep jq
 
+      # node is required by tools/tests/adversarial-verify (deterministic synthesis-core
+      # harness). Pinned rather than relying on the runner's preinstalled node.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       # HARD gate: run every tools/tests/*/run-tests.sh; fail the job on the
       # first non-zero exit. set -e propagates the failure (no "|| echo").
       - name: Run tools/tests regression suites
