@@ -6,6 +6,60 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.20.0] — autonomous build loop + self-hosted knowledge ingestion
+
+### Added
+
+- **Closed-loop autonomous build** (`.claude/workflows/autonomous-build-loop.js`).
+  Drives a build task to a candidate on an isolated iteration branch:
+  refine → plan → verify-plan → orchestrator build → best-effort in-loop
+  acceptance checks → iterate until green or the budget is spent. Repo-generic —
+  `repoPath`, `gateRunner`, and an optional base `gateConfig` are inputs, so the
+  loop runs from any working directory against a repo that need not contain this
+  tooling. It drafts and converges a candidate; it does not self-certify.
+- **Deterministic acceptance gate** (`tools/acceptance_gate.py`,
+  `tools/acceptance-gate.sh`). Runs configured *command* gates and aggregates
+  their exit codes — a gate passes iff its command exits 0, never a model grading
+  its own output (Huang et al., arXiv:2310.01798). Gates any repo via `--root`,
+  evaluates the committed tip via `--diff-base/--diff-head` in a throwaway
+  worktree, rejects an empty diff, and fails closed. Unit-tested under
+  `tools/tests/acceptance-gate/` (incl. external-repo-from-a-foreign-cwd and
+  fail-closed cases).
+- **Real-exec Stop-hook gate** (`hooks/stop-acceptance-gate.py`) — the build
+  loop's gate component (invoked by the workflow, not registered as a global
+  lifecycle hook).
+- **Self-hosted web ingestion engine** (`tools/web_ingest.py`,
+  `tools/web_extract.py`, `tools/web-ingest.sh`). A dependency-free replica of
+  Firecrawl's self-hostable core (`scrape` / `map` / `crawl`): stdlib fetch,
+  `robots.txt` respected, main-content markdown extraction, conditional-GET
+  caching. No web search and no LLM extraction by design; TLS verification is
+  never disabled.
+- **Query-indexed semantic layer over Cortex** (`tools/semantic_layer.py`,
+  `tools/semantic-layer.sh`, `memory/semantic-layer.yaml`,
+  `memory/semantic-layer.schema.yaml`). A YAML index keyed by query + intent
+  (`ingest` / `verify` / `compare` / `monitor`) with `fresh` / `stale` /
+  `superseded` states. Never writes Cortex itself — the agent owns the write and
+  passes back the `cortex_id` as a pointer.
+- **Manifest-membership gate** (`tools/manifest_gate.py`, `tools/manifest-gate.sh`,
+  tests under `tools/tests/manifest-gate/`). Fail-closed grounding check: every
+  fact's `source` must be a URL the web-ingest engine actually fetched this
+  session. Complements the semantic layer's presence check with a membership
+  check; a pure `stdin → stdout` filter.
+
+### Changed
+
+- **README: broader refresh.** Corrected counts to ground truth — agents
+  116 → 117 (a 20th team-role agent, `memory-writer`), skills 63 → 64; documented
+  the autonomous build loop and the new knowledge-ingestion / semantic-layer
+  subsystems; refreshed the genius-trigger source comment (recounted 2026-06-23).
+- **Marketplace manifest** counts refreshed (20 team agents, 64 skills,
+  25 commands, 24 logical tools, 17 registered hooks).
+
+### Fixed
+
+- **`web-ingest` follows 308 redirects** and records the final resolved URL.
+- **Manifest-gate comments** reworded to satisfy the absolute-claim checker (§8).
+
 ## [2.19.1] — fix Release workflow test paths
 
 ### Fixed

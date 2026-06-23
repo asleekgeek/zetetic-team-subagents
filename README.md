@@ -5,14 +5,14 @@
 <p align="center">
   <a href="https://github.com/cdeust/zetetic-team-subagents/actions/workflows/ci.yml"><img src="https://github.com/cdeust/zetetic-team-subagents/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/tests-241-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/agents-116-8A2BE2" alt="Agents">
-  <img src="https://img.shields.io/badge/skills-63-green" alt="Skills">
+  <img src="https://img.shields.io/badge/agents-117-8A2BE2" alt="Agents">
+  <img src="https://img.shields.io/badge/skills-64-green" alt="Skills">
   <img src="https://img.shields.io/badge/hooks-17_lifecycle-red" alt="Hooks">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
 > **Claude Code agents whose commits are blocked when constants lack source citations.**
-> 97 genius reasoning agents (plus 19 team-role agents = 116 total) each citing their primary paper and documenting their refusal conditions, paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
+> 97 genius reasoning agents (plus 20 team-role agents = 117 total) each citing their primary paper and documenting their refusal conditions, paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
 > Not a prompt library. A methodology with **commit-time enforcement**.
 
 ---
@@ -88,9 +88,9 @@ That's the whole install. The plugin's installer copies agents, skills, hooks, a
 | Capability | What it gives you (concretely) |
 |---|---|
 | **97 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
-| **63 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
+| **64 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
 | **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) at any profile. `MAGIC_NUMBER` floats (3+ decimals without `source:`) and `TODO_NO_REF` warn at default profile, block under `ZETETIC_PROFILE=strict`. Active only when `git commit` is invoked through Claude Code's hook system. |
-| **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 654 data rows counted by python3 -c "from re import sub; ..." (see docs/AGENT-INTERNALS.md) on 2026-04-25. --> |
+| **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 759 table content rows (grep -cE '^\|' agents/genius/INDEX.md = 843, minus 84 separator rows), counted 2026-06-23; "650+" is a conservative floor. --> |
 
 ---
 
@@ -204,6 +204,18 @@ A `pre-tool-secret-shield` hook blocks any agent from reading `.env`, `.aws/cred
 
 ---
 
+## Knowledge ingestion + a query-indexed semantic layer
+
+Agents pull external knowledge into memory **without** an external SaaS dependency and **without** trusting an ungrounded claim. Three composable tools, each with a single responsibility:
+
+- **Self-hosted web ingestion** ([`tools/web_ingest.py`](tools/web_ingest.py)) — a dependency-free replica of Firecrawl's self-hostable core (`scrape` / `map` / `crawl`). Fetches with the standard library, respects `robots.txt`, extracts main-content markdown, and caches with conditional GET so revisiting a topic is cheap and incremental. It deliberately does **not** do web search or LLM extraction — it hands the agent clean markdown and the agent does the reasoning. TLS verification is never disabled.
+- **Query-indexed semantic layer** ([`tools/semantic_layer.py`](tools/semantic_layer.py)) — a YAML index ([`memory/semantic-layer.yaml`](memory/semantic-layer.yaml)) over Cortex memory, keyed by *query* and *intent* (`ingest` / `verify` / `compare` / `monitor`) with freshness states (`fresh` / `stale` / `superseded`). The layer never writes Cortex itself: the agent owns the Cortex write and passes back the `cortex_id` as a pointer, so the index and the store stay cleanly separated. Contract: [`memory/semantic-layer.schema.yaml`](memory/semantic-layer.schema.yaml).
+- **Membership gate** ([`tools/manifest_gate.py`](tools/manifest_gate.py)) — the fail-closed link between the two: every fact in a draft semantic-layer entry must be grounded in a URL the web-ingest engine **actually fetched this session**. The semantic layer can only check that a `source` string is *present*; this gate checks that it is *real*. A plausible-but-unfetched source is rejected (exit 3), not passed through. A pure `stdin → stdout` filter with no network or filesystem of its own.
+
+Honest limit: these are file-and-CLI tools the agent must be wired to call, not yet a turnkey one-command pipeline; and the freshness state is advisory — the layer records staleness, it does not auto-refetch.
+
+---
+
 ## A visible, enforced context budget
 
 Every agent here follows a per-model **token-budget protocol** (`agents/orchestrator.md` → `<token-budget>`): checkpoint at ~180K tokens (Opus 4.8 / Sonnet 4.6) or ~120K (Haiku 4.5), with a 200K session soft cap. Left to prose, that protocol is easy to ignore. This plugin ships it as a **status line you can see** and a **hook that enforces it** — both from the companion [**session-optimizer**](https://github.com/cdeust/session-optimizer) repo (MIT).
@@ -259,4 +271,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-<p align="center"><sub>Built by <a href="https://github.com/cdeust">cdeust</a>. All 116 agent files pass the <a href="tools/agent-definition-auditor.sh">structural auditor</a>. The system enforces source-citation discipline on the constants in its own commits.</sub></p>
+<p align="center"><sub>Built by <a href="https://github.com/cdeust">cdeust</a>. All 117 agent files pass the <a href="tools/agent-definition-auditor.sh">structural auditor</a>. The system enforces source-citation discipline on the constants in its own commits.</sub></p>
