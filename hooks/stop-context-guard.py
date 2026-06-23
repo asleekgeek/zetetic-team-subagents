@@ -387,6 +387,12 @@ def main():
     except (json.JSONDecodeError, ValueError):
         _exit()
 
+    # Valid JSON that is not an object (e.g. a bare number, string, list, or
+    # null) parses without error but has no .get(); treating it as a missing
+    # payload preserves the fail-open contract (parse/shape problems exit 0).
+    if not isinstance(data, dict):
+        _exit()
+
     # Loop guard: if we already forced a continuation, do not act again.
     if data.get("stop_hook_active"):
         _exit()

@@ -6,6 +6,63 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.21.0] — mechanical craftsmanship enforcement + hook-layer correctness
+
+### Added
+
+- **Craftsmanship checker** (`tools/craftsmanship-checker.sh` + `tools/lib/craftsmanship-detectors.sh`).
+  Mechanically enforces `coding-standards.md` §4 size limits and select structural
+  rules. `FILE_TOO_LONG` (>500 lines) blocks; function/class/parameter/nesting block
+  for recognized languages; grab-bag module names and layer-direction advise.
+  Judgment rules (SRP/OCP/LSP/ISP, rule-of-three, dead-code) are deliberately NOT
+  mechanized — a hook that fakes a verdict it cannot reach just trains you to ignore
+  it. Mirrors `zetetic-checker.sh` (`--staged`/`--files`/`--full`, exit 0/1/2);
+  wired into the commit/push hooks and a new CI job (hard on newly-added files,
+  informational full-tree sweep).
+- **Per-repo `.craftsmanship.conf`** (`.craftsmanship.conf.example`). Every threshold
+  and per-rule severity (`block`/`advise`/`off`) is team-tunable; defaults are the
+  sourced §4 numbers. A CI drift-guard test pins the defaults to the §4 table in
+  `rules/agent-reference/craftsmanship-moves.md`.
+- **Regression suites** `tools/tests/hook-layer/` (87 cases) and
+  `tools/tests/threshold-drift/` (10 cases), run as a hard CI gate.
+
+### Fixed
+
+- **Registry drift, at the root.** `scripts/setup.sh`'s hook merge was
+  skip-if-present and silently let `hooks/hooks.json` and `.claude-plugin/plugin.json`
+  diverge; it is now a content-equality re-sync. Restored the dropped
+  `stop-acceptance-gate.py` Stop entry (plugin.json 17 → 18 hooks).
+- **macOS hook no-op.** 11 stdin-reading hooks used `timeout 3 cat`; stock macOS
+  ships no `timeout`/`gtimeout`, so the payload was zeroed and the hooks silently
+  did nothing. Replaced with a portable bounded read.
+- **Fail-open holes.** `pre-tool-secret-shield.py`, `stop-acceptance-gate.py`, and
+  `stop-context-guard.py` raised on valid non-object JSON instead of failing open;
+  guarded with an `isinstance` shape check.
+- **secret-shield false blocks + a regression.** No longer hard-blocks
+  `.env.example`/`.sample`/`.template` templates or `keyring`/`keychain` source
+  files; restored the `printenv $SECRET` / `env NAME` secret-read block. All
+  true-positive secret blocks preserved.
+- **git-verb guard bypasses.** The commit/push gates were silently skipped by
+  `git push;`, `git commit&`, `(git commit)`, `sudo git commit`, `env X=1 git commit`,
+  and `GIT_EDITOR=… git commit`. One unified anchor across all 5 hooks closes both
+  classes with no new false positives.
+- **claim-gate latency.** A per-line subprocess loop (~38–70s on routine edits) is
+  now a 3-pass scan (<1s).
+- Smaller hook fixes: `notification-handler.sh` `pipefail` crash, `session-end.sh`
+  abort in a non-git directory, `post-commit-difficulty.sh` promiscuous grep,
+  `post-tool-error-routing.sh` keyword anchoring, `pre-edit-layer-check.sh`
+  advisory-honesty wording.
+
+### Changed
+
+- Mutation testing stays operationalized as `test-engineer` Move 8 (in
+  `coding-standards.md` §3.2 and `craftsmanship-moves.md`); a real per-stack runner
+  integration in the acceptance gate is a tracked follow-up — an inert draft was not
+  shipped (no current caller, per §9).
+- The craftsmanship CI gate is a ratchet: newly-added files must fully comply; the
+  legacy tree's pre-existing §4 debt (e.g. `scripts/setup.sh`) is surfaced
+  informationally, not blocked, until refactored.
+
 ## [2.20.0] — autonomous build loop + self-hosted knowledge ingestion
 
 ### Added

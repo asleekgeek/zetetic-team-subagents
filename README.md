@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/tests-241-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/agents-117-8A2BE2" alt="Agents">
   <img src="https://img.shields.io/badge/skills-64-green" alt="Skills">
-  <img src="https://img.shields.io/badge/hooks-17_lifecycle-red" alt="Hooks">
+  <img src="https://img.shields.io/badge/hooks-18_lifecycle-red" alt="Hooks">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
@@ -90,6 +90,7 @@ That's the whole install. The plugin's installer copies agents, skills, hooks, a
 | **97 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
 | **64 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
 | **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) at any profile. `MAGIC_NUMBER` floats (3+ decimals without `source:`) and `TODO_NO_REF` warn at default profile, block under `ZETETIC_PROFILE=strict`. Active only when `git commit` is invoked through Claude Code's hook system. |
+| **Craftsmanship gate** | `tools/craftsmanship-checker.sh` mechanically enforces `coding-standards.md` §4 size limits + select structural rules. `FILE_TOO_LONG` (>500 lines) blocks; function/class/parameter/nesting block for recognized languages; grab-bag module names and layer-direction advise. Every threshold and per-rule severity (`block`/`advise`/`off`) is tunable per-repo via `.craftsmanship.conf` — defaults are the sourced §4 numbers. Runs at commit (local hook, changed files) and in CI (hard on newly-added files, informational full-tree sweep). Judgment rules (SRP/OCP/LSP/ISP, rule-of-three) are deliberately **not** mechanized — a hook that fakes a verdict it can't reach just trains you to ignore it. |
 | **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 759 table content rows (grep -cE '^\|' agents/genius/INDEX.md = 843, minus 84 separator rows), counted 2026-06-23; "650+" is a conservative floor. --> |
 
 ---
@@ -237,7 +238,16 @@ ZETETIC_PROFILE=permissive    # everything informational; never blocks
                               # → graduate to standard → strict over weeks
 ```
 
-Full migration path: [`docs/MIGRATION.md`](docs/MIGRATION.md).
+Size and structural limits adopt the same way — per-repo, in `.craftsmanship.conf` (the §4 thresholds are team-dependent by design, so they are configuration, not hard-coded into the gate):
+
+```bash
+# .craftsmanship.conf at repo root — defaults are the sourced §4 numbers
+FILE_MAX=500                 # raise for a legacy tree, or grandfather per rule
+SEV_FILE_TOO_LONG=block      # block | advise | off — every rule is tunable, incl. off
+SEV_NESTING_TOO_DEEP=advise
+```
+
+A team that never writes the file gets the strict defaults; a team that disagrees edits one line instead of disabling the whole gate. Full migration path: [`docs/MIGRATION.md`](docs/MIGRATION.md).
 
 ---
 

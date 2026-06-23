@@ -67,3 +67,92 @@ jobs:
           fetch-depth: 0
       - name: Run zetetic-checker on full tree
         run: ZETETIC_PROFILE=standard bash tools/zetetic-checker.sh --full || echo "checker reported violations (informational)"
+
+  craftsmanship-checker:
+    name: Craftsmanship Checker (hard gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install ripgrep and jq
+        run: sudo apt-get update && sudo apt-get install -y ripgrep jq
+
+      # RATCHET: the hard gate runs on newly-ADDED files in the diff, not the full
+      # tree. The legacy tree carries pre-existing §4 violations that are out of
+      # scope for an incremental change; gating the whole tree (or every modified
+      # legacy file) would guarantee a red build. New files must meet the standard —
+      # the ratchet tightens without rewriting history. Base ref is the PR base SHA
+      # for pull_request, or HEAD^ for a push (HEAD on the first commit, no parent).
+      - name: Determine base ref for the diff
+        id: base
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${PR_BASE_SHA}" ]]; then
+            base="${PR_BASE_SHA}"
+          else
+            base="$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)"
+          fi
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
+          echo "Diff base: ${base}"
+
+      # HARD gate: no "|| echo" — a real violation in a NEWLY-ADDED file fails the
+      # job. Scope is --diff-filter=A (added files only): every NEW file must fully
+      # comply, while MODIFIED legacy files (which carry pre-existing §4 debt the
+      # ratchet must not red-build on the moment they are touched) are surfaced by
+      # the informational --full step below. This is the honest ratchet for a repo
+      # with legacy debt: new code is held to the standard; legacy debt is reported,
+      # not blocked, until it is refactored. (Tracked follow-up: bring the legacy
+      # offenders — scripts/setup.sh 698L, stop-context-guard.py, etc. — into §4
+      # compliance, then widen this gate to modified files.)
+      - name: Craftsmanship hard gate on newly-added files
+        run: |
+          set -euo pipefail
+          added=()
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            [[ -f "$f" ]] && added+=("$f")
+          done < <(git diff --name-only --diff-filter=A "${{ steps.base.outputs.base }}" HEAD)
+          if [[ ${#added[@]} -eq 0 ]]; then
+            echo "No newly-added files to gate — passing."
+            exit 0
+          fi
+          printf 'Hard-gating newly-added files (new files must fully comply):\n'
+          printf '  %s\n' "${added[@]}"
+          bash tools/craftsmanship-checker.sh --files "${added[@]}"
+
+      # INFORMATIONAL: full-tree sweep that NEVER fails the job (mirrors the
+      # informational zetetic-checker job above). Surfaces the legacy backlog
+      # without blocking the build.
+      - name: Run craftsmanship-checker on full tree (informational)
+        run: bash tools/craftsmanship-checker.sh --full || echo "craftsmanship --full reported violations (informational; legacy tree)"
+
+  tools-tests:
+    name: Tools Regression Suite (hard gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install ripgrep and jq
+        run: sudo apt-get update && sudo apt-get install -y ripgrep jq
+
+      # HARD gate: run every tools/tests/*/run-tests.sh; fail the job on the
+      # first non-zero exit. set -e propagates the failure (no "|| echo").
+      - name: Run tools/tests regression suites
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          suites=(tools/tests/*/run-tests.sh)
+          if [[ ${#suites[@]} -eq 0 ]]; then
+            echo "no tools/tests/*/run-tests.sh suites found" >&2
+            exit 1
+          fi
+          for suite in "${suites[@]}"; do
+            echo "=== Running $suite ==="
+            bash "$suite"
+          done

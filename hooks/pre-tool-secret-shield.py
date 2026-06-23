@@ -42,7 +42,10 @@ import sys
 from pathlib import Path
 
 BLOCKED_PATH_PATTERNS: list[str] = [
-    r"(^|/)\.env(\.[^/]+)?$",
+    # A real `.env` (or `.env.production`, `.env.local`) holds live secrets and
+    # blocks. Committed placeholders `.env.example|sample|template|dist` carry
+    # no real secret — the negative lookahead exempts only those suffixes.
+    r"(^|/)\.env(\.(?!example$|sample$|template$|dist$)[^/]+)?$",
     r"(^|/)credentials(\.[^/]+)?$",
     r"(^|/)\.aws/credentials$",
     r"(^|/)\.aws/config$",
@@ -56,9 +59,19 @@ BLOCKED_PATH_PATTERNS: list[str] = [
     r"(^|/)id_(rsa|ed25519|ecdsa|dsa)(\.[^/]+)?$",
     r"(^|/)\.ssh/.*$",
     r"(^|/)\.gnupg/.*$",
-    r"\.(pem|key|p12|pfx|jks|keystore)$",
-    r"(^|/)secrets?/",
-    r"(^|/)vault/",
+    # Unambiguous key/cert *container* formats — always block.
+    r"\.(pem|p12|pfx|jks)$",
+    # `.key`/`.keystore` are ambiguous (i18n `de.key`, `config.key`,
+    # `data.keystore`). Block only inside a credential/PKI location or when
+    # the stem itself names a key/cert (server.key, tls.key, private.key).
+    r"(^|/)(ssl|tls|certs?|keys?|pki|private|secrets?|vault|\.ssh)/"
+    r"[^/]*\.(key|keystore)$",
+    r"(^|/)(server|client|tls|ssl|private|priv|ca|cert|rsa|ed25519|"
+    r"id_[a-z0-9]+)\.(key|keystore)$",
+    # Secret/vault *stores* — but not documentation *about* secrets. A
+    # `docs/`/`documentation/`/`doc/` ancestor marks prose, not a store.
+    r"(^|/)secrets?/(?!.*\.(md|markdown|rst|txt|adoc|html?)$)",
+    r"(^|/)vault/(?!.*\.(md|markdown|rst|txt|adoc|html?)$)",
     r"(^|/)pii-fixtures/tp-[^/]*$",
     r"(^|/)tp-known-secrets",
     r"(^|/)\.(bash|zsh|fish)_history$",
@@ -66,31 +79,102 @@ BLOCKED_PATH_PATTERNS: list[str] = [
     r"(^|/)\.psql_history$",
     r"(^|/)\.mysql_history$",
     r"(^|/)\.node_repl_history$",
-    r"keychain",
-    r"keyring",
-    r"login\.keychain-db$",
+    # The real macOS credential artifact. Bare `keychain`/`keyring` substrings
+    # were dropped: they false-blocked source/test/doc files merely named after
+    # the concept (keyring_backend.py, test_keychain.py, how-keychain.md).
+    r"(^|/)login\.keychain-db$",
 ]
 
 BLOCKED_PATH_RE = re.compile("|".join(BLOCKED_PATH_PATTERNS), re.IGNORECASE)
 
+# Verbs that *read/consume* a file's contents (a credential SOURCE).
+# `cat foo` exfiltrates foo; matching a credential arg here is a true block.
 BASH_READ_VERBS = re.compile(
     r"\b(cat|less|more|head|tail|bat|grep|rg|ag|awk|sed|cut|sort|uniq|wc|"
-    r"file|tee|cp|mv|rsync|scp|curl|wget|base64|xxd|od|strings|jq|yq|"
-    r"python3?|node|ruby|perl|sh|bash|zsh|fish|env|printenv|"
+    r"file|base64|xxd|od|strings|jq|yq|"
+    r"python3?|node|ruby|perl|sh|bash|zsh|fish|printenv|"
     r"openssl|gpg|ssh-keygen)\b",
     re.IGNORECASE,
 )
 
-BASH_ENV_LEAK = re.compile(
-    r"\b(printenv|env\s*$|export\s*-p|set\s*$|"
-    r"echo\s+\$\{?[A-Z_]*(KEY|TOKEN|SECRET|PASSWORD|PASS|CREDENTIAL|"
-    r"API|AUTH|PRIVATE|CERT)[A-Z_]*\}?)\b",
+# Verbs that *relocate or write* a file without surfacing its contents into
+# the agent's view. The threat model (see module docstring) is about READING
+# credential contents; a local copy/move/write reveals nothing, so neither
+# the source nor the destination of these verbs is a hard block. Writing a
+# credential file (e.g. seeding a fresh .env) is allowed-with-warning.
+BASH_COPY_VERBS = frozenset({"cp", "mv", "tee", "install", "dd"})
+
+# Verbs whose *destination* may be remote (exfiltration channel). The final
+# positional is a write destination, but a credential SOURCE argument is
+# still a real read+transmit and stays blocked.
+BASH_TRANSFER_VERBS = frozenset({"scp", "rsync"})
+
+# All verbs that take a write/transfer destination as their final positional.
+BASH_WRITE_VERBS = BASH_COPY_VERBS | BASH_TRANSFER_VERBS
+
+# Network-fetch verbs whose URL arguments are remote locations, not local
+# credential paths. A public URL containing the literal segment "/vault/"
+# or "secrets/" must not be mistaken for a local credential directory.
+BASH_FETCH_VERBS = frozenset({"curl", "wget"})
+
+# Verbs that read a *named* environment variable. `printenv NAME` and the
+# leading bare `NAME` tokens of `env NAME` print that variable's value, so a
+# sensitive NAME is a credential read. Bare `printenv`/`env` (whole-env dump)
+# is covered separately by BASH_ENV_DUMP.
+BASH_ENV_READ_VERBS = frozenset({"printenv", "env"})
+
+# Shape of a shell variable-name token (so `env FOO=bar cmd` assignments and
+# the command word after them are not mistaken for variable reads).
+VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+# Env-var *dump* commands: enumerate the whole environment. These must sit at
+# a command position (start, or after a shell separator) so that a literal
+# path ending in ".env" does not trip the bare-`env` alternative.
+BASH_ENV_DUMP = re.compile(
+    r"(?:^|[;|&]|\b(?:and|or|then|do)\s)\s*"
+    r"(printenv|env|export\s+-p|set)\s*(?:[;|&]|$)",
     re.IGNORECASE,
 )
 
+# A *sensitive* shell variable name. The name is split on underscores; a
+# component must be exactly one of the high-confidence credential words, OR
+# the name must end with one of the credential suffixes. Substring matches
+# inside a component (APITUDE→API, AUTHOR→AUTH, PASSWORDLESS→PASSWORD,
+# PASSTHROUGH→PASS) are rejected. Real cases such as AWS_SECRET_ACCESS_KEY
+# (component SECRET + suffix _KEY) and GITHUB_TOKEN (suffix _TOKEN) match.
+SENSITIVE_VAR_WORDS = frozenset(
+    {"KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "CREDENTIALS",
+     "APIKEY", "PRIVKEY"}
+)
+SENSITIVE_VAR_SUFFIXES = (
+    "_KEY", "_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIAL", "_CREDENTIALS",
+)
+
+# Captures the variable name printed by `echo`/`printf` so it can be checked
+# against SENSITIVE_VAR_WORDS / SENSITIVE_VAR_SUFFIXES instead of a blind
+# substring match.
+ECHO_VAR_RE = re.compile(
+    r"\b(?:echo|printf)\b[^|;&]*?\$\{?([A-Za-z_][A-Za-z0-9_]*)",
+    re.IGNORECASE,
+)
+
+
+def _is_sensitive_var(name: str) -> bool:
+    """True only for high-confidence credential variable names."""
+    upper = name.upper()
+    if any(upper.endswith(sfx) for sfx in SENSITIVE_VAR_SUFFIXES):
+        return True
+    return any(part in SENSITIVE_VAR_WORDS for part in upper.split("_"))
+
+
 BLOCKED_PATTERNS_EMBEDDED = re.compile(
     r"(?<![A-Za-z0-9])("
-    r"\.env(\.[A-Za-z0-9_-]+)?"
+    # `.env` and real suffixes block; template placeholders are exempted by
+    # the negative lookahead (mirrors the BLOCKED_PATH_PATTERNS `.env` rule).
+    # The lookahead guards immediately after `.env` so a template suffix
+    # cannot fall back to a bare-`.env` match (the suffix group is optional).
+    r"\.env(?!\.(?:example|sample|template|dist)(?![A-Za-z0-9]))"
+    r"(\.[A-Za-z0-9_-]+)?"
     r"|\.aws/(credentials|config)"
     r"|\.(netrc|git-credentials|npmrc|pypirc)"
     r"|\.config/gh/hosts\.yml"
@@ -98,10 +182,18 @@ BLOCKED_PATTERNS_EMBEDDED = re.compile(
     r"|\.gnupg/[A-Za-z0-9._/-]+"
     r"|id_(rsa|ed25519|ecdsa|dsa)(\.[A-Za-z0-9]+)?"
     r"|credentials(\.[A-Za-z0-9_-]+)?"
-    r"|(secrets?|vault)/[A-Za-z0-9._/-]*"
+    # Secret/vault stores, but not prose *about* secrets (doc extensions).
+    r"|(secrets?|vault)/(?![A-Za-z0-9._/-]*\."
+    r"(md|markdown|rst|txt|adoc|html?)(?![A-Za-z0-9]))[A-Za-z0-9._/-]*"
     r"|tp-known-secrets[A-Za-z0-9._-]*"
     r"|\.(bash|zsh|fish|python|psql|mysql|node_repl)_history"
-    r"|[A-Za-z0-9_-]+\.(pem|key|p12|pfx|jks|keystore)"
+    # Unambiguous key/cert containers.
+    r"|[A-Za-z0-9_-]+\.(pem|p12|pfx|jks)"
+    # `.key`/`.keystore` only in a PKI/credential dir or with a key-ish stem.
+    r"|(ssl|tls|certs?|keys?|pki|private|secrets?|vault)/[^/\s]*"
+    r"\.(key|keystore)"
+    r"|(server|client|tls|ssl|private|priv|ca|cert|rsa|ed25519)"
+    r"\.(key|keystore)"
     r")(?![A-Za-z0-9])",
     re.IGNORECASE,
 )
@@ -114,66 +206,207 @@ def is_blocked_path(p: str) -> tuple[bool, str | None]:
     return (bool(m), m.group(0) if m else None)
 
 
-def bash_blocked(cmd: str) -> tuple[bool, str | None]:
-    if not cmd:
-        return False, None
-    if BASH_ENV_LEAK.search(cmd):
-        return True, "env-var dump (printenv/env/export -p / echo $SECRET)"
+def _split_pipeline(cmd: str) -> list[str]:
+    """Split a command line into simple commands on shell separators.
+
+    Best-effort: separators inside quotes are tolerated (we err toward more
+    segments, never fewer reads escaping inspection). Each segment is then
+    classified independently so a write destination in one segment cannot
+    suppress a credential read in another.
+    """
+    return [seg for seg in re.split(r"[;|&\n]+|&&|\|\|", cmd) if seg.strip()]
+
+
+def _segment_tokens(segment: str) -> list[str]:
     try:
-        tokens = shlex.split(cmd, posix=True)
+        return shlex.split(segment, posix=True)
     except ValueError:
-        tokens = cmd.split()
-    has_read_verb = bool(BASH_READ_VERBS.search(cmd))
-    if not has_read_verb:
-        return False, None
+        return segment.split()
+
+
+def _verb_of(tokens: list[str]) -> str | None:
+    """The command verb of a segment, skipping leading env-var assignments.
+
+    e.g. `FOO=1 cp a b` -> 'cp'. Returns the bare program name, lowercased.
+    """
     for tok in tokens:
-        candidate = tok.lstrip("@-+")
+        if "=" in tok and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tok):
+            continue
+        return Path(tok.lstrip("@-+")).name.lower()
+    return None
+
+
+def _is_url(arg: str) -> bool:
+    return bool(re.match(r"^[a-z][a-z0-9+.-]*://", arg, re.IGNORECASE))
+
+
+def _scan_arguments(verb: str, tokens: list[str]) -> tuple[bool, str | None]:
+    """Inspect a segment's positional args for a credential SOURCE read.
+
+    - COPY verbs (cp/mv/tee/install/dd): local relocation/write surfaces no
+      contents to the agent; neither source nor destination is a block.
+    - TRANSFER verbs (scp/rsync): destination may be remote; the source is
+      still a read+transmit, so the final positional (destination) is dropped
+      and remaining args are scanned as sources.
+    - FETCH verbs (curl/wget): URL args are remote and never local credential
+      paths, so they are skipped entirely.
+    """
+    if verb in BASH_COPY_VERBS:
+        return False, None
+    positional = [t for t in tokens[1:] if not t.startswith("-")]
+    if verb in BASH_TRANSFER_VERBS and positional:
+        # Last positional is the destination; everything before is a source.
+        positional = positional[:-1]
+    for arg in positional:
+        if verb in BASH_FETCH_VERBS and _is_url(arg):
+            continue
+        candidate = arg.lstrip("@-+")
         is_b, pattern = is_blocked_path(candidate)
         if is_b:
             return True, (
                 f"read of credential-bearing path '{candidate}' "
                 f"(pattern '{pattern}')"
             )
-    m = BLOCKED_PATTERNS_EMBEDDED.search(cmd)
+    return False, None
+
+
+def _scan_env_read(tokens: list[str]) -> tuple[bool, str | None]:
+    """Inspect `printenv NAME` / `env NAME ...` reads for a sensitive variable.
+
+    Only the leading bare variable-name tokens are reads: `printenv X` and the
+    `env X Y` form print those variables. A `NAME=val` assignment configures
+    the environment and the first non-assignment, non-name token is the command
+    `env` runs (`env FOO=bar somecmd`) — neither is a read, so scanning stops
+    at the first token that is not a bare variable name.
+    """
+    for tok in tokens[1:]:
+        if tok.startswith("-"):
+            continue
+        if not VAR_NAME_RE.match(tok):
+            break
+        if _is_sensitive_var(tok):
+            return True, f"read of sensitive environment variable {tok}"
+    return False, None
+
+
+def bash_blocked(cmd: str) -> tuple[bool, str | None]:
+    if not cmd:
+        return False, None
+
+    # 1) Whole-environment dump commands (command-positioned so a literal
+    #    path ending in ".env" does not trip the bare-`env` alternative).
+    if BASH_ENV_DUMP.search(cmd):
+        return True, "env-var dump (printenv / env / export -p / set)"
+
+    # 2) `echo`/`printf` of a *sensitive* variable. Names are matched on
+    #    underscore components + a suffix allowlist — never blind substring.
+    for var in ECHO_VAR_RE.findall(cmd):
+        if _is_sensitive_var(var):
+            return True, f"echo of sensitive variable ${var}"
+
+    # 3) Per-segment credential SOURCE reads, distinguishing read verbs from
+    #    write/copy destinations and skipping curl/wget URLs.
+    for segment in _split_pipeline(cmd):
+        tokens = _segment_tokens(segment)
+        if not tokens:
+            continue
+        verb = _verb_of(tokens)
+        if verb is None:
+            continue
+        if verb in BASH_ENV_READ_VERBS:
+            blocked, reason = _scan_env_read(tokens)
+            if blocked:
+                return True, reason
+        is_read = bool(BASH_READ_VERBS.search(segment))
+        is_write = verb in BASH_WRITE_VERBS
+        is_fetch = verb in BASH_FETCH_VERBS
+        if not (is_read or is_write or is_fetch):
+            continue
+        blocked, reason = _scan_arguments(verb, tokens)
+        if blocked:
+            return True, reason
+
+    # 4) Embedded credential path appearing anywhere in a read/copy/fetch
+    #    command (catches paths not cleanly tokenized). Write destinations and
+    #    fetch URLs are stripped first so they cannot trip a false block.
+    scannable = _strip_write_dest_and_urls(cmd)
+    m = BLOCKED_PATTERNS_EMBEDDED.search(scannable)
     if m:
         return True, f"credential path embedded in command: '{m.group(0)}'"
     return False, None
 
 
-def main() -> int:
-    try:
-        raw = sys.stdin.read()
-        event = json.loads(raw) if raw.strip() else {}
-    except json.JSONDecodeError:
-        return 0
+def _strip_write_dest_and_urls(cmd: str) -> str:
+    """Remove non-source paths before the embedded credential-path scan.
 
-    tool = event.get("tool_name", "")
-    tin = event.get("tool_input", {}) or {}
+    Keeps read sources intact so the embedded regex sees only exfiltration
+    sources, never a legitimate destination or remote URL:
+    - COPY verbs (cp/mv/tee/install/dd): drop ALL their path args (local
+      relocation/write reveals no contents).
+    - TRANSFER verbs (scp/rsync): drop only the final destination.
+    - FETCH verbs (curl/wget): drop URL args.
+    """
+    parts: list[str] = []
+    for segment in _split_pipeline(cmd):
+        tokens = _segment_tokens(segment)
+        verb = _verb_of(tokens) if tokens else None
+        if verb in BASH_COPY_VERBS:
+            # Keep only the verb token; all path args are non-source.
+            parts.append(tokens[0] if tokens else "")
+            continue
+        kept = list(tokens)
+        if verb in BASH_TRANSFER_VERBS:
+            positional = [t for t in tokens[1:] if not t.startswith("-")]
+            if positional:
+                dest = positional[-1]
+                # Drop the final destination occurrence only.
+                for i in range(len(kept) - 1, -1, -1):
+                    if kept[i] == dest:
+                        del kept[i]
+                        break
+        if verb in BASH_FETCH_VERBS:
+            kept = [t for t in kept if not _is_url(t)]
+        parts.append(" ".join(kept))
+    return " ".join(parts)
 
-    blocked_reason: str | None = None
 
+def _field(tin: dict, key: str) -> str:
+    """Extract a string field, coercing non-strings to "".
+
+    A non-string value (e.g. a numeric `command`) carries no path/command to
+    inspect; returning "" makes the matchers fail open instead of crashing.
+    """
+    val = tin.get(key, "")
+    return val if isinstance(val, str) else ""
+
+
+def _evaluate(tool: str, tin: dict) -> str | None:
+    """Return a block reason for an exfiltrating call, else None.
+
+    Edit/Write/NotebookEdit to a credential path is a warning, not a block
+    (writing reveals no contents), so it returns None after the stderr note.
+    """
     if tool == "Read":
-        path = tin.get("file_path", "")
+        path = _field(tin, "file_path")
         is_blocked, pattern = is_blocked_path(path)
         if is_blocked:
-            blocked_reason = f"Read blocked: {path} matches credential pattern '{pattern}'"
+            return f"Read blocked: {path} matches credential pattern '{pattern}'"
     elif tool == "Bash":
-        cmd = tin.get("command", "")
+        cmd = _field(tin, "command")
         is_blocked, reason = bash_blocked(cmd)
         if is_blocked:
-            blocked_reason = (
+            return (
                 f"Bash blocked: {reason}. Command: {cmd[:160]}"
                 + ("…" if len(cmd) > 160 else "")
             )
     elif tool == "Grep":
         for key in ("path", "include"):
-            v = tin.get(key, "")
+            v = _field(tin, key)
             is_blocked, pattern = is_blocked_path(v) if v else (False, None)
             if is_blocked:
-                blocked_reason = f"Grep blocked: {key}={v} matches credential pattern '{pattern}'"
-                break
+                return f"Grep blocked: {key}={v} matches credential pattern '{pattern}'"
     elif tool in ("Edit", "Write", "NotebookEdit"):
-        path = tin.get("file_path", "")
+        path = _field(tin, "file_path")
         is_blocked, pattern = is_blocked_path(path)
         if is_blocked:
             print(
@@ -181,7 +414,29 @@ def main() -> int:
                 f"(matched '{pattern}'). Read of this path will remain blocked.",
                 file=sys.stderr,
             )
+    return None
 
+
+def main() -> int:
+    # Fail-open on any input failure: an unreadable stdin (OSError), invalid
+    # JSON (JSONDecodeError/ValueError), or valid-but-non-object JSON
+    # (`[]`, `42`, `"x"`, `true`, `null`) must NOT block or traceback — the
+    # contract is exit 0. Only a JSON object carries a tool event.
+    try:
+        raw = sys.stdin.read()
+        event = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, ValueError, OSError):
+        return 0
+
+    if not isinstance(event, dict):
+        return 0
+
+    tool = event.get("tool_name", "")
+    tin = event.get("tool_input", {}) or {}
+    if not isinstance(tin, dict):
+        return 0
+
+    blocked_reason = _evaluate(tool, tin)
     if blocked_reason:
         print(f"[secret-shield] {blocked_reason}", file=sys.stderr)
         print(

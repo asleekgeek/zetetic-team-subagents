@@ -526,15 +526,39 @@ elif [[ ! -f "$hooks_json" ]]; then
 elif ! command -v python3 &>/dev/null; then
   warn "python3 not found — skipping hook merge"
 else
-  existing_count=$(python3 -c "
-import json
-with open('$plugin_json') as f: d = json.load(f)
-hooks = d.get('hooks', {})
-print(sum(len(v) for v in hooks.values()) if isinstance(hooks, dict) else 0)
-" 2>/dev/null || echo "0")
+  # Content-equality re-sync (hooks.json is authoritative):
+  #   - 0 = plugin.json hooks already match hooks.json (timeouts stripped) → skip
+  #   - 1 = drift detected (or hooks absent) → re-merge
+  #   - 2 = parse/IO error → exit 2 (fail-open: leave plugin.json untouched)
+  # This makes hooks.json the single source of truth and prevents merge drift.
+  in_sync=$(python3 -c "
+import json, sys
+try:
+    with open('$plugin_json') as f: plugin = json.load(f)
+    with open('$hooks_json') as f: hooks_data = json.load(f)
+    authoritative = hooks_data.get('hooks', {})
+    existing = plugin.get('hooks', {})
+    # Strip merge-injected 'timeout' fields from plugin hooks before comparing.
+    stripped = {}
+    for event, entries in existing.items():
+        new_entries = []
+        for entry in entries:
+            new_entry = {k: v for k, v in entry.items() if k != 'hooks'}
+            new_entry['hooks'] = [
+                {k: v for k, v in h.items() if k != 'timeout'}
+                for h in entry.get('hooks', [])
+            ]
+            new_entries.append(new_entry)
+        stripped[event] = new_entries
+    print('0' if stripped == authoritative else '1')
+except Exception:
+    print('2')
+" 2>/dev/null || echo "2")
 
-  if [[ "$existing_count" -gt 0 ]]; then
-    ok "Hooks already in plugin.json ($existing_count entries) — skipping"
+  if [[ "$in_sync" == "0" ]]; then
+    ok "Hooks in plugin.json match hooks.json (source of truth) — skipping"
+  elif [[ "$in_sync" == "2" ]]; then
+    warn "Could not parse plugin.json/hooks.json — leaving plugin.json untouched"
   else
     cp "$plugin_json" "${plugin_json}.bak.$$"
     if python3 -c "
@@ -554,10 +578,10 @@ with open('$plugin_json', 'w') as f: json.dump(plugin, f, indent=2); f.write('\n
 print(sum(len(v) for v in plugin_hooks.values()))
 " 2>/dev/null; then
       rm -f "${plugin_json}.bak.$$"
-      ok "Merged hooks into plugin.json"
+      ok "Re-synced hooks into plugin.json from hooks.json (source of truth)"
     else
       mv "${plugin_json}.bak.$$" "$plugin_json"
-      warn "Hook merge failed — plugin.json restored"
+      warn "Hook re-sync failed — plugin.json restored"
     fi
   fi
 fi

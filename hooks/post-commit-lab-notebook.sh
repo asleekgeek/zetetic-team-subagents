@@ -5,13 +5,29 @@ set -euo pipefail
 
 # Command guard: only fire after git commit (matcher: "Bash" fires on ALL Bash calls)
 HOOK_INPUT=""
-if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+if ! [ -t 0 ]; then
+  # Portable bounded stdin read. macOS ships NO 'timeout'/'gtimeout'; its
+  # absence must NOT zero out the payload (that silently disables the hook — the
+  # root cause of audit finding R1). Use the bound if present, else plain cat.
+  _ZT="$(command -v timeout || command -v gtimeout || true)"
+  if [ -n "$_ZT" ]; then
+    HOOK_INPUT="$("$_ZT" 3 cat 2>/dev/null || true)"
+  else
+    HOOK_INPUT="$(cat 2>/dev/null || true)"
+  fi
+fi
 if command -v jq &>/dev/null; then
   BASH_CMD=$(echo "$HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
 else
   BASH_CMD=$(echo "$HOOK_INPUT" | grep -oE '"command":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"command":\s*"//' | sed 's/"$//' || echo "")
 fi
-if ! echo "$BASH_CMD" | grep -q 'git commit' 2>/dev/null; then exit 0; fi
+# Match the git SUBCOMMAND (commit|push) at a command position only: line start or
+# right after a shell separator (; & | ( {), then optional global flags (-x tokens,
+# each optionally followed by one non-flag arg, e.g. -C /path), then the verb as a
+# whole word NOT followed by '-' (excludes commit-tree/commit-graph, committed/pushed)
+# and NOT inside an echo/quoted string or a --grep=... value. source: audit finding R1.
+ZT_GIT_VERB_RE='(^|[;&|({])[[:space:]]*((sudo|command|env)[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*([^[:space:];&|({]*/)?git[[:space:]]+(-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?[[:space:]]+)*(commit|push)([[:space:];&|)<>]|$)'
+if ! printf '%s' "$BASH_CMD" | grep -qE "$ZT_GIT_VERB_RE" 2>/dev/null; then exit 0; fi
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 NOTEBOOK="$REPO_ROOT/research/NOTEBOOK.md"

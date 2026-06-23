@@ -12,7 +12,13 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 # Auto-save a minimal session summary
 BRANCH="$(git -C "$REPO_ROOT" branch --show-current 2>/dev/null || echo 'unknown')"
 LAST_COMMIT="$(git -C "$REPO_ROOT" log --oneline -1 2>/dev/null || echo 'none')"
-UNCOMMITTED="$(git -C "$REPO_ROOT" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+# Guard: only count when inside a work tree, else the pipeline's git-128 would
+# (under pipefail) abort the script before the session save below. Fail-open to 0.
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  UNCOMMITTED="$(git -C "$REPO_ROOT" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+else
+  UNCOMMITTED=0
+fi
 
 "$TOOLS/session-store.sh" save "Branch: $BRANCH | Last: $LAST_COMMIT | Uncommitted: $UNCOMMITTED files" 2>/dev/null || true
 

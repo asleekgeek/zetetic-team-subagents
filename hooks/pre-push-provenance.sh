@@ -5,13 +5,27 @@ set -euo pipefail
 
 # Command guard: only fire on git push
 HOOK_INPUT=""
-if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+if ! [ -t 0 ]; then
+  # Portable bounded stdin read. macOS ships NO 'timeout'/'gtimeout'; its
+  # absence must NOT zero out the payload (that silently disables the hook — the
+  # root cause of audit finding R1). Use the bound if present, else plain cat.
+  _ZT="$(command -v timeout || command -v gtimeout || true)"
+  if [ -n "$_ZT" ]; then
+    HOOK_INPUT="$("$_ZT" 3 cat 2>/dev/null || true)"
+  else
+    HOOK_INPUT="$(cat 2>/dev/null || true)"
+  fi
+fi
 if command -v jq &>/dev/null; then
   BASH_CMD=$(echo "$HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
 else
   BASH_CMD=$(echo "$HOOK_INPUT" | grep -oE '"command":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"command":\s*"//' | sed 's/"$//' || echo "")
 fi
-if ! echo "$BASH_CMD" | grep -q 'git push' 2>/dev/null; then exit 0; fi
+# Match 'git push' only when 'git' is at a command position (line start or after
+# a shell separator) followed by optional global flags, so the guard does NOT
+# false-trigger on quoted text ('remember to git push later') or unrelated verbs.
+GIT_PUSH_RE='(^|[;&|({])[[:space:]]*((sudo|command|env)[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*([^[:space:];&|({]*/)?git[[:space:]]+(-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?[[:space:]]+)*push([[:space:];&|)<>]|$)'
+if ! printf '%s' "$BASH_CMD" | grep -qE "$GIT_PUSH_RE" 2>/dev/null; then exit 0; fi
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 STRICTNESS="${PROVENANCE_STRICT:-warn}"

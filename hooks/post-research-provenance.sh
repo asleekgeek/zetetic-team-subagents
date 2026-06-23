@@ -16,7 +16,17 @@ RESEARCH_DIR="$REPO_ROOT/research"
 
 # Read hook context from stdin
 HOOK_INPUT=""
-if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+if ! [ -t 0 ]; then
+  # Portable bounded stdin read. macOS ships NO 'timeout'/'gtimeout'; its
+  # absence must NOT zero out the payload (that silently disables the hook — the
+  # root cause of audit finding R1). Use the bound if present, else plain cat.
+  _ZT="$(command -v timeout || command -v gtimeout || true)"
+  if [ -n "$_ZT" ]; then
+    HOOK_INPUT="$("$_ZT" 3 cat 2>/dev/null || true)"
+  else
+    HOOK_INPUT="$(cat 2>/dev/null || true)"
+  fi
+fi
 
 # Guard: check for active research session
 PROVENANCE_FILE=""

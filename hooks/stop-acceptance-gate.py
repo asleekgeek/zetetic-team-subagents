@@ -53,6 +53,8 @@ def main() -> None:
         payload = json.loads(sys.stdin.read() or "{}")
     except (ValueError, OSError):
         allow()
+    if not isinstance(payload, dict):  # valid non-object JSON (e.g. []) -> fail open
+        allow()
     if payload.get("stop_hook_active"):  # already in a forced continuation -> do not loop
         allow()
 
@@ -63,6 +65,8 @@ def main() -> None:
     try:
         cfg = json.load(open(marker))
     except (OSError, ValueError):
+        allow()
+    if not isinstance(cfg, dict):  # hand-edited non-object marker (e.g. []) -> fail open
         allow()
 
     gate = os.path.join(root, "tools", "acceptance-gate.sh")
