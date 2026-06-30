@@ -34,3 +34,23 @@ gates:
     cmd: "bash tools/tests/acceptance-gate/run-tests.sh"
     mandatory: true
     origin: base
+
+  - name: tests-mutation-gate
+    # Gates the mutation-gate wrapper itself (proportional contract: PASS on
+    # non-applicable, BLOCK only on survivors, degrade on no-runner). Like the
+    # self-tests above, this keeps the gate component from silently breaking.
+    cmd: "bash tools/tests/mutation-gate/run-tests.sh"
+    mandatory: true
+    origin: base
+
+  - name: mutation-test-strength
+    # Test-strength over exactly the files this iteration changed (§12.4): the
+    # suite must KILL mutants, not just cover lines. tools/mutation-gate.sh wraps
+    # the scoped runner (tools/mutation_check.sh) so the loop never freezes on
+    # non-code or tool-less iterations: PASS when no mutation-applicable source
+    # changed; BLOCK only on a surviving mutant; degrade LOUDLY (warn, pass) when
+    # no runner is configured (test-engineer Move 8 step 2). The authoritative
+    # external check stays the human/CI re-gate (INV-2). source: coding-standards §12.
+    cmd: "bash tools/mutation-gate.sh {files}"
+    mandatory: true
+    origin: base
