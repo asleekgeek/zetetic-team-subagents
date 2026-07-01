@@ -47,6 +47,23 @@ gates:
     mandatory: true
     origin: base
 
+  - name: tests-mutation-gate
+    # Gates the mutation-gate wrapper itself (gate-the-gate, like the suites above).
+    cmd: "bash tools/tests/mutation-gate/run-tests.sh"
+    mandatory: true
+    origin: base
+
+  - name: mutation-test-strength
+    # §12.4 test-strength over the STAGED diff: the suite must KILL mutants, not
+    # just cover lines. tools/mutation-gate.sh wraps the scoped runner
+    # (tools/mutation_check.sh) with proportional semantics — PASS when no
+    # mutation-applicable source is staged; BLOCK only on a surviving mutant;
+    # degrade loudly (warn, pass) when no runner is configured (test-engineer
+    # Move 8 step 2). source: coding-standards.md §12.
+    cmd: "bash tools/mutation-gate.sh --staged"
+    mandatory: true
+    origin: base
+
   # --- Cross-backend test gate template (rules/coding-standards.md §12.3) ---
   # A suite green on one backend can hide a defect on another (numpy.float32 on PG
   # vs float on SQLite — green coverage, shipped bug). tools/test-matrix.sh runs the

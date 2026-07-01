@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # post-research-provenance.sh — Append URL/query to active provenance file after research tool calls
 # Fires after WebFetch/WebSearch. Lightweight (< 1s). Silent no-op if no active provenance.
+#
+# claude.ai Science binding slot: claude.ai Science is a beta desktop app not yet
+# exposed as a named MCP tool (rules/agent-reference/research-resources.md). When it
+# is, add its real mcp__… tool name to the WebFetch|WebSearch PostToolUse matcher in
+# hooks/hooks.json AND .claude-plugin/plugin.json so this hook fires for it. The body
+# below already labels a science-review tool call as "verified" (vs "consulted") by
+# tool_name pattern, so provenance distinguishes verification from mere consultation
+# the moment the matcher is widened. Do NOT invent the tool name before it exists.
 set -euo pipefail
 
 # Path resolution: CLAUDE_PLUGIN_ROOT → script-relative → git root
@@ -55,6 +63,15 @@ else
 fi
 [[ -z "$SOURCE" ]] && exit 0
 
+# claude.ai Science is a verification/audit engine, not a discovery search — a hit
+# is a VERIFIED claim, not merely a consulted source. Label it distinctly by
+# tool_name pattern (case-insensitive 'science'). Forward-compatible: harmless until
+# the matcher routes the real mcp__… tool name (see header binding slot).
+STATUS="consulted"
+case "$(printf '%s' "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')" in
+  *science*) STATUS="verified (claude.ai Science)" ;;
+esac
+
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 # Append to provenance via the manager
@@ -62,10 +79,10 @@ TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   --file "$PROVENANCE_FILE" \
   --source "$SOURCE" \
   --tool "$TOOL_NAME" \
-  --status "consulted" \
+  --status "$STATUS" \
   --timestamp "$TIMESTAMP" 2>/dev/null || {
   # Fallback: direct append if manager fails
-  echo "| $TIMESTAMP | $TOOL_NAME | $SOURCE | consulted |" >> "$PROVENANCE_FILE" || true
+  echo "| $TIMESTAMP | $TOOL_NAME | $SOURCE | $STATUS |" >> "$PROVENANCE_FILE" || true
 }
 
 exit 0
