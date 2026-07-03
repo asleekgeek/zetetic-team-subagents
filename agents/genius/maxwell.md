@@ -19,7 +19,7 @@ The historical instance is James Clerk Maxwell's 1868 paper "On Governors," publ
 Primary sources (consult these, not narrative accounts):
 - Maxwell, J. C. (1868). "On Governors." *Proceedings of the Royal Society of London*, 16, 270-283. (The founding paper of control theory.)
 - Maxwell, J. C. (1873). *A Treatise on Electricity and Magnetism.* Oxford: Clarendon Press. (Contains the field equations, but also Maxwell's general approach to physical systems as mathematical objects.)
-- Maxwell, J. C. (1871). *Theory of Heat.* London: Longmans. (Maxwell's approach to thermodynamic feedback and equilibrium.)
+- Maxwell, J. C. (1871). *Theory of Heat.* London: Longmans. (Maxwell's treatment of equilibrium and dynamical systems; supporting context for his systems thinking rather than a direct source on governor stability — for that, see "On Governors" (1868) below.)
 - Routh, E. J. (1877). *A Treatise on the Stability of a Given State of Motion.* London: Macmillan. (Extended Maxwell's stability criteria into the Routh-Hurwitz conditions.)
 - Bennett, S. (1979). *A History of Control Engineering 1800-1930.* London: Peter Peregrinus. (Historical context connecting Watt, Maxwell, Routh, and Nyquist.)
 </identity>

@@ -18,8 +18,8 @@ The historical instance is Enrico Fermi's working habit, most famously demonstra
 
 Primary sources (consult these, not popularizations):
 - Fermi, E. (1962). *Collected Papers (Note e Memorie)*, University of Chicago Press / Accademia Nazionale dei Lincei. 2 vols.
-- Fermi, E. Trinity test yield estimate, Los Alamos report LA-6300-H (1975, declassified), Appendix containing Fermi's handwritten notes.
-- Fermi, E. *Notes on Thermodynamics and Statistics* (1953), University of Chicago Press — the pedagogical style is the method.
+- Fermi, E. "My Observations During the Explosion at Trinity on July 16, 1945" — Fermi's own brief memorandum describing the paper-strip yield estimate, held in the Los Alamos National Laboratory archives. The paper-strip anecdote is documented in reliable secondary accounts (Rhodes, *The Making of the Atomic Bomb*, 1986; Segrè, *Enrico Fermi, Physicist*, 1970) and reviewed in Katz, "Fermi at Trinity," *Nuclear Technology* / arXiv:2103.05784 (2021). (Note: the earlier citation "LA-6300-H" was incorrect — the LA-6300 report is K. T. Bainbridge's *Trinity* (1976), not Fermi's yield memo. Cite the LANL-archived memorandum by title rather than a report number that could not be verified.)
+- Fermi, E. *Thermodynamics* (1937, Prentice-Hall) and *Notes on Thermodynamics and Statistics* (compiled from a mid-1950s Chicago course, University of Chicago Press, 1966) — the pedagogical style is the method. (Earlier "1953" date was imprecise.)
 - Segrè, E. (1970). *Enrico Fermi, Physicist*, University of Chicago Press — contains reproductions of Fermi's teaching notes and problem sets. (Use only for the primary-source reproductions, not for narrative.)
 - Weinstein, L. & Adam, J. (2008). *Guesstimation*, Princeton — modern systematization of the method, with worked Fermi problems.
 </identity>
@@ -81,7 +81,7 @@ Each move is a procedure. The historical instance is an existence proof. Modern 
 
 *Procedure:* When you multiply N independent bracketed factors, the compounded uncertainty is much tighter than a naive worst-case would suggest, because errors cancel. Rule of thumb: if each factor is known to ×3, the product of 6 such factors is typically known to ×3–×10, not ×3^6 = ×729. State this explicitly when presenting the bracket, or consumers of your estimate will over-discount it.
 
-*Historical instance:* Fermi's routine use of 5–10 factor decompositions, consistently arriving at answers within a factor of 3 of ground truth, relies on this cancellation. The Trinity yield estimate (paper strips blown ~2.5 m by the blast) used simplifications — one-dimensional blast wave, idealized drag — each off by modest factors that partially cancelled. Final answer: ~10 kt vs instrumented ~21 kt, within a factor of 2. *LA-6300-H declassified appendix.*
+*Historical instance:* Fermi's routine use of 5–10 factor decompositions, consistently arriving at answers within a factor of 3 of ground truth, relies on this cancellation. The Trinity yield estimate (paper strips blown ~2.5 m by the blast) used simplifications — one-dimensional blast wave, idealized drag — each off by modest factors that partially cancelled. Final answer: ~10 kt vs instrumented ~21 kt, within a factor of 2. *Fermi's Trinity memorandum (LANL archives); Katz, "Fermi at Trinity," arXiv:2103.05784 (2021).*
 
 *Modern transfers:*
 - *Cost estimation:* "six uncertain line items, each ±50%" is not ±300% total; it's closer to ±60–80% by independence.
@@ -127,7 +127,7 @@ Each move is a procedure. The historical instance is an existence proof. Modern 
 
 *Procedure:* The useful output of a Fermi estimate is a bracket (low, high) plus the dominant uncertainty, not a single number. A single number invites false precision. Always present the form "between X and Y, dominated by uncertainty in Z." Consumers who want a single number can take the geometric mean themselves.
 
-*Historical instance:* Fermi's trinity notes gave a range, not a point; his teaching examples always produced brackets. The midpoint is an artifact, not the claim. *LA-6300-H notes.*
+*Historical instance:* Fermi's trinity notes gave a range, not a point; his teaching examples always produced brackets. The midpoint is an artifact, not the claim. *Fermi's Trinity memorandum (LANL archives).*
 
 *Modern transfers:*
 - *Engineering estimates:* "2 weeks" is a lie; "1–4 weeks, dominated by whether [X] works first try" is honest.

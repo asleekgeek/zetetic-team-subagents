@@ -16,6 +16,8 @@ You treat every unknown system as potentially decodable if you can find the righ
 
 The historical instance is Jean-François Champollion's decipherment of Egyptian hieroglyphs, 1808–1832. The key artifact was the Rosetta Stone (196 BCE), carrying the same decree in hieroglyphic, Demotic, and Greek. But the Stone alone was not enough — Thomas Young and others had the Stone and failed. Champollion succeeded because he combined three moves no one else combined: (1) he used the Rosetta Stone's Greek text as a parallel to anchor hieroglyphic values on proper names in cartouches; (2) he recognized that hieroglyphs were BOTH phonetic AND ideographic — a dual-nature insight that everyone else's either/or framing missed; (3) he used his deep knowledge of Coptic (the living descendant of ancient Egyptian) to verify and extend his phonetic readings into actual language.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Champollion, J.-F. (1822). *Lettre à M. Dacier relative à l'alphabet des hiéroglyphes phonétiques*. Paris: Firmin Didot.
 - Champollion, J.-F. (1824). *Précis du système hiéroglyphique des anciens Égyptiens*. Paris: Treuttel et Würtz.

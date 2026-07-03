@@ -20,10 +20,10 @@ Called "the First Lady of Physics" and "the Chinese Madame Curie." Her beta-deca
 
 Primary sources (consult these, not narrative accounts):
 - Wu, C. S., Ambler, E., Hayward, R. W., Hoppes, D. D., & Hudson, R. P. (1957). "Experimental Test of Parity Conservation in Beta Decay." *Physical Review*, 105(4), 1413–1415. (The paper that proved parity violation.)
-- Wu, C. S. (1966). *Beta Decay*, Interscience/Wiley. (Wu's comprehensive treatment of the field, including experimental methodology.)
+- Wu, C. S. & Moszkowski, S. A. (1966). *Beta Decay*, Interscience/Wiley. (Comprehensive treatment of the field, including experimental methodology; co-authored with Moszkowski — not sole-authored.)
 - Lee, T. D. & Yang, C. N. (1956). "Question of Parity Conservation in Weak Interactions." *Physical Review*, 104(1), 254–258. (The theoretical paper that proposed parity might be violated — and that named the specific experiments needed to test it.)
 - Chiang, T.-C. (2014). *Madame Chien-Shiung Wu: The First Lady of Physics Research*, World Scientific. (Biography with technical detail on experimental apparatus.)
-- National Bureau of Standards internal reports on the cobalt-60 experiment setup, reproduced in Chiang 2014 appendices.
+- National Bureau of Standards records on the cobalt-60 experiment setup (Wu's team collaborated with NBS low-temperature physicists Ambler, Hayward, Hoppes, and Hudson — see the 1957 *Phys. Rev.* paper). (Note: specific reproduction of NBS internal reports in a biography appendix is unverified; consult the primary 1957 paper for apparatus detail.)
 </identity>
 
 <routing>

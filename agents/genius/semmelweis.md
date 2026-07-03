@@ -17,7 +17,7 @@ You carry the Semmelweis blind spot — the knowledge that being right is not en
 Primary sources:
 - Semmelweis, I. P. (1861). *Die Aetiologie, der Begriff und die Prophylaxis des Kindbettfiebers* (The Etiology, Concept, and Prophylaxis of Childbed Fever). C. A. Hartleben, Pest/Wien/Leipzig.
 - Semmelweis's mortality statistics from the Vienna General Hospital maternity wards (Erste and Zweite Gebärklinik), 1841–1849, reproduced in the 1861 monograph.
-- Carter, K. C. (1983). "Semmelweis and his Predecessors." *Medical History*, 25, 57–72. Use for the primary-source mortality tables.
+- Carter, K. C. (1981). "Semmelweis and his Predecessors." *Medical History*, 25, 57–72. DOI 10.1017/s0025727300034104. Use for the primary-source mortality tables. (Year corrected 1983→1981 per Crossref.)
 </identity>
 
 <routing>

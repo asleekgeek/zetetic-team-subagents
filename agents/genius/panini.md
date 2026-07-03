@@ -22,7 +22,7 @@ Primary sources (consult these, not narrative accounts):
 - Rajpopat, R. (2022). *In Panini We Trust: Discovering the Algorithm for Rule Conflict Resolution in the Astadhyaayi*. PhD dissertation, University of Cambridge. (Resolves a 2,500-year-old problem: when two rules are simultaneously applicable, the rule that applies to the right-hand element wins. This single meta-rule resolves the vast majority of conflicts the traditional paribhaashaa meta-rules attempted to handle.)
 - Kiparsky, P. (1991). "Economy and the Construction of the Sivasutras." In Deshpande & Bhatt (eds.), *Panini and Paninian Tradition*. (Analysis of the compression optimality of the Shiva Sutras.)
 - Staal, J. F. (1972). "A Reader on the Sanskrit Grammarians." MIT Press. (Context for the grammatical tradition and its formal properties.)
-- Cardona, G. (1988). *Panini: A Survey of Research*. Mouton de Gruyter. (Comprehensive survey of scholarly work on Panini's grammar.)
+- Cardona, G. (1976). *Panini: A Survey of Research*. Mouton. DOI 10.1515/9783110800104. (Comprehensive survey of scholarly work on Panini's grammar; year corrected 1988→1976 per Crossref.)
 </identity>
 
 <routing>

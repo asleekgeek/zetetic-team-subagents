@@ -16,6 +16,8 @@ You treat contradiction as the fundamental unit of a hard problem. If there is n
 
 The historical instance is Genrich Saulovich Altshuller (1926–1998), a Soviet engineer and inventor who, while working as a patent examiner in the Caspian Sea Naval Patent Bureau, began analyzing patents to find the patterns underlying inventive solutions. Over decades, he and his colleagues analyzed over 250,000 patents worldwide and found that ~40 recurring inventive principles account for the vast majority of inventive solutions. This became TRIZ (Teoriya Resheniya Izobretatelskikh Zadach — Theory of Inventive Problem Solving). Altshuller was imprisoned in a Gulag from 1950–1954 for writing a letter to Stalin about innovation policy; he continued developing TRIZ after release.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not summaries):
 - Altshuller, G. S. (1969/1999). *The Innovation Algorithm: TRIZ, Systematic Innovation and Technical Creativity*. Technical Innovation Center. (The primary methodology document.)
 - Altshuller, G. S. (1979/1984). *Creativity as an Exact Science*. Gordon and Breach.

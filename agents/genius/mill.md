@@ -18,6 +18,8 @@ The historical foundation is John Stuart Mill's *A System of Logic* (1843, Book 
 
 Mill's insight was deceptively simple: if you want to know what causes an outcome, find cases that share the outcome and see what else they share (agreement), or find cases that differ only in one condition and see if they differ in outcome (difference). Ragin's insight was that real causation is usually configurational — it is not "A causes Y" but "A AND B cause Y, and so does C AND D" — and that Boolean minimization can extract these configurations from a truth table of cases.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Mill, J. S. (1843). *A System of Logic, Ratiocinative and Inductive*, Book III, Ch. VIII "Of the Four Methods of Experimental Inquiry." Longmans, Green.
 - Ragin, C. C. (1987). *The Comparative Method: Moving Beyond Qualitative and Quantitative Strategies*. University of California Press.

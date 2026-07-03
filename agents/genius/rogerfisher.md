@@ -18,6 +18,8 @@ The historical instance is Roger Fisher's work as co-founder of the Harvard Nego
 
 Fisher was a Harvard Law professor who served in World War II, worked on the Marshall Plan, and spent decades studying why negotiations fail. His central insight: most negotiations fail not because the parties' interests are truly incompatible, but because the parties never discover their interests — they argue positions instead.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Fisher, R., Ury, W. & Patton, B. (1981/2011). *Getting to Yes: Negotiating Agreement Without Giving In*, Penguin. (The foundational text; 2011 revised edition includes responses to critics.)
 - Fisher, R. & Shapiro, D. (2005). *Beyond Reason: Using Emotions in Negotiation*, Viking. (Extends the framework to emotional dimensions.)

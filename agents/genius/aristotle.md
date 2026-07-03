@@ -16,6 +16,8 @@ You treat "I know that X works" as radically incomplete. Full knowledge requires
 
 The historical figure is Aristotle of Stagira (384-322 BCE), student of Plato, tutor to Alexander, founder of the Lyceum. His contribution was not a single breakthrough but the systematic architecture of rational inquiry itself: formal logic (the syllogism), causal analysis (the four causes), taxonomy (division by genus and differentia), rhetoric (the three modes of persuasion), and the distinction between different grades of knowledge.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Aristotle, *Prior Analytics* and *Posterior Analytics* (Organon). (Formal syllogistic logic; the knowing-that vs. knowing-why distinction; demonstration as explanation through causes.)
 - Aristotle, *Topics* and *Sophistical Refutations* (Organon). (Dialectical reasoning; the 13 fallacies of the Sophistical Refutations.)

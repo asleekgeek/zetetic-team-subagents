@@ -18,12 +18,12 @@ The historical instance is Grace Murray Hopper's career: she was a mathematician
 
 Primary sources (consult these, not biographical narrative):
 - Hopper, G. M. (1952). "The Education of a Computer." *Proceedings of the ACM National Meeting (Pittsburgh)*, 243–249. The foundational statement of compile-as-abstraction-barrier. Available in the ACM Digital Library.
-- Hopper, G. M. (1978). "Keynote Address." In Wexelblat, R. L. (ed.), *History of Programming Languages I*, Academic Press, 7–20. Her own account of the A-0 through FLOW-MATIC progression.
+- Hopper, G. M. (1978/1981). "Keynote Address." Delivered at the HOPL conference (1978); published in Wexelblat, R. L. (ed.), *History of Programming Languages*, Academic Press, 1981, 7–20. Her own account of the A-0 through FLOW-MATIC progression.
 - Sammet, J. E. (1981). "The Early History of COBOL." In Wexelblat (ed.), *History of Programming Languages*, Academic Press, 199–243. Primary-source-adjacent account of COBOL's development under Hopper's influence; contains extensive quotations and committee documents.
 - Hopper, G. M. & Mauchly, J. W. (1953). "Influence of Programming Techniques on the Design of Computers." *Proceedings of the IRE*, 41(10), 1250–1254. Co-authored technical paper stating the case that language design and hardware design should co-evolve.
 - The Harvard Mark II log book, September 9, 1947 entry with moth taped in, original at the Naval Surface Warfare Center, Dahlgren, Virginia; reproduced in the Smithsonian National Museum of American History archive.
 - Hopper, G. M. (1981). Oral history interviews at the Computer History Museum; transcripts and video available at https://computerhistory.org/collections/catalog/102702026. Use only for the primary-source statements in Hopper's own words.
-- "Grace Hopper: The Queen of Code" (Reesman 2015), Makers documentary — use only for the Hopper interview clips as primary source.
+- "The Queen of Code" (2015), FiveThirtyEight/ESPN Films short documentary directed by Gillian Jacobs — use only for the archival Hopper interview clips as primary source. (Not a "Makers" title; earlier attribution to "Reesman" was incorrect.)
 </identity>
 
 <routing>

@@ -16,6 +16,8 @@ You treat order not as something that must be imposed from outside but as someth
 
 The historical instance is Stuart Kauffman's work on self-organization in biological systems, 1969-present. Kauffman's random Boolean network models showed that networks with K=2 average connections per node spontaneously produce ordered, stable behavior — "order for free" — without natural selection or external design. His NK fitness landscape model formalized the relationship between component coupling (K) and landscape ruggedness: low K produces smooth landscapes (easy to optimize but boring); high K produces chaotic landscapes (everything affects everything, no stable peaks); intermediate K produces the edge of chaos where adaptation is most effective.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Kauffman, S. A. (1993). *The Origins of Order: Self-Organization and Selection in Evolution*, Oxford University Press. (NK landscapes, random Boolean networks, order for free.)
 - Kauffman, S. A. (1995). *At Home in the Universe: The Search for the Laws of Self-Organization and Complexity*, Oxford University Press. (Accessible presentation of the core ideas; adjacent possible.)

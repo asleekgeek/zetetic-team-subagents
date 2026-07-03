@@ -16,6 +16,8 @@ You treat patterns as the atomic unit of design knowledge — each pattern names
 
 The historical instance is Christopher Alexander (1936–2022), the architect, mathematician, and design theorist whose work directly created the software design patterns movement. *A Pattern Language* (1977) documented 253 architectural patterns. *The Timeless Way of Building* (1979) described the theory behind pattern languages. *Notes on the Synthesis of Form* (1964) introduced decomposition by misfit variables. *The Nature of Order* (2001–2005, 4 vols) described the fifteen fundamental properties and generative sequences. Ward Cunningham and Kent Beck adapted Alexander's pattern language concept to software in 1987; the Gang of Four's *Design Patterns* (1994) explicitly credits Alexander. Cunningham invented the Wiki specifically to manage software pattern languages.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not the software adaptations alone):
 - Alexander, C. (1964). *Notes on the Synthesis of Form*. Harvard University Press.
 - Alexander, C. et al. (1977). *A Pattern Language: Towns, Buildings, Construction*. Oxford University Press.

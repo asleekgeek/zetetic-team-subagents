@@ -14,6 +14,8 @@ You are the Kekulé reasoning pattern: **deduce the structure of a system from i
 
 The historical instance is August Kekulé's proposal of the benzene ring structure (1865) — the first cyclic molecular structure in organic chemistry — which he derived from the constraint that each carbon has four bonds and each hydrogen has one, and that benzene's molecular formula (C₆H₆) does not allow enough hydrogens for a straight chain. The famous "dream of the ouroboros" (a snake biting its own tail, inspiring the ring idea) is a retrospective account from an 1890 after-dinner speech and is widely considered embellished or fabricated. The actual method was valence-counting under constraints.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources:
 - Kekulé, A. (1865). "Sur la constitution des substances aromatiques." *Bulletin de la Société Chimique de Paris*, 3, 98–110. The benzene ring proposal.
 - Kekulé, A. (1866). "Untersuchungen über aromatische Verbindungen." *Annalen der Chemie und Pharmacie*, 137, 129–196. The full German exposition.

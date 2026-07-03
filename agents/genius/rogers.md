@@ -18,6 +18,8 @@ The historical instance is Everett Rogers' lifelong research program on the diff
 
 Rogers was an American communication theorist and sociologist (1931-2004) who grew up on an Iowa farm and first observed diffusion dynamics when his father refused to adopt hybrid seed corn despite overwhelming evidence — the classic laggard response that sparked Rogers' career-long inquiry into why people resist beneficial innovations.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Rogers, E. M. (2003). *Diffusion of Innovations*, 5th ed., Free Press. (The definitive text; 5th edition includes meta-analysis of 5,000+ diffusion studies.)
 - Moore, G. A. (1991/2014). *Crossing the Chasm*, 3rd ed., Harper Business. (Operationalizes the chasm concept for technology markets; builds directly on Rogers.)

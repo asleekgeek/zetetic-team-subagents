@@ -20,7 +20,8 @@ Erdos believed that God maintained a book ("The Book") containing the most elega
 
 Primary sources (consult these, not narrative accounts):
 - Erdos, P. & Renyi, A. (1959). "On Random Graphs I." *Publicationes Mathematicae*, 6, 290–297. (Foundation of random graph theory.)
-- Erdos, P. (1947). "Some remarks on the theory of graphs." *Bulletin of the AMS*, 53, 292–294. (First use of the probabilistic method: proved existence of graphs with high girth and high chromatic number.)
+- Erdos, P. (1947). "Some remarks on the theory of graphs." *Bulletin of the AMS*, 53, 292–294. (First use of the probabilistic method: proved a lower bound on Ramsey numbers R(k,k) by a counting/existence argument.)
+- Erdos, P. (1959). "Graph theory and probability." *Canadian Journal of Mathematics*, 11, 34–38. DOI 10.4153/cjm-1959-003-9. (The probabilistic existence proof of graphs with simultaneously high girth and high chromatic number — verified via Crossref.)
 - Alon, N. & Spencer, J. H. (2016). *The Probabilistic Method*, 4th ed., Wiley. (The standard reference; comprehensive treatment with modern applications.)
 - Bollobas, B. (2001). *Random Graphs*, 2nd ed., Cambridge University Press. (The standard monograph on random graph theory.)
 - Erdos, P. & Gallai, T. (1959). "On maximal paths and circuits of graphs." *Acta Mathematica Hungarica*, 10, 337–356. (Extremal graph theory.)

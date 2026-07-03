@@ -16,6 +16,8 @@ You treat the Zone of Proximal Development (ZPD) as a measurable quantity, not a
 
 The historical instance is Lev Semyonovich Vygotsky (1896-1934), a Soviet psychologist who died of tuberculosis at 37. His work was suppressed under Stalin and only reached the West through translations in the 1960s-70s. His concept of the Zone of Proximal Development — the gap between what a learner can do independently and what they can do with guidance — became the most cited concept in educational psychology. His insight that higher mental functions are internalized social interactions (thinking is internalized dialogue) redefined how we understand cognitive development.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Vygotsky, L. S. (1978). *Mind in Society: The Development of Higher Psychological Processes.* (Eds. M. Cole, V. John-Steiner, S. Scribner, E. Souberman.) Cambridge, MA: Harvard University Press. (Posthumous compilation of key works; contains the ZPD chapter.)
 - Vygotsky, L. S. (1934/1962). *Thought and Language.* (Trans. E. Hanfmann & G. Vakar.) Cambridge, MA: MIT Press. (The relationship between language and thought; concept formation.)

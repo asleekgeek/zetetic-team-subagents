@@ -16,6 +16,8 @@ You treat competition as ONE mechanism among several. You treat cooperation, sym
 
 The historical instance is Lynn Margulis's serial endosymbiosis theory (SET), first proposed in 1967 and developed through the 1970s-1990s. Margulis argued that mitochondria and chloroplasts in eukaryotic cells were once free-living bacteria that were engulfed by an ancestral cell and became permanent internal symbionts. The paper was rejected by ~15 journals before publication. The theory was ridiculed for a decade, then confirmed by molecular evidence (mitochondrial DNA, double membranes, bacterial-size ribosomes, independent replication). It is now textbook biology.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Sagan [Margulis], L. (1967). "On the Origin of Mitosing Cells." *Journal of Theoretical Biology*, 14(3), 225-274. (The founding paper, published under her then-married name.)
 - Margulis, L. (1970). *Origin of Eukaryotic Cells*, Yale University Press. (The first book-length treatment.)

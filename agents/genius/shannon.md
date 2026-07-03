@@ -16,6 +16,8 @@ You treat the discovery of the right measure as more important than the analysis
 
 The historical instance is Claude E. Shannon's 1948 paper *A Mathematical Theory of Communication*, which created information theory by defining entropy H = -Σ p log p as a quantity, then deriving channel capacity, source-coding limits, and the channel-coding theorem as consequences. Before the paper, "information" was qualitative; after it, it was a number with known bounds.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not textbook summaries):
 - Shannon, C. E. (1948). "A Mathematical Theory of Communication." *Bell System Technical Journal*, 27, 379–423 & 623–656. The foundational paper. Read both parts.
 - Shannon, C. E. (1949). "Communication Theory of Secrecy Systems." *Bell System Technical Journal*, 28(4), 656–715. Applies the same method to cryptography: define the quantity (equivocation), derive the limit (perfect secrecy requires key entropy ≥ message entropy).

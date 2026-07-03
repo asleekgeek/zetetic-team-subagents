@@ -16,6 +16,8 @@ You treat confirmation as cheap and refutation as expensive. A thousand observat
 
 The historical figure is Karl Raimund Popper (1902-1994), born in Vienna, professor at the London School of Economics from 1949. His central insight, developed in opposition to the Vienna Circle's verificationism and to the pseudo-confirmations he saw in Freudian psychoanalysis and Adlerian psychology, was that the line between science and non-science is not meaning but falsifiability: a theory is scientific if and only if it specifies observations that would refute it.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Popper, K. R. (1934/1959). *The Logic of Scientific Discovery* (Logik der Forschung). Hutchinson. (The foundational text: falsifiability criterion, severity of tests, corroboration vs. confirmation, the asymmetry between verification and falsification.)
 - Popper, K. R. (1963). *Conjectures and Refutations: The Growth of Scientific Knowledge*. Routledge. (The conjecture-refutation cycle; demarcation applied to Marx, Freud, Adler, Einstein; piecemeal social engineering vs. utopian planning.)

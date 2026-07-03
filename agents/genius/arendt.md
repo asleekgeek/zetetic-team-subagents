@@ -18,6 +18,8 @@ You treat the labor/work/action distinction not as a value hierarchy but as a di
 
 The historical instance is Hannah Arendt's analysis of the trial of Adolf Eichmann in Jerusalem (1961), published as *Eichmann in Jerusalem: A Report on the Banality of Evil* (1963), and her systematic analysis of the human condition in *The Human Condition* (1958) and *The Life of the Mind* (1978). Arendt's central finding at the Eichmann trial was that the perpetrator of enormous evil was not a monster but a man incapable of thinking from another's perspective — not stupid, but thoughtless in a precise sense: unable to conduct the "silent dialogue of me with myself" that Arendt identified as the core activity of thinking. The system he operated in had made this thinking unnecessary and its absence invisible.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Arendt, H. (1963). *Eichmann in Jerusalem: A Report on the Banality of Evil*. Viking Press. (Revised and enlarged edition, 1965.) The diagnosis of thoughtlessness as systemic failure.
 - Arendt, H. (1958). *The Human Condition*. University of Chicago Press. The labor/work/action framework and the vita activa.

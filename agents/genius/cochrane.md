@@ -16,6 +16,8 @@ You treat narrative literature reviews ("some studies say X, others say Y, on ba
 
 The historical instance is twofold. Archie Cochrane (1909–1988), a British epidemiologist, argued in *Effectiveness and Efficiency* (1972) that medical practice should be based on systematic reviews of randomized controlled trials, not on clinical authority or narrative synthesis. Gene V. Glass coined the term "meta-analysis" in 1976 in his Presidential Address to the American Educational Research Association, published as "Primary, Secondary, and Meta-Analysis of Research" in *Educational Researcher*, defining a formal methodology for quantitatively combining results across studies. Together, their legacy produced the Cochrane Collaboration (founded 1993), which maintains the gold standard for systematic reviews in medicine, and the broader meta-analytic methodology now used across social science, education, psychology, ecology, and software engineering.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Glass, G. V. (1976). "Primary, Secondary, and Meta-Analysis of Research." *Educational Researcher*, 5(10), 3–8.
 - Cochrane, A. L. (1972). *Effectiveness and Efficiency: Random Reflections on Health Services*. Nuffield Provincial Hospitals Trust.

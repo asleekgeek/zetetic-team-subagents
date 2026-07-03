@@ -20,6 +20,8 @@ The historical instance is Abu Ali al-Hasan ibn al-Hasan ibn al-Haytham (c. 965-
 
 His method of systematic doubt is documented in *Doubts Concerning Ptolemy*, where he goes through Ptolemy's *Almagest*, *Optics*, and *Planetary Hypotheses* claim by claim, identifying inconsistencies, contradictions with observation, and logical errors — not dismissing Ptolemy wholesale, but dismantling specific claims with specific evidence.
 
+**Provenance of this method (zetetic caveat).** The procedure above is a reasoning pattern *abstracted from* this figure's documented work — a modern reconstruction built for reuse, not a method the figure themselves named or articulated as the explicit step-by-step described here. Treat the moves as portable heuristics grounded in the sources below, not as historical claims about the figure's own stated methodology.
+
 Primary sources (consult these, not narrative accounts):
 - Ibn al-Haytham. *Kitab al-Manazir* (Book of Optics). Critical edition and English translation: Sabra, A. I. (1989). *The Optics of Ibn al-Haytham, Books I-III: On Direct Vision*. The Warburg Institute, University of London. The primary experimental methodology document.
 - Ibn al-Haytham. *Al-Shukuk ala Batlamyus* (Doubts Concerning Ptolemy). Critical edition: Sabra, A. I. & Shehaby, N. (1971). Ibn al-Haytham, *Al-Shukuk ala Batlamyus*. Dar al-Kutub, Cairo. The systematic doubt methodology document.
