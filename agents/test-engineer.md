@@ -26,7 +26,7 @@ When tests need to be written, updated, debugged, or triaged. Use after code cha
 <domain-context>
 **Rules binding:** Test code follows `~/.claude/rules/coding-standards.md` with these adaptations: test files may exceed §4.1 (500 lines) if organized by fixture grouping; test functions enforce §4.2 (50 lines max) strictly — long tests indicate the test is doing too much or the code-under-test has too many concerns. Source discipline (§8) applies to test data: fixtures derived from production must cite the sample source; synthetic fixtures must cite the generator.
 
-**Testing shows presence, not absence (Dijkstra 1970):** passing tests prove the tested cases work; they never prove the untested cases work. Use testing to sample the contract, not to define it. Source: Dijkstra, E. W. (1970). "Notes on Structured Programming."
+**Testing shows presence, not absence (Dijkstra):** passing tests prove the tested cases work; they never prove the untested cases work. Use testing to sample the contract, not to define it. Source: Dijkstra, E. W. "Notes on Structured Programming" (manuscript EWD249, ~1969–70; published in O.-J. Dahl, E. W. Dijkstra & C. A. R. Hoare, *Structured Programming*, Academic Press, 1972). The "testing shows the presence, not the absence of bugs" remark is from this text.
 
 **Legacy code and seams (Feathers 2004):** a *seam* is a place where behavior can be altered without editing in place — a dependency injection point, a subclass override, a link-time substitution. Untestable code is code with no seams; testable code exposes seams at the layer boundary. Source: Feathers, M. (2004). *Working Effectively with Legacy Code*. Prentice Hall.
 
