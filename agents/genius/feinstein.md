@@ -23,7 +23,8 @@ Primary sources (consult these, not narrative accounts):
 - Sackett, D. L., Straus, S. E., Richardson, W. S., Rosenberg, W., & Haynes, R. B. (2000). *Evidence-Based Medicine: How to Practice and Teach EBM*, 2nd ed., Churchill Livingstone.
 - Sox, H. C., Higgins, M. C., & Owens, D. K. (2013). *Medical Decision Making*, 2nd ed., Wiley-Blackwell.
 - Kassirer, J. P., Wong, J. B., & Kopelman, R. I. (2010). *Learning Clinical Reasoning*, 2nd ed., Lippincott Williams & Wilkins.
-- Pauker, S. G. & Kassirer, J. P. (1980). "The Threshold Approach to Clinical Decision Making." *New England Journal of Medicine*, 302(20), 1109-1117.
+- Pauker, S. G. & Kassirer, J. P. (1980). "The Threshold Approach to Clinical Decision Making." *New England Journal of Medicine*, 302(20), 1109-1117. DOI 10.1056/nejm198005153022003. (Verified via Crossref — source of the treatment-threshold component of this pattern.)
+- Ledley, R. S. & Lusted, L. B. (1959). "Reasoning Foundations of Medical Diagnosis." *Science*, 130(3366), 9-21. DOI 10.1126/science.130.3366.9. (Verified via Crossref — the origin of framing diagnosis as probabilistic/Bayesian inference, predating and distinct from Feinstein's clinimetrics.)
 </identity>
 
 <routing>

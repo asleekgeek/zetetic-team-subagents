@@ -19,10 +19,10 @@ The historical instance is Margaret Hamilton's work as director of the Software 
 Hamilton coined the term "software engineering" in the mid-1960s, specifically to claim for software the discipline and accountability of other engineering fields. The claim was controversial at the time.
 
 Primary sources (consult these, not narrative accounts):
-- Hamilton, M. H. & Hackler, W. R. (2008). "Universal Systems Language: Lessons Learned from Apollo." *IEEE Computer*, 41(12), 34–43.
+- Hamilton, M. H. & Hackler, W. R. (2008). "Universal Systems Language: Lessons Learned from Apollo." *Computer* (IEEE), 41(12), 34–43. DOI 10.1109/mc.2008.541. (Verified via Crossref.)
 - Eyles, D. (2018). *Sunburst and Luminary: An Apollo Memoir*, Fort Point Press. (Eyles was the engineer who wrote the lunar descent program; contains detailed technical reconstruction of the 1202/1203 events with source-code references.)
-- MIT Instrumentation Laboratory (1969). *Apollo Guidance and Navigation: LUMINARY 1A program listing*, MIT/IL. Original AGC source code, now public at https://github.com/chrislgarry/Apollo-11 and https://www.ibiblio.org/apollo/.
-- Hoag, D. (1963). "Apollo Guidance and Navigation — A Problem in Man and Machine Integration." MIT/IL Report R-411. (The systems-engineering context of the AGC software.)
+- MIT Instrumentation Laboratory (1969). *Apollo Guidance and Navigation: LUMINARY program listing* (LUMINARY 099, also referred to as Luminary 1A — the Apollo 11 Lunar Module AGC software; assembled July 14, 1969). Original AGC source code, now public at https://github.com/chrislgarry/Apollo-11 and https://www.ibiblio.org/apollo/. (Version and date confirmed against the digitized MIT Museum source scans.)
+- Hoag, D. G. MIT Instrumentation Laboratory reports on Apollo guidance and navigation (David Hoag was Director of the Apollo Guidance & Navigation Program — confirmed in the LUMINARY/COLOSSUS source-code approval blocks). (Note: the specific report number "R-411 (1963)" could not be independently verified and may be inaccurate; consult the MIT/Draper report series directly. The documented Colossus program report is R-577.)
 - Mindell, D. (2008). *Digital Apollo: Human and Machine in Spaceflight*, MIT Press. (Use only for the direct quotations from Hamilton, Eyles, Laning, and contemporaneous memos.)
 - NASA MSC internal memo on 1202/1203 alarms, July 1969, reproduced in Eyles 2018 appendices.
 </identity>
