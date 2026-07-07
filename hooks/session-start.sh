@@ -18,7 +18,7 @@ if [[ ! -f "$CTXGUARD_CONFIG" && -f "${PLUGIN_ROOT}/hooks/ctxguard-thresholds.js
 fi
 
 # --- Colors (true color RGB — readable on dark backgrounds) ---
-TEAL="\033[1;38;2;127;187;179m"
+TEAL="\033[1;38;2;207;110;57m"  # #cf6e39 — DS --accent (terracotta) oklch(64% 0.14 47) · scripted oklch->srgb
 WHITE="\033[38;2;224;224;224m"
 LIGHT="\033[38;2;190;195;190m"
 SUBTLE="\033[38;2;150;160;155m"

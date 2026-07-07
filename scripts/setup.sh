@@ -21,7 +21,7 @@ MODEL_CONFIG="${CLAUDE_DIR}/zetetic-agent-models.json"
 BACKUP_SUFFIX=".zetetic-backup"
 
 # ── Colors ─────────────────────────────────────────────────────────────
-TEAL="\033[1;38;2;127;187;179m"
+TEAL="\033[1;38;2;207;110;57m"  # #cf6e39 — DS --accent (terracotta) oklch(64% 0.14 47) · scripted oklch->srgb
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
 RED="\033[0;31m"
