@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/tests-288-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/agents-118-8A2BE2" alt="Agents">
   <img src="https://img.shields.io/badge/skills-64-green" alt="Skills">
-  <img src="https://img.shields.io/badge/hooks-18_lifecycle-red" alt="Hooks">
+  <img src="https://img.shields.io/badge/hooks-19_lifecycle-red" alt="Hooks">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
