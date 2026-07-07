@@ -6,6 +6,40 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.26.0] — zetetic spine: evidence directionality (source-before-code)
+
+### Changed
+
+- **Spine beat 2 (`evidence/sources`) now enforces the *direction* of evidence**,
+  across all 117 agents (team + genius) via the single generator
+  `scripts/generate-spine.py` and its elaboration
+  `rules/agent-reference/zetetic-spine.md`. The prior wording — "every claim traces
+  to a source" — was direction-agnostic: it was satisfied equally by rigor (read a
+  source, derive the code from it) and by fabrication (write the code, then find a
+  resembling paper and attach the citation as post-hoc justification). Scientific
+  rigor is *source-first*: start from a factual, verifiable, demonstrable source and
+  produce the implementation **from** it. A citation attached after the fact to a
+  lookalike paper is fabricated proof, not evidence — even when the citation is real,
+  because the code was never derived from it.
+- Beat 2 now names three refused failure modes, backed by observed provenance audits
+  (invented arXiv ids, fabricated benchmark deltas, constants mislabeled with
+  unrelated papers): **retrofitted citation** (added after the code, chosen for
+  resemblance), **resemblance ≠ prescription** (a paper *about* your topic is not a
+  source for your specific value/equation unless it states it *and* its experimental
+  conditions match yours), and **borrowed authority** (a hardcoded constant wearing a
+  paper's name with no line the paper actually prescribes). The honesty discriminator
+  is the provenance comment written *before* the value plus an explicit
+  "engineering-default / hand-tuned" disclaimer when a value is not paper-prescribed —
+  never the citation alone.
+- No source → "I don't know" and stop is now explicit that this is a **gate failure,
+  not a formatting gap to fill later**: do not ship, then justify.
+
+### Notes
+
+- Content-only change to the injected `<zetetic-spine>` blocks; no tool, hook, or
+  memory-contract surface changed. `scripts/generate-spine.py --check` is clean
+  (idempotent) and all seven release-gate memory suites pass locally.
+
 ## [2.24.0] — `simplifier` agent (de-over-engineering) + adversarial-verify simplicity lens
 
 ### Added

@@ -74,9 +74,14 @@ def spine_block(strong: bool) -> str:
         "1. **Recall** before acting — `cortex:recall` scoped to your "
         "`agent_topic` + your memory scope. If recall contradicts the plan, "
         "stop and reconcile before proceeding.",
-        "2. **Evidence/sources** while claiming — every claim, constant, and "
-        "threshold traces to a source; no source → say \"I don't know\" and "
-        "stop (coding-standards.md §8). " + resource +
+        "2. **Evidence/sources** — *the source precedes the implementation, "
+        "never the reverse.* Every claim, constant, threshold, and algorithm is "
+        "**derived from** a source read first. A citation attached *after* the "
+        "code — a paper picked because it resembles what you already wrote — is "
+        "fabricated proof, not evidence; resemblance is not prescription, so "
+        "verify the source actually states your value/equation and that its "
+        "conditions match yours. No source → say \"I don't know\" and stop; do "
+        "not ship, then justify (coding-standards.md §8). " + resource +
         " — `~/.claude/rules/agent-reference/research-resources.md`.",
         "3. **Adversarial-verify** before \"done\" — design the test that "
         "catches the error *if it exists* (severity, not ceremony); reproduce "
