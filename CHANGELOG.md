@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.27.0] — git-historian agent + get_impact drift fix
+
+### Added
+- **git-historian** team agent — regression provenance and abandoned-approach recovery: traces when a behavior changed, which commit introduced it, and surfaces approaches tried-and-reverted so a session doesn't re-walk a dead end.
+
+### Changed
+- Registered the `cortex-viz` memory scope in the central registry so cross-agent recall resolves it.
+
+### Fixed
+- Corrected `get_impact` drift in `rules/agent-reference/codebase-intelligence.md` — the doc over-promised the tool's blast-radius (it returns one reverse-edge hop, not transitive/test-aware); wording now matches the implementation.
+
 ## [2.26.0] — zetetic spine: evidence directionality (source-before-code)
 
 ### Changed
