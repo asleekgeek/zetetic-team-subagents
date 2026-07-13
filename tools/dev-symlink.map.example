@@ -1,0 +1,21 @@
+# dev-symlink.map — "edition live" montage between plugin cache installs and
+# dev repos. Copy to ~/.claude/dev-symlink.map (or point DEV_SYMLINK_MAP at
+# a copy) and keep it updated: plugin versions change on every install/update,
+# so the cache path's version segment below WILL go stale — update the line
+# after each `claude plugin install`/`update` rather than trusting this file.
+#
+# Format: <cache_install_dir>|<dev_repo_dir>|<mode>
+#   mode = tree                          (symlink every top-level entry) or
+#   mode = <relative binary path>        (symlink just that one path)
+#
+# Verified against the live montage on 2026-07-13 (see memory:
+# dev-symlink-montage.md). Update the version segments after each release.
+
+~/.claude/plugins/cache/cortex-plugins/cortex/4.13.3|/Users/cdeust/Developments/anthropic-partnership/Cortex-live|tree
+~/.claude/plugins/cache/cortex-plugins/cortex-viz/2.6.0|/Users/cdeust/Developments/anthropic-partnership/cortex-viz|tree
+~/.claude/plugins/cache/cortex-vision-plugins/cortex-vision/1.0.1|/Users/cdeust/Developments/anthropic-partnership/cortex-vision|tree
+~/.claude/plugins/cache/cortex-voice-plugins/cortex-voice/1.0.1|/Users/cdeust/Developments/anthropic-partnership/cortex-voice|tree
+~/.claude/plugins/cache/prd-spec-generator-marketplace/prd-spec-generator/0.4.1|/Users/cdeust/Developments/anthropic-partnership/prd-spec-generator|tree
+~/.claude/plugins/cache/session-optimizer-marketplace/session-optimizer/1.4.1|/Users/cdeust/Developments/anthropic-partnership/session-optimizer|tree
+~/.claude/plugins/cache/zetetic-marketplace/zetetic-team-subagents/2.27.0|/Users/cdeust/Developments/anthropic-partnership/zetetic-team-subagents|tree
+~/.claude/plugins/cache/automatised-pipeline-marketplace/automatised-pipeline/0.6.1|/Users/cdeust/Developments/anthropic-partnership/automatised-pipeline-live|target/release/automatised-pipeline

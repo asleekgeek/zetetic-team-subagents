@@ -25,6 +25,27 @@ SUBTLE="\033[38;2;150;160;155m"
 BOLD="\033[1m"
 RESET="\033[0m"
 
+# --- Portable time-box: prefer coreutils timeout/gtimeout, else a background
+# watchdog. Never lets a hook subcommand hang session start. ---
+run_timeboxed() {
+  local secs="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$secs" "$@"
+  else
+    "$@" &
+    local pid=$!
+    ( sleep "$secs"; kill -9 "$pid" 2>/dev/null ) &
+    local watchdog=$!
+    wait "$pid" 2>/dev/null
+    local rc=$?
+    kill "$watchdog" 2>/dev/null
+    wait "$watchdog" 2>/dev/null
+    return "$rc"
+  fi
+}
+
 # --- Banner ---
 echo ""
 echo -e "${TEAL}  ███████╗███████╗████████╗███████╗████████╗██╗ ██████╗${RESET}"
@@ -79,6 +100,24 @@ fi
 
 echo -e "${WHITE}${BOLD}  ◆ Agent Worktrees${RESET}"
 "$TOOLS/worktree-manager.sh" list 2>/dev/null || echo "  (none)"
+echo ""
+
+echo -e "${WHITE}${BOLD}  ◆ Worktree Sweep${RESET}"
+if [[ -x "$TOOLS/worktree-manager.sh" ]]; then
+  # No --fetch at boot (no network); merged-check relies on refs already
+  # fetched from a prior `git fetch`. Warn-only — never blocks startup.
+  run_timeboxed 15 "$TOOLS/worktree-manager.sh" sweep 2>/dev/null | sed 's/^/  /' || true
+else
+  echo "  (worktree-manager unavailable)"
+fi
+echo ""
+
+echo -e "${WHITE}${BOLD}  ◆ Dev Symlink Montage${RESET}"
+if [[ -x "$TOOLS/dev-symlink-doctor.sh" ]]; then
+  run_timeboxed 10 "$TOOLS/dev-symlink-doctor.sh" 2>/dev/null | sed 's/^/  /' || true
+else
+  echo "  (dev-symlink-doctor unavailable)"
+fi
 echo ""
 
 echo -e "${WHITE}${BOLD}  ◆ Session Cache${RESET}"
