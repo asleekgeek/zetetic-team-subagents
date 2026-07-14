@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.28.1] — CI audit gate fix + subagent alignment
+
+### Fixed
+- **`agent-definition-auditor.sh` now actually gates in CI** — the script's default `ROOT` was a hardcoded personal absolute path that didn't exist on the CI runner, so the glob silently matched 0 files and the whole audit (F1-F9, FD, B1-B3, G1-G3, P1) passed vacuously. `ROOT` now resolves relative to the script's own location, and a 0-match glob fails explicitly (exit 2) instead of reporting an empty pass. All 97 genius agents also gained an explicit `tools:` frontmatter field (previously scoped only via the plugin manifest's blanket "All tools" grant), bringing F8/F9 from 22/119 to 119/119 passing.
+- **26 genius agent descriptions repaired** — 4 agents (`deming`, `fisher`, `leguin`, `ranganathan`) shipped with frontmatter `description` truncated mid-sentence by a JSON double-encoding bug (e.g. `"W."`); a further 10 had the same corruption undetected until a new quality gate (check FD: description ≥ 40 chars, no broken escape artifacts) was added to the auditor, and 16 more had valid-but-terse descriptions. Since `description` is the spawn/routing criterion, corrupted values made these agents unroutable; `rules/agent-routing-table.md` was regenerated so the fix reaches routing consumers.
+- Orchestrator now validates a subagent's result against its artifact contract before forwarding it downstream, and isolates a failed subtask so it does not invalidate already-validated independent results — encoded as new Move 6 steps and refusal conditions.
+- Encoded the anti-passive-waiting lesson (long-running work is foreground-blocking or terminate-and-handoff, never a sleep/poll loop on a background monitor) as binding §8c in the shared memory contract.
+
 ## [2.27.0] — git-historian agent + get_impact drift fix
 
 ### Added
