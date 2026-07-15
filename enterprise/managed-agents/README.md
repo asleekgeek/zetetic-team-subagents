@@ -23,7 +23,7 @@ The engagement runs on two distinct planes, decided in the issue #26
 |---|---|---|
 | `reporting` | Scorecards and readouts from exported OTel/Admin data | scheduled deployment (weekly cron); outcome rubric on the readout; `.xlsx`/`.docx` deliverables via skills |
 | `analysis` | Baseline/adoption diagnosis: cohorts, chasm, common- vs special-cause variation | engagement memory store (baseline, decision history); Console-traced sessions |
-| `agent-management` | Deployed-fleet health: plugin/marketplace version drift, config drift vs managed templates, inventory | versioned agent + `github_repository` mount of the client's config repo; webhooks |
+| `agent-management` | Deployed-fleet health: plugin/marketplace version drift, config drift vs managed templates, inventory | versioned agent + `github_repository` mount of the client's config repo; webhooks (ASSUMED — no webhook is wired in this phase, listed as a candidate CMA capability for drift-alert notification, to validate in Phase B) |
 | `security-data-audit` | Security questionnaire, MCP governance, data-surface/retention audit | outcome-rubric-gradable checklist; versioned memory store + redact |
 
 Why this split: the local plane keeps what no CMA agent can offer (full

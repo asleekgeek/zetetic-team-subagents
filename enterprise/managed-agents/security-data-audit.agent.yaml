@@ -8,9 +8,12 @@
 # audit checklist. This is the blocking gate of the pilot in the lead's
 # architecture decision — its output is designed as an outcome rubric.
 #
-# Model: claude-opus-4-8 — security/compliance review is explicitly named
-# as a "precision enterprise workflow" in effort-calibration.md, and this
-# facilitator's output is client-facing evidence a CISO will scrutinize.
+# Model: claude-opus-4-8 — effort-calibration.md's model-selection table
+# names "precision enterprise workflows (finance, legal, formal
+# verification)" as an Opus use case; a security/compliance audit
+# reasonably falls under that same bar (client-facing evidence a CISO
+# will scrutinize, same cost-of-error profile as a legal or financial
+# review) even though the source does not name "security" verbatim.
 # A wrong or hedged security answer is worse than a slow one here; the
 # higher-intelligence tier is justified regardless of call frequency.
 name: security-data-audit
