@@ -237,7 +237,7 @@ These rules apply proportionally:
 - **Medium stakes** (core business logic, user-facing): rules 1, 2, 3, 5, 7, 8, 9 fully enforced; 4 (size limits) enforced with ≤20% flexibility on limits.
 - **Low stakes** (scripts/experiments/prototypes marked as such, or UI polish / copy / CSS): rules 1, 7, 8 enforced; others can be informal.
 
-**Rules 1 (SOLID), 2 (layer dependency), 7 (local reasoning), 8 (sources) apply at all stakes levels.**
+**Rules 1 (SOLID), 2 (layer dependency), 7 (local reasoning), 8 (sources), and 13 (Definition of Done — Completion Contract) apply at all stakes levels.**
 
 Stakes classification is **objective**, never self-declared. See engineer.md Move 6 for criteria.
 
@@ -299,6 +299,87 @@ Mutation enforcement is split, because the two jobs have opposite failure costs:
 - The **per-commit** tier is blocking but narrow: it only mutates the lines this change touched, so it stays fast and never punishes a change for a pre-existing gap elsewhere (§12.1).
 - The **sweep** tier is wide but report-only: a broad mutation run surfaces a long tail of survivors at once, and gating commits on it would freeze the team for months. It **always exits 0** and emits a per-zone report; we ratchet coverage up **one zone per iteration**, triaging that zone's survivors with evidence. Making the wide sweep block by default would repeat the product-safety anti-pattern (heavy/broad automation must be report-only unless explicitly opted in).
 - A surviving mutant migrates from the sweep's backlog into the blocking tier organically: once a critical zone is wired and clean, any later change to it is gated per-commit.
+
+## 13. Definition of Done — the Completion Contract (blocking, all stakes levels)
+
+Source: lead directive, 2026-07-15 (recorded after the AP #13–#18 series, where a reviewer classified an unasserted fallback-signal path as "non-blocking, repo convention"). Empirical backing: the FlashRank silent-failure incident (2026-07-11) — an unexercised error path degraded six benchmarks and production without a single signal.
+
+**An implementation is complete and without remainder, or it does not exist.** A PR is a claim of completeness; this section defines what makes that claim verifiable and what happens when it is not.
+
+### 13.1 The exhaustive checklist — every item is HANDLED or N/A-with-justification, nothing else
+
+Every item below has exactly two acceptable states in a finished PR: **done, with evidence** (test name, command + quoted output, measurement, or written analysis) or **N/A, with a one-line justification** that a reviewer can refute. An item that is neither is an unfinished implementation. §10 stakes calibration may ADD requirements on top; nothing may subtract.
+
+**A. Correctness & behavior**
+- A1. Happy paths implemented and tested end-to-end (run output quoted, not code read).
+- A2. Edge cases enumerated and each mapped to a test: empty/zero/one/many/max, boundary values, duplicates, ordering, unicode/encoding, oversized input, absent/null/malformed data. An unlisted edge case is an unhandled one.
+- A3. Every failure path tested like a happy path: every error arm, fallback, early return, and degraded mode maps to a test asserting its OBSERVABLE effect — including the emission of the signal itself (log line, error value, notice), never only a downstream side effect.
+- A4. Input validated at trust boundaries; internal contracts trusted (§3.2). Malformed and adversarial inputs have tests.
+- A5. Invariants and pre/postconditions stated for new/changed functions; partial-failure behavior defined (what state remains after an interrupted operation).
+- A6. Idempotency/retry semantics defined where the operation can be re-invoked (or N/A: single-shot by construction).
+
+**B. Concurrency**
+- B1. Deadlocks eliminated: written lock-ordering/blocking analysis (what is held, what is awaited, why it cannot cycle); timeouts on external waits. "No concurrency touched" is acceptable when true.
+- B2. Race conditions: shared mutable state identified; atomicity of read-modify-write guaranteed or the absence of sharing demonstrated.
+- B3. Cancellation/interruption safety: resources released and state consistent when the operation is aborted mid-flight.
+
+**C. Resources & performance**
+- C1. Scalability: growth dimensions of every new loop/collection/query named; no O(n²) on unbounded inputs; batching/pagination where per-item I/O would occur — or a measured justification.
+- C2. Resource lifecycle: no leaked memory/file descriptors/connections/processes; pools and queues bounded; temp artifacts cleaned up.
+- C3. Hot paths measured when touched (before/after numbers committed); no unexplained regression.
+
+**D. Security**
+- D1. Injection-class defects excluded via the project's vetted helpers (SQL/Cypher/shell/path); never hand-rolled escaping. Adversarial-payload test present when the diff builds queries/commands from data.
+- D2. Untrusted data (user, network, file, AND LLM-generated content) treated as untrusted wherever the diff consumes it.
+- D3. No secrets in code, logs, or commits; least privilege on any new access.
+
+**E. Interfaces & compatibility**
+- E1. API/schema changes are additive, or the break is versioned + documented; version markers bumped.
+- E2. Downstream consumers identified BY NAME and their read paths verified against the change (empty/absent-field cases included).
+- E3. Persisted-data compatibility: one-shot migration for format changes (no back-compat shims — standing lead rule); old-data-in/new-code tested.
+- E4. Cross-platform behavior addressed where the diff touches paths, encoding, process spawning, or OS services (or N/A: platform-independent logic).
+
+**F. Observability & operations**
+- F1. Every failure mode emits an actionable signal (enough context to debug), and that emission is asserted by a test; nominal path stays quiet (asserted too).
+- F2. Degraded modes are explicit, named in the output/schema, and documented — never a silent default.
+
+**G. Tests themselves**
+- G1. The path→test ledger (§13.2) is complete: every diff path mapped.
+- G2. Every bug fixed in this PR has a regression test that fails on the pre-fix code.
+- G3. Tests are deterministic and isolated: unique temp dirs, no shared fixed paths, no order dependence, no sleeps-as-synchronization; suite passes repeatedly in default parallelism.
+- G4. Negative assertions present where absence IS the behavior (no emission, no write, no cross-access).
+- G5. Full suite executed locally, output quoted; lint/format/type gates pass on touched files.
+
+**H. Code quality & delivery**
+- H1. This file's rules pass: SOLID (§1), layering (§2), sizes (§4), DI (§5), local reasoning (§7), sourced constants (§8), no anti-patterns (§9).
+- H2. Readable and simplified: next reader understands each function from itself plus its contract; no needless indirection, no dead code, no debug leftovers, no commented-out code.
+- H3. Naming and structural conventions match neighboring code; ONE language per file (repo language for repo files).
+- H4. CHANGELOG entry for any behavior/contract change a consumer can observe; affected docs/tool descriptions updated in the same PR.
+- H5. Commit hygiene: conventional messages, logic commits separate from formatting noise.
+- H6. CI green on the exact pushed tree before requesting merge.
+
+### 13.2 The Completion Ledger — no finished PR without it
+
+Every PR marked ready-for-review MUST embed a **Completion Ledger**: one row per §13.1 item AND one row per code path introduced by the diff, each with its **evidence** — the test name that asserts it, the command + output that proves it, the measurement, or the written analysis. Evidence is an external signal; "reviewed it, looks fine" is not a row.
+
+**Path-enumeration duty (author):** enumerate every branch, early return, error arm, fallback, and degraded mode in `git diff base...HEAD`; each appears in the ledger mapped to its asserting test.
+
+**Reconciliation duty (reviewer):** independently re-enumerate the diff's paths and reconcile against the ledger. Any unmapped path, any row without evidence, or a missing ledger ⇒ verdict **REFUSED** — immediately, without further analysis, at every stakes level. There is no "approve with reservations" for ledger gaps on new code.
+
+### 13.3 Enumerated refusals
+- Opening (or marking ready) a PR whose ledger is missing or incomplete — the PR is not finished; it does not ship.
+- Classifying a coverage gap in NEW code as "non-blocking", "follow-up", "future evolution", or "matches existing convention". It is **blocking**. A defective existing convention does not exempt new code from being hardened.
+- Shipping the happy path with failure paths "to be covered later".
+- Counting a downstream side effect as coverage of a signal-emission path (the emission itself must be asserted).
+
+### 13.4 Pre-existing debt discovered en route
+Becomes a **dated, planned work item in the active series** (an issue with acceptance criteria), never a free-floating "worth a follow-up" note. Discovering debt creates an obligation to schedule it, not permission to ignore it.
+
+### 13.5 Enforcement wiring
+- **engineer/refactorer**: the change report ends with the Completion Ledger; without it the task is not done — do not hand off.
+- **code-reviewer**: reconciliation duty (§13.2) is Move 0 — run it before any other analysis; a failed reconciliation short-circuits to REFUSED.
+- **git:pr skill**: the PR description template requires the ledger section; a PR created through the skill without it is invalid.
+- This section applies at **all stakes levels**, joining §1, §2, §7, §8 in §10's always-on list.
 
 ## Primary Sources
 
