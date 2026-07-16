@@ -17,6 +17,17 @@
     "max_file_kb": 100
   },
   "scopes": {
+    "_user": {
+      "description": "Home scope for the '_user' identity — the top-level interactive session's own working memory, not a curator-only channel. session-start.sh and stop-context-guard.py default MEMORY_AGENT_ID to '_user' whenever the caller is the main session rather than a spawned team/genius agent, and the token-budget checkpoint protocol (and memory-writer's 'primary path') prescribes writing that session's own checkpoint to /memories/_user/checkpoint.md — the same own-scope pattern every team agent gets (see 'engineer', 'architect', etc.). '_user' also appears in curator_agents and as a reader/owner token elsewhere in this registry (e.g. reviewer-prefs, quarantine, lessons); this entry is unrelated to those curator grants and governs only _user's own home scope.",
+      "owners": [
+        "_user"
+      ],
+      "readers": [
+        "*"
+      ],
+      "ttl_days": 30,
+      "max_file_kb": 100
+    },
     "global": {
       "description": "Cross-project ground truth. Curator-maintained. Never auto-loaded at spawn.",
       "owners": [

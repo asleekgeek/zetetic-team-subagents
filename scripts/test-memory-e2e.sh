@@ -333,6 +333,46 @@ test_i11() {
   fi
 }
 
+# ── I12: `_user` has a registered home scope (issue #31) ─────────────────────
+# The checkpoint protocol (token-budget.md, hooks/stop-context-guard.py,
+# memory-writer.md's "primary path") defaults MEMORY_AGENT_ID to `_user` for
+# the top-level interactive session and prescribes writing its own checkpoint
+# to /memories/_user/checkpoint.md — the same own-scope pattern every team
+# agent gets (I1). Unlike team agents, `_user` had no `_user` entry in
+# scope-registry.json, so strict_unknown_scope (I2) denied it unconditionally.
+# This must succeed exactly like I1 does for `engineer`.
+test_i12() {
+  local content="checkpoint: session at 42% context"
+  local out; out=$(mt _user -- create /memories/_user/checkpoint.md "$(fm "$content")" 2>&1)
+  local exit_code=$?
+
+  if [[ $exit_code -ne 0 ]] || ! echo "$out" | grep -q "File created successfully"; then
+    fail 12 "_user create own scope failed (exit=$exit_code)" "$out" ""
+    return
+  fi
+
+  local rethink_out
+  rethink_out=$(mt _user -- rethink /memories/_user/checkpoint.md "$(fm "checkpoint: session at 60% context")" 2>&1)
+  local rethink_exit=$?
+
+  if [[ $rethink_exit -ne 0 ]] || ! echo "$rethink_out" | grep -q "File rewritten successfully"; then
+    fail 12 "_user rethink own scope failed (exit=$rethink_exit)" "$rethink_out" ""
+    return
+  fi
+
+  # Cross-agent isolation must still hold: engineer must NOT be able to write
+  # into _user's scope (own-scope grant is not a backdoor to a shared scope).
+  local cross_out; cross_out=$(mt engineer -- create /memories/_user/sneaky.md "$(fm "stolen")" 2>&1)
+  local cross_exit=$?
+  local expected_deny="Error: agent 'engineer' is not permitted to write scope '/memories/_user'"
+
+  if [[ $cross_exit -eq 1 ]] && echo "$cross_out" | grep -qF "$expected_deny"; then
+    pass 12 "_user own-scope write/rethink durable; cross-agent write into _user still denied"
+  else
+    fail 12 "expected cross-agent denial into _user scope (exit=$cross_exit)" "$cross_out" ""
+  fi
+}
+
 # ── main runner ───────────────────────────────────────────────────────────────
 
 echo "=== Memory E2E Integration Test ==="
@@ -352,6 +392,7 @@ test_i8
 test_i9
 test_i10
 test_i11
+test_i12
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
