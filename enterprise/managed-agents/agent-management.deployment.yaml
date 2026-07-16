@@ -1,0 +1,55 @@
+# CMA deployment: agent-management (on-demand, manual trigger)
+#
+# Field sources and name-reference convention: see
+# reporting.deployment.yaml header. No schedule block: drift checks run on
+# demand (after a fleet change or before an engagement checkpoint) via
+# POST /v1/deployments/{id}/run. Webhook-driven drift alerting remains a
+# Phase B+ candidate (see README) and is not wired here.
+#
+# The client config repository mount is INTENTIONALLY not declared:
+# github_repository resources require the repo URL and an
+# authorization_token (write-only secret) that are per-client values
+# supplied at engagement start, never committed. Attach it at deploy time
+# by adding the block below with values from the engagement handoff:
+#
+#   - type: github_repository
+#     url: <client config repo URL>
+#     authorization_token: <injected from env, never committed>
+#     checkout: {type: branch, name: main}
+#     mount_path: /workspace/client-config
+#
+# initial_events are replayed verbatim on every run — relative dates only.
+
+name: agent-management-on-demand
+description: >-
+  Deployed-fleet health check for the pilot engagement: plugin/marketplace
+  version drift, config drift against the client's managed-settings and
+  managed-mcp templates, and fleet inventory refresh.
+
+agent: agent-management
+environment: pilot
+
+initial_events:
+  - type: user.message
+    content:
+      - type: text
+        text: >-
+          Run a fleet drift check as of this run. Compare the deployed
+          fleet's plugin/marketplace pins and managed-settings/managed-mcp
+          configuration against the client's templates (mounted config
+          repository when attached, otherwise the latest inventory in the
+          engagement memory store). Record the refreshed inventory and any
+          drift findings in the memory store, and write the drift report
+          to /mnt/session/outputs/.
+
+resources:
+  - type: memory_store
+    memory_store: pilot-engagement
+    access: read_write
+    instructions: >-
+      Read the last recorded fleet inventory before comparing; write the
+      refreshed inventory and drift findings so consecutive runs report
+      deltas, not full rescans.
+
+vaults:
+  - pilot-engagement-data-access

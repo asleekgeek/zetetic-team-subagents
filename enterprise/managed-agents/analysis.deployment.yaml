@@ -1,0 +1,43 @@
+# CMA deployment: analysis (on-demand, manual trigger)
+#
+# Field sources and name-reference convention: see
+# reporting.deployment.yaml header. No schedule block: analysis runs on
+# demand via the deployment manual-run endpoint
+# (POST /v1/deployments/{id}/run) when fresh OTel/Admin exports land —
+# adoption diagnosis is event-driven, not clock-driven, so a cron would
+# either fire on stale data or miss fresh drops (source: launch-your-agent
+# cma-api.md section 9: schedule only when the job repeats on a clock).
+#
+# initial_events are replayed verbatim on every run — relative dates only.
+
+name: analysis-on-demand
+description: >-
+  Baseline/adoption diagnosis for the pilot engagement: cohort and chasm
+  segmentation, common-cause vs special-cause variation on the exported
+  usage series. Triggered manually when new data snapshots are available.
+
+agent: analysis
+environment: pilot
+
+initial_events:
+  - type: user.message
+    content:
+      - type: text
+        text: >-
+          New OTel/Admin data snapshots are available for the pilot
+          engagement. Update the adoption baseline as of this run:
+          classify the variation observed since the last recorded
+          baseline as common-cause or special-cause before proposing any
+          intervention, segment adopters along the diffusion curve, and
+          record the updated baseline and your diagnosis rationale in the
+          engagement memory store. Write the diagnosis report to
+          /mnt/session/outputs/.
+
+resources:
+  - type: memory_store
+    memory_store: pilot-engagement
+    access: read_write
+    instructions: >-
+      Read the prior baseline and decision history before diagnosing;
+      write the updated baseline and the rationale for any reclassification
+      so future runs and the reporting facilitator can build on it.

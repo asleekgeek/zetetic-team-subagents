@@ -1,92 +1,38 @@
 # CMA environment: pilot
 #
-# HONEST LIMIT (§8 source discipline): the exact CreateEnvironment schema
-# for Claude Managed Agents was not available to author this file against
-# — the task's schema template covers CreateAgent only. The shape below is
-# a best-effort declaration of what the 4 facilitator agents need (derived
-# from the issue #26 architecture decision: memory stores per engagement,
-# vaults for client-data secrets, a scheduled deployment for reporting,
-# a github_repository mount for agent-management) — it has NOT been
-# validated against the real `ant beta:environments create` API. That
-# validation is explicitly deferred to Phase B (see README.md
-# "PoC criteria"). Every field below that is not directly quoted from the
-# CreateAgent schema in the issue is marked inline as ASSUMED.
+# VERIFIED (Phase B, 2026-07-16): this manifest was validated against the
+# live Managed Agents API — deploy.py created it as
+# env_01EDqGQaZ6NeQV8X8VakKnUn (CreateEnvironment is not subject to the
+# credit-balance gate that blocked the agent creates on the same run; see
+# issue #26, Phase B run comment).
 #
-# Do not treat this file as proven-correct config; treat it as the
-# starting hypothesis Phase B is designed to falsify or confirm.
+# Field sources: SDK anthropic 0.116 environment_create_params.py
+# (name, description, metadata, scope, config) and
+# platform.claude.com/docs/en/api/beta (environments).
+#
+# The five blocks that used to live here as ASSUMED (memory_store, vaults,
+# resources, scheduled_deployments, limits) were REMOVED after verification
+# against the SDK and the API reference: those concepts are first-class
+# workspace objects attached to DEPLOYMENTS (or sessions), not environment
+# fields, and `limits` has no API equivalent at all. See
+# pilot.engagement.yaml (memory store + vault declarations) and
+# *.deployment.yaml (per-facilitator deployment configs), and the mapping
+# comment on issue #26.
+#
+# Note: the live `pilot` environment was created with this file's previous
+# description text. Environments are not versioned; deploy.py deliberately
+# leaves an existing environment untouched (create-once), so the live
+# description predates this cleanup. Cosmetic only.
 
-name: pilot                       # ASSUMED: environment identifier, 1-256 chars per the CreateAgent name convention
+name: pilot
 description: >-
   Shared environment for the 4 CMA facilitator agents (reporting, analysis,
   agent-management, security-data-audit) on a single pilot engagement.
-  Provides per-engagement memory-store mounting, vault-backed secrets for
-  client data access, and the resources each facilitator reads
-  (OTel/Admin exports, the client's config repository). ASSUMED shape —
-  see the header note; not yet validated against the live API (Phase B).
+  Each session gets its own fresh isolated container; engagement state
+  lives in the memory store declared in pilot.engagement.yaml and is
+  attached per deployment, not here.
 
-# ASSUMED block: memory store attachment. Per issue #26 ("workstream
-# priority #1" comment, 2026-07-15), Phase A uses native CMA memory stores (not the
-# cortex-relay MCP bridge, which is Cortex#151 and explicitly deferred).
-# Interim mechanism, migrating to an mcp_servers + vault entry later is a
-# non-breaking agent `update`, not a redesign (per the same comment).
-memory_store:
-  mode: per_engagement            # ASSUMED: one store instance attached per client engagement session, not shared across clients
-  versioning: enabled             # ASSUMED: native CMA memory stores are versioned (issue #26 architecture note)
-  redact: enabled                 # ASSUMED: native redact capability, load-bearing for security-data-audit's PII handling
-
-# ASSUMED block: vault-backed secrets. Needed for facilitators that read
-# client data (agent-management's mounted config repo credentials;
-# security-data-audit's read access to environment/config snapshots).
-# Field names are placeholders pending the real schema.
-vaults:
-  - name: engagement-data-access  # ASSUMED name — replace with the real vault identifier at attach time
-    purpose: >-
-      Read credentials for the client's exported OTel/Admin data and the
-      config repository mounted for agent-management and
-      security-data-audit. Substituted at session start, never embedded
-      in agent system prompts or committed config.
-
-# ASSUMED block: resources each facilitator mounts. The exact mount
-# mechanism (resource type names, whether "github_repository" is a
-# first-class type or a resource subtype) is UNVERIFIED against the real
-# API — this declares intent, not a proven schema.
-resources:
-  - agent: agent-management
-    type: github_repository       # per task instructions: agent-management reads a mounted client config repo
-    purpose: >-
-      Client's managed-settings/managed-mcp templates and plugin/
-      marketplace pin manifests, for drift comparison against the
-      deployed fleet.
-  - agent: analysis
-    type: file_mount               # ASSUMED type name
-    purpose: >-
-      Exported OTel and Admin Console data snapshots (session.count,
-      active_time.total, cost.usage, DAU/retention series) for adoption
-      and variance diagnosis.
-  - agent: reporting
-    type: file_mount               # ASSUMED type name
-    purpose: >-
-      Same exported OTel/Admin data snapshots as analysis, plus prior
-      scorecard artifacts, for readout generation.
-  - agent: security-data-audit
-    type: file_mount               # ASSUMED type name
-    purpose: >-
-      Environment/config snapshot (managed-settings.json, managed-mcp.json,
-      declared deployment path) for the questionnaire and governance checks.
-
-# Scheduled deployment for reporting only (per issue #26: "scheduled
-# deployment (cron hebdo)" is reporting's distinguishing CMA capability).
-# ASSUMED cron field name/format — ISO 8601 / standard 5-field cron is the
-# working hypothesis; verify against the real API in Phase B.
-scheduled_deployments:
-  - agent: reporting
-    schedule: "0 8 * * MON"        # ASSUMED format: weekly, Monday 08:00 — verify against real API in Phase B
-    purpose: >-
-      Weekly scorecard/readout generation so the artifact exists before
-      the sponsor asks for it, per the reporting agent's system prompt.
-
-# Resource limits — ASSUMED conservative defaults pending real numbers
-# from Phase B; no source for these values, they are placeholders only.
-limits:
-  max_concurrent_sessions: 4       # ASSUMED — one slot per facilitator agent, no source
-  session_timeout_minutes: 60      # ASSUMED — no source
+# source: SDK environment_create_params.py config.type cloud | self_hosted;
+# cloud networking defaults to unrestricted when omitted.
+config:
+  type: cloud

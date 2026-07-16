@@ -1,0 +1,53 @@
+# CMA deployment: security-data-audit (on-demand, manual trigger)
+#
+# Field sources and name-reference convention: see
+# reporting.deployment.yaml header. No schedule block: the questionnaire
+# and governance checks run on demand (before a security review or when
+# the client's environment/config snapshot changes) via
+# POST /v1/deployments/{id}/run.
+#
+# initial_events are replayed verbatim on every run — relative dates only.
+
+name: security-data-audit-on-demand
+description: >-
+  Security questionnaire, MCP governance and data-surface/retention audit
+  for the pilot engagement, graded row by row against pointed evidence.
+
+agent: security-data-audit
+environment: pilot
+
+initial_events:
+  - type: user.define_outcome
+    description: >-
+      Refresh the security questionnaire and governance audit as of this
+      run, against the current environment/config snapshot
+      (managed-settings.json, managed-mcp.json, declared deployment path).
+      Maintain one row per checklist item in the engagement memory store
+      and write the audit report to /mnt/session/outputs/.
+    rubric:
+      type: text
+      content: |
+        - Every checklist row carries a control/theme ID, a short
+          narrative, a pointer into the engagement memory store (or a
+          mounted snapshot path), and a last-verified marker relative to
+          this run.
+        - No row is graded "yes" without a pointer to evidence; rows whose
+          evidence predates the current config snapshot are marked stale,
+          not passed through.
+        - MCP governance findings reference the actual managed-mcp
+          entries they audit, not paraphrases.
+        - The audit report is written to /mnt/session/outputs/ and the
+          refreshed rows are persisted to the engagement memory store.
+    max_iterations: 3
+
+resources:
+  - type: memory_store
+    memory_store: pilot-engagement
+    access: read_write
+    instructions: >-
+      The questionnaire lives here as one row per checklist item; read the
+      existing rows before refreshing, update in place, and mark stale
+      rather than delete when evidence ages out.
+
+vaults:
+  - pilot-engagement-data-access
