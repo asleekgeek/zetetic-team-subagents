@@ -1,0 +1,33 @@
+# CMA engagement-scoped objects: pilot
+#
+# Workspace-scoped API objects shared by the 4 facilitator deployments for
+# ONE client engagement. At the start of a new engagement, copy this file
+# with a new engagement prefix — deployments reference these objects by
+# name and deploy.py resolves names to IDs at deploy time.
+#
+# Field sources: SDK anthropic 0.116 memory_store_create_params.py
+# (name, description) and vault_create_params.py (display_name, metadata);
+# platform.claude.com/docs/en/api/beta (memory stores, vaults).
+
+# One per-engagement memory store, attached to each facilitator deployment
+# via its resources[] block (issue #26 architecture: memory stores per
+# engagement, native CMA stores for this phase — the cortex-relay MCP
+# bridge is Cortex#151, a later non-breaking agent update).
+# Limits (source: docs, memory stores): 100kB/memory, 2,000 memories/store,
+# 8 stores/session. Versioning and redaction are native store capabilities
+# (memory versions API), not configuration fields.
+memory_stores:
+  - name: pilot-engagement
+    description: >-
+      Shared engagement memory for the pilot facilitators: adoption
+      baselines and decision history (analysis), prior scorecard artifacts
+      (reporting), fleet inventory and drift findings (agent-management),
+      questionnaire evidence rows (security-data-audit). One store per
+      client engagement; never shared across clients.
+
+# One per-engagement credential vault. Referenced by the deployments that
+# read client data (agent-management, security-data-audit) via vault_ids.
+# Credentials are registered OUT-OF-BAND (vaults/{id}/credentials, secret
+# values are write-only) — no secret material ever lands in this repo.
+vaults:
+  - display_name: pilot-engagement-data-access

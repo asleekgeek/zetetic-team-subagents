@@ -44,70 +44,69 @@ oversight. When the relay ships, migrating a facilitator to it is an
 `ant beta:agents update` adding an `mcp_servers` entry and a vault, not a
 manifest rewrite.
 
-## Deployment flow
+## Manifest layers (Phase B)
 
-### Control-plane CI — creating and versioning an agent
+Phase B verification against the SDK (`anthropic` 0.116, `types/beta/*.py`)
+and the API reference (platform.claude.com/docs/en/api/beta) showed that
+memory stores, vaults, resources and schedules are **first-class workspace
+objects attached to deployments**, not environment fields (issue #26,
+mapping comment, 2026-07-16). The manifests are layered accordingly:
 
-```bash
-# First deploy of a facilitator (creates version 1)
-ant beta:agents create < enterprise/managed-agents/reporting.agent.yaml
+| File | API object | Verified against |
+|---|---|---|
+| `*.agent.yaml` | agent (versioned) | CreateAgent schema (Phase A) + SDK `agent_create_params.py` |
+| `pilot.environment.yaml` | environment (create-once) | SDK `environment_create_params.py`; **created live** as `env_01EDqGQaZ6NeQV8X8VakKnUn` (2026-07-16) |
+| `pilot.engagement.yaml` | memory stores + vaults (per engagement) | SDK `memory_store_create_params.py`, `vault_create_params.py` |
+| `*.deployment.yaml` | deployments (one per facilitator) | SDK `deployment_create_params.py` + docs `/v1/deployments` |
 
-# Subsequent changes to the manifest — bump the version explicitly
-ant beta:agents update reporting --version 2 < enterprise/managed-agents/reporting.agent.yaml
-```
-
-Repeat per facilitator (`reporting`, `analysis`, `agent-management`,
-`security-data-audit`). Each manifest is the single source of truth for its
-agent's `system` prompt, model, tools, and skills — do not hand-edit an
-agent through the console once it is under version control here; edit the
-YAML, bump the version, and re-run `update`.
-
-CI wiring (recommended, not yet implemented in this repo): a workflow that
-runs `ant beta:agents update <name> --version <n>` on merge to `main` for
-any changed `*.agent.yaml`, gated on the YAML-parse + schema checks below
-already passing.
-
-### Attaching the environment
+## Deployment flow — `deploy.py`
 
 ```bash
-ant beta:environments create < enterprise/managed-agents/pilot.environment.yaml
+# Compile every manifest and print the exact payloads (no API calls, no key)
+python3 enterprise/managed-agents/deploy.py --dry-run
+
+# Deploy for real (idempotent: create-once or versioned update, never delete)
+export ANTHROPIC_API_KEY=...   # only accepted via the environment
+python3 enterprise/managed-agents/deploy.py
 ```
 
-See the **honest limit** note inside `pilot.environment.yaml` — every field
-in that file beyond `name`/`description` is a best-effort hypothesis about
-the real `CreateEnvironment` schema, not a verified one. Phase B's first job
-is running this against a real `ant beta:agents create` / environments call
-on a test workspace and correcting the manifest from what the API actually
-accepts.
+`deploy.py` upserts in dependency order — environment, agents, memory
+stores + vaults, then deployments — and resolves the **names** used in
+`*.deployment.yaml` (`agent`, `environment`, `resources[].memory_store`,
+`vaults[]`) to live IDs at deploy time, pinning each deployment to the
+agent version current at that moment. Re-running it re-pins; a deployment
+whose prerequisites failed is skipped with an explicit finding, never
+half-created.
 
-### Attaching memory stores per engagement
+Each manifest stays the single source of truth for its object — do not
+hand-edit an agent or deployment through the Console once it is under
+version control here; edit the YAML and re-run `deploy.py`.
 
-At the start of a new client engagement, attach a fresh memory-store
-instance to the environment for that engagement (native CMA memory store,
-per the interim mechanism above) before the first facilitator session runs.
-The exact attach command is part of the Phase B validation — this repo does
-not yet script it, because the environment schema itself is unverified.
+### Memory store and vault per engagement
+
+`pilot.engagement.yaml` declares the per-engagement objects: one shared
+memory store (`pilot-engagement`) that every facilitator deployment mounts
+via its `resources[]` block, and one credential vault
+(`pilot-engagement-data-access`) referenced by the deployments that read
+client data (`agent-management`, `security-data-audit`). Credential
+**values** are registered out-of-band against the vault (secret values are
+write-only in the API) — never embedded in an agent's `system` prompt,
+never committed to this repository. At the start of a new engagement, copy
+the file with a new engagement prefix.
 
 ### Scheduled deployment (reporting)
 
-`reporting` is the one facilitator with a cron requirement — see
-`scheduled_deployments` in `pilot.environment.yaml`. The weekly cadence
+`reporting` is the one facilitator whose job repeats on a clock — see the
+`schedule` block in `reporting.deployment.yaml` (5-field POSIX cron +
+IANA timezone, weekly Monday 08:00 Europe/Paris). The weekly cadence
 exists so a scorecard/readout draft is already sitting in
-`/mnt/session/outputs/` before the consultant or sponsor asks for it, per
-the reporting agent's system prompt. The cron schedule and format in the
-manifest are marked ASSUMED — validate against the real scheduling API in
-Phase B.
+`/mnt/session/outputs/` before the consultant or sponsor asks for it. The
+other three facilitators deploy without a schedule and are fired on demand
+via `POST /v1/deployments/{id}/run` (their kickoff events are versioned in
+their `*.deployment.yaml`). Note: a deployment's `initial_events` are
+replayed verbatim on every run — kickoff text uses relative dates only.
 
-### Vaults for secrets
-
-`agent-management` and `security-data-audit` read client data (a mounted
-config repository, an environment/config snapshot) that requires
-credentials. Those credentials belong in a vault attached to the
-environment, substituted into the session at start — never embedded in an
-agent's `system` prompt, never committed to this repository. See the
-`vaults` block in `pilot.environment.yaml` for the (also-ASSUMED) shape.
-
-## PoC criteria — Phase B (not yet run)
+## PoC criteria — Phase B (in progress)
 
 Phase B validates the 3 facilitators whose capabilities are most novel
 against a real CMA workspace:
@@ -123,12 +122,16 @@ against a real CMA workspace:
     (once with `allowManagedMcpServersOnly: true`, once without) and
     correctly flags the difference.
 
-None of (a)-(c) has been run. This phase-A delivery is manifests and a
-system-prompt design grounded in the Anthropic activation-guide reference
-material (measurement, pilot-qualification, security-questionnaire,
-managed-settings, MCP-governance, and plugins-handoff lessons) — it is not
-a claim that the manifests work against the live Managed Agents API. That
-claim is exactly what Phase B is for.
+Phase B status (2026-07-16, first live run — see the issue #26 run
+comment): the `pilot` environment was **created live**
+(`env_01EDqGQaZ6NeQV8X8VakKnUn`); the 4 agent creates were rejected with
+HTTP 400 "credit balance too low" — a billing gate, not a schema
+verdict. By decision, no credit top-up happens before a pilot client is
+signed, so live CreateAgent validation is deferred to the first pilot
+engagement. The deployment/memory-store/vault layer compiles against the
+verified SDK schemas (`--dry-run`) but has not been exercised live.
+None of (a)-(c) has completed; they run as day-one steps of the first
+pilot, funded by it.
 
 ## Phase C (later)
 

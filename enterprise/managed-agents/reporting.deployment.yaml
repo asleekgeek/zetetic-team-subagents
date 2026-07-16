@@ -1,0 +1,67 @@
+# CMA deployment: reporting (weekly scheduled)
+#
+# Field sources: SDK anthropic 0.116 deployment_create_params.py +
+# platform.claude.com/docs/en/api/beta (deployments). Required: name,
+# agent, environment_id, initial_events (1-50). Optional: description,
+# schedule (5-field POSIX cron + IANA timezone), resources (max 500),
+# vault_ids (max 50), metadata (max 16 pairs).
+#
+# Name-reference convention (resolved by deploy.py at deploy time):
+#   agent:       agent NAME -> pinned {type: agent, id, version} (current
+#                version at deploy time; re-running deploy.py re-pins)
+#   environment: environment NAME -> environment_id
+#   resources[].memory_store: store NAME -> memory_store_id
+#   vaults:      vault display_name -> vault_ids entry
+#
+# initial_events are replayed VERBATIM on every scheduled run (source:
+# launch-your-agent references/cma-api.md section 9) — kickoff text must use
+# relative dates only, never a literal date.
+
+name: reporting-weekly
+description: >-
+  Weekly pilot scorecard/readout generation, fired on cron so the artifact
+  exists before the sponsor asks for it (issue #26: scheduled deployment is
+  the reporting facilitator's distinguishing CMA capability).
+
+agent: reporting
+environment: pilot
+
+# source: docs (deployments.schedule) — 5-field POSIX cron, minute
+# granularity, IANA timezone required, wall-clock DST semantics. Weekly
+# Monday 08:00 cadence per issue #26 ("cron hebdo" for reporting).
+schedule:
+  type: cron
+  expression: "0 8 * * 1"
+  timezone: Europe/Paris
+
+initial_events:
+  - type: user.define_outcome
+    description: >-
+      Generate this week's pilot engagement scorecard and readout from the
+      exported OTel/Admin data snapshots available in the engagement
+      memory store, covering the last 7 days as of this run. Write the
+      deliverables to /mnt/session/outputs/.
+    rubric:
+      type: text
+      content: |
+        - The readout covers the 7 days ending at this run's date; every
+          reported number cites the source snapshot file it came from.
+        - session.count, active_time.total, cost.usage and DAU/retention
+          series are each either reported or explicitly marked as missing
+          from this week's exports (no silently omitted metric).
+        - Week-over-week deltas reference the prior scorecard stored in
+          the engagement memory store when one exists; if none exists the
+          readout says so instead of fabricating a baseline.
+        - The scorecard artifact is written to /mnt/session/outputs/ and a
+          copy of the summary row is appended to the engagement memory
+          store for next week's delta.
+    max_iterations: 3
+
+resources:
+  - type: memory_store
+    memory_store: pilot-engagement
+    access: read_write
+    instructions: >-
+      Read prior scorecard summaries for week-over-week deltas; after the
+      readout is graded, append this week's summary row so the next run
+      can compute its delta.
