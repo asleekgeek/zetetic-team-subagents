@@ -126,10 +126,12 @@ Phase B status (2026-07-16, first live run — see the issue #26 run
 comment): the `pilot` environment was **created live**
 (`env_01EDqGQaZ6NeQV8X8VakKnUn`); the 4 agent creates were rejected with
 HTTP 400 "credit balance too low" — a billing gate, not a schema
-verdict, so live CreateAgent validation is still pending a credit top-up.
-The deployment/memory-store/vault layer compiles against the verified SDK
-schemas (`--dry-run`) but has not yet been exercised live. None of (a)-(c)
-has completed; running them is the remainder of Phase B.
+verdict. By decision, no credit top-up happens before a pilot client is
+signed, so live CreateAgent validation is deferred to the first pilot
+engagement. The deployment/memory-store/vault layer compiles against the
+verified SDK schemas (`--dry-run`) but has not been exercised live.
+None of (a)-(c) has completed; they run as day-one steps of the first
+pilot, funded by it.
 
 ## Phase C (later)
 
