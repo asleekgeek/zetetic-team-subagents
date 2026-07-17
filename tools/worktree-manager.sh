@@ -12,22 +12,74 @@
 # sweep contract:
 #   - No repo args: discovers top-level git repos under the parent of this
 #     repo (skips linked worktrees, identified by a `.git` FILE, not a dir).
+#     `hooks/session-start.sh` never invokes this no-args form — it scopes
+#     its automatic sweep to its own repo only (see issue #33 fix note
+#     below); the multi-repo form is for deliberate, explicit hygiene runs.
 #   - --fetch: runs `git fetch origin --prune` first (never on by default —
 #     session-start calls sweep without it to avoid network at boot).
 #   - A worktree is removed only if: its path is under /tmp or /private/tmp
 #     (never a deliberate ~/Developments worktree), its branch is not
 #     `live/*` (dev-symlink targets), its tip is an ancestor of origin/main,
-#     and its working tree is clean. Removal never uses --force; branch
-#     deletion never uses -D.
+#     its working tree is clean, AND it is older than WORKTREE_GRACE_SECONDS
+#     (see below). Removal never uses --force; branch deletion never uses -D.
 #   - After worktree removal, local branches merged into origin/main with no
 #     worktree (excluding main/master/live/*/checked-out branches) are
 #     deleted with `git branch -d`.
+#   - Every removal (and skip-by-grace-period) is appended to
+#     ~/.claude/worktree-sweep-audit.log for post-hoc attribution.
+#
+# ISSUE #33 ROOT CAUSE (fixed here, reproduced empirically 2026-07-17):
+# `git merge-base --is-ancestor <branch> origin/main` returns TRUE for a
+# brand-new branch that has zero commits beyond its base, because a freshly
+# created worktree's branch tip equals origin/main's tip. Combined with a
+# clean working tree (true before the agent's first edit), the old
+# sweep_worktrees logic classified an untouched, minutes-old worktree as
+# "merged + clean" and removed it — deregistering it from `git worktree
+# list` and deleting its directory. Repro: `git worktree add /private/tmp/x
+# -b test/repro origin/main` followed immediately by `sweep` removed it.
+# The grace period below (WORKTREE_GRACE_SECONDS) closes this race by refusing
+# to remove any worktree younger than the threshold, regardless of merge
+# state. source: measured incident, issue #33 — reported loss occurred
+# ~15-20 minutes after worktree creation; 3600s (60 min) gives a >=3x
+# safety margin over the observed loss window.
 #
 # Exit codes: 0 success, 1 error, 2 usage error
 
 set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 ACTION="${1:-}"; AGENT="${2:-}"
+
+# source: measured incident, issue #33 (loss observed ~15-20 min post-creation;
+# 3600s = 60 min gives >=3x safety margin). Override for tests only.
+WORKTREE_GRACE_SECONDS="${WORKTREE_GRACE_SECONDS:-3600}"
+AUDIT_LOG="${WORKTREE_AUDIT_LOG:-$HOME/.claude/worktree-sweep-audit.log}"
+
+# Appends one audit line: ISO-timestamp, repo, path, branch, decision.
+# Never fails the sweep — a log write failure is swallowed (best-effort).
+audit_log() {
+  local repo="$1" path="$2" branch="$3" decision="$4"
+  mkdir -p "$(dirname "$AUDIT_LOG")" 2>/dev/null || true
+  printf '%s\trepo=%s\tpath=%s\tbranch=%s\t%s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$repo" "$path" "$branch" "$decision" \
+    >>"$AUDIT_LOG" 2>/dev/null || true
+}
+
+# Portable directory age in seconds (birth time when the OS exposes it,
+# else mtime as a documented fallback). macOS/BSD: `stat -f %B`. Linux with
+# statx birth-time support: `stat -c %W` (returns 0 when unsupported, in
+# which case we fall back to mtime `%Y`/`%m`).
+worktree_age_seconds() {
+  local path="$1" now created
+  now="$(date +%s)"
+  created="$(stat -f "%B" "$path" 2>/dev/null || true)"
+  if [[ -z "$created" || "$created" == "0" ]]; then
+    created="$(stat -c "%W" "$path" 2>/dev/null || true)"
+  fi
+  if [[ -z "$created" || "$created" == "0" ]]; then
+    created="$(stat -f "%m" "$path" 2>/dev/null || stat -c "%Y" "$path" 2>/dev/null || echo "$now")"
+  fi
+  echo $(( now - created ))
+}
 
 [[ -z "$ACTION" ]] && { echo "usage: $0 <list|cleanup|status|sweep> [args]" >&2; exit 2; }
 
@@ -49,7 +101,7 @@ list_worktrees() {
 # decision. Returns 1 only on an unexpected command failure, not on skips.
 sweep_worktrees() {
   local repo="$1" primary="$2" primary_branch="$3"
-  local removed=0 path branch rc=0
+  local removed=0 path branch rc=0 age
   while IFS=$'\t' read -r path branch; do
     [[ -z "$path" ]] && continue
     path="$(cd "$path" 2>/dev/null && pwd || echo "$path")"
@@ -68,6 +120,17 @@ sweep_worktrees() {
       /tmp/*|/private/tmp/*) ;;
       *) echo "  skip $path: not under /tmp (deliberate worktree)"; continue ;;
     esac
+    # Root-cause fix (issue #33): a brand-new branch with zero commits is
+    # (by definition of its tip) an ancestor of origin/main, so the
+    # merge-check below cannot by itself distinguish "already merged, safe
+    # to remove" from "just created, not yet worked on". Refuse removal until the worktree has
+    # existed for WORKTREE_GRACE_SECONDS regardless of merge/clean state.
+    age="$(worktree_age_seconds "$path")"
+    if [[ "$age" -lt "$WORKTREE_GRACE_SECONDS" ]]; then
+      echo "  skip $path ($branch): within grace period (age ${age}s < ${WORKTREE_GRACE_SECONDS}s)"
+      audit_log "$repo" "$path" "$branch" "skip-grace-period age=${age}s"
+      continue
+    fi
     if ! git -C "$repo" merge-base --is-ancestor "$branch" origin/main 2>/dev/null; then
       echo "  skip $path ($branch): not merged into origin/main"; continue
     fi
@@ -79,8 +142,10 @@ sweep_worktrees() {
     if git -C "$repo" worktree remove "$path" 2>/dev/null; then
       git -C "$repo" branch -d "$branch" 2>/dev/null || true
       removed=$((removed + 1))
+      audit_log "$repo" "$path" "$branch" "removed age=${age}s"
     else
       echo "  error: worktree remove failed for $path"
+      audit_log "$repo" "$path" "$branch" "error-remove-failed age=${age}s"
       rc=1
     fi
   done < <(list_worktrees "$repo")
