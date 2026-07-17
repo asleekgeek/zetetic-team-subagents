@@ -106,7 +106,16 @@ echo -e "${WHITE}${BOLD}  ◆ Worktree Sweep${RESET}"
 if [[ -x "$TOOLS/worktree-manager.sh" ]]; then
   # No --fetch at boot (no network); merged-check relies on refs already
   # fetched from a prior `git fetch`. Warn-only — never blocks startup.
-  run_timeboxed 15 "$TOOLS/worktree-manager.sh" sweep 2>/dev/null | sed 's/^/  /' || true
+  #
+  # Scoped to REPO_ROOT only (issue #33 fix). The no-args form of `sweep`
+  # auto-discovers and sweeps EVERY sibling git repo under REPO_ROOT's
+  # parent directory — which meant any Claude Code session started in ANY
+  # sibling project on this machine would reach into and remove worktrees
+  # belonging to a completely unrelated repo (this one included), widening
+  # the removal race far beyond what a single repo's own boot should touch.
+  # Deliberate cross-repo hygiene sweeps remain available via the explicit
+  # multi-repo form: `tools/worktree-manager.sh sweep --fetch <repo...>`.
+  run_timeboxed 15 "$TOOLS/worktree-manager.sh" sweep "$REPO_ROOT" 2>/dev/null | sed 's/^/  /' || true
 else
   echo "  (worktree-manager unavailable)"
 fi
