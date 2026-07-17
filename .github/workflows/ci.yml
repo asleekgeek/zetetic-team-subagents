@@ -58,6 +58,15 @@ jobs:
       - name: Run structural auditor
         run: bash tools/agent-definition-auditor.sh
 
+  worktree-tests:
+    name: Worktree Manager Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run sweep-safety suite (issue #33)
+        run: bash scripts/test-worktree-sweep-safety.sh
+
   zetetic-checker:
     name: Zetetic Standard Checker
     runs-on: ubuntu-latest
