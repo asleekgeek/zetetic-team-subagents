@@ -61,7 +61,7 @@ AUDIT_LOG="$TMP/audit.log"
 
 # ── P1: fresh worktree survives within grace period ─────────────────────────
 echo "P1: fresh worktree (0 commits, clean) survives a sweep within grace period"
-FRESH="/private/tmp/zts-sweep-test-fresh-$$"
+FRESH="/tmp/zts-sweep-test-fresh-$$"
 rm -rf "$FRESH"
 git -C "$TARGET" worktree add -q "$FRESH" -b test/fresh origin/main
 WORKTREE_AUDIT_LOG="$AUDIT_LOG" WORKTREE_GRACE_SECONDS=3600 \
@@ -77,7 +77,7 @@ git -C "$TARGET" branch -D test/fresh 2>/dev/null || true
 
 # ── P2: stale merged worktree IS removed (grace period elapsed) ─────────────
 echo "P2: stale merged+clean worktree is removed once past grace period"
-STALE="/private/tmp/zts-sweep-test-stale-$$"
+STALE="/tmp/zts-sweep-test-stale-$$"
 rm -rf "$STALE"
 git -C "$TARGET" worktree add -q "$STALE" -b test/stale origin/main
 WORKTREE_AUDIT_LOG="$AUDIT_LOG" WORKTREE_GRACE_SECONDS=0 \
