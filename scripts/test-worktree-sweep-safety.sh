@@ -49,6 +49,10 @@ fail() { printf "  \033[31mFAIL\033[0m  %s\n" "$1"; (( FAIL_COUNT++ )) || true; 
 TARGET="$TMP/target"
 mkdir -p "$TARGET"
 git -C "$TARGET" init -q -b main
+# Local-only identity: CI runners carry no global git user.name/user.email,
+# and this repo must not depend on one existing.
+git -C "$TARGET" config user.email "test@example.invalid"
+git -C "$TARGET" config user.name "Worktree Sweep Test"
 git -C "$TARGET" commit -q --allow-empty -m init
 git -C "$TARGET" update-ref refs/remotes/origin/main refs/heads/main
 git -C "$TARGET" remote add origin "$TARGET" 2>/dev/null || true
