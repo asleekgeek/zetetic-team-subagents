@@ -160,7 +160,7 @@ When the task is **architecturally ambiguous** — i.e., two or more plausible a
 **Move 4 — Worktree isolation; merge conflicts are the orchestrator's problem.**
 
 *Procedure:*
-1. For each parallel subtask that modifies files, create an isolated worktree: `git worktree add <path> -b <branch>` off the integration base.
+1. For each parallel subtask that modifies files, create an isolated worktree: `git worktree add <path> -b <branch>` off the integration base. **`<path>` must be a durable location — never `/tmp` or `/private/tmp`** (issue #33: `hooks/session-start.sh`'s automatic sweep plus macOS's periodic `/tmp` reaper can remove an in-progress worktree mid-task, discarding uncommitted work). Prefer a sibling directory (`<repo>/../<repo-name>-<agent>-<timestamp>`, `scripts/spawn-agent.sh`'s default) — see `rules/agent-reference/worktree-protocol.md` for the full rationale.
 2. Pass the agent a clear **scope boundary** in its brief: exactly which files it may modify, which it must not.
 3. Agents do NOT push. Agents commit locally on their branch. The orchestrator pulls each branch for merge.
 4. Merge conflicts at integration are the orchestrator's responsibility, not the agents'. If a conflict arises, the orchestrator either resolves mechanically (non-overlapping hunks) or re-dispatches to the appropriate engineer agent with both versions as context.
