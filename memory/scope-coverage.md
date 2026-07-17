@@ -14,6 +14,7 @@
 
 | Scope | Owners | Readers | Notes |
 |---|---|---|---|
+| `_user` | `_user` | `*` | Home scope for the `_user` identity itself — the top-level interactive session's own checkpoint/working memory (default `MEMORY_AGENT_ID` when the caller is not a spawned team/genius agent; see `hooks/session-start.sh`, `hooks/stop-context-guard.py`, token-budget checkpoint protocol). Distinct from `_user`'s curator/owner role on other scopes below — this row is `_user`'s OWN scope, same shape as `engineer`'s or `architect`'s (issue #31). |
 | `global` | `_user`, `_curator` | `*` | Cross-project ground truth. Curator-only writes. |
 | `lessons` | `_user`, `_curator` | `*` | Rules from corrections. `orchestrator` writes via `_curator` role. |
 | `quarantine` | `*` | `_user`, `_curator` | Untrusted-source writes. Triage-only reads. |
@@ -108,7 +109,7 @@ All genius agents share scope `genius`. Per-agent isolation is by **mandatory su
 | Team agents (excl. genius) | 21 | 21 / 21 = 100% |
 | Genius agents | 97 | 97 / 97 = 100% |
 | **Total agents** | **118** | **100%** |
-| Distinct registry scopes | 28 | (7 systemic + 19 team + 1 research + 1 genius) |
+| Distinct registry scopes | 30 | (8 systemic incl. `_user` + 19 team + 1 research + 1 genius + 1 external-plugin `cortex-viz`) |
 
 > **Why this total (118) is one less than the README's agent count (119):** this doc
 > tabulates only **scope-owning** agents. `memory-writer` is a budgeted scribe that
@@ -166,4 +167,4 @@ For every agent file under `agents/`:
 python3 -c 'import json; d=json.load(open("memory/scope-registry.json")); print("scopes=", len(d["scopes"]), "strict=", d["strict_unknown_scope"], "curators=", d["curator_agents"])'
 ```
 
-Expected: `scopes= 28 strict= True curators= ['_user', 'orchestrator']`
+Expected: `scopes= 30 strict= True curators= ['_user', 'orchestrator']`
