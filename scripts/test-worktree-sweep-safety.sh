@@ -28,6 +28,12 @@ REPO="$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)"
 MANAGER="$REPO/tools/worktree-manager.sh"
 
 TMP="$(mktemp -d)"
+# A second scratch root guaranteed OUTSIDE /tmp and /private/tmp, for P3.
+# `mktemp -d`'s default TMPDIR is platform-dependent (/tmp on Linux CI
+# runners, but $TMPDIR under /var/folders on macOS) — using it directly for
+# a "deliberate, non-tmp" fixture is not portable. Root it under $HOME
+# instead, which is never under /tmp on either platform.
+NONTMP_ROOT="$(mktemp -d "${HOME}/.zts-sweep-test-XXXXXX")"
 TARGET=""
 cleanup() {
   if [[ -n "$TARGET" ]]; then
@@ -35,7 +41,7 @@ cleanup() {
       | awk '/^worktree/ {print $2}' | grep -v "^$TARGET\$" \
       | xargs -I{} git -C "$TARGET" worktree remove --force {} 2>/dev/null || true
   fi
-  rm -rf "$TMP"
+  rm -rf "$TMP" "$NONTMP_ROOT"
 }
 trap cleanup EXIT
 
@@ -91,7 +97,7 @@ fi
 
 # ── P3: non-tmp worktree is never touched ────────────────────────────────────
 echo "P3: worktree outside /tmp is never removed regardless of age/merge state"
-DELIBERATE="$TMP/deliberate-wt"
+DELIBERATE="$NONTMP_ROOT/deliberate-wt"
 git -C "$TARGET" worktree add -q "$DELIBERATE" -b test/deliberate origin/main
 WORKTREE_AUDIT_LOG="$AUDIT_LOG" WORKTREE_GRACE_SECONDS=0 \
   "$MANAGER" sweep "$TARGET" >/dev/null 2>&1 || true
