@@ -1,6 +1,24 @@
 # Skills Index
 
-36 skills across 7 categories. Every skill carries the zetetic standard: four pillar gates, sourced evidence, and explicit refusal conditions.
+75 skills: 11 problem-shaped entry points (`<name>/SKILL.md`) plus 64 category skills. Every skill carries the zetetic standard: four pillar gates, sourced evidence, and explicit refusal conditions.
+
+## Problem-shaped entry points (start here)
+
+Each wraps a cluster of genius-agent categories from [`agents/genius/INDEX.md`](../agents/genius/INDEX.md) and loads the best-fit agent on demand via `tools/genius-invoker.sh`:
+
+| Skill | Problem shape |
+|-------|---------------|
+| [`measurement-discipline`](measurement-discipline/SKILL.md) | untrusted metrics, unbalanced ledgers, missing instruments |
+| [`estimation`](estimation/SKILL.md) | decisions blocked by missing data; false precision; capacity/feasibility bounds |
+| [`causal-audit`](causal-audit/SKILL.md) | causation claimed from correlation; experiment design; confounding |
+| [`formal-correctness`](formal-correctness/SKILL.md) | spec-less concurrent/distributed code; contracts; decidability |
+| [`failure-forensics`](failure-forensics/SKILL.md) | incidents, discarded anomalies, undesigned degraded modes |
+| [`decision-bias-check`](decision-bias-check/SKILL.md) | intuition-driven high-stakes calls; unfalsifiable claims; gamed metrics |
+| [`evidence-synthesis`](evidence-synthesis/SKILL.md) | conflicting sources into one graded, warranted claim |
+| [`systems-leverage`](systems-leverage/SKILL.md) | structural dysfunction that resists local fixes; where to intervene |
+| [`boundary-design`](boundary-design/SKILL.md) | build-vs-buy, module/team/API boundaries, abstraction placement |
+| [`structure-discovery`](structure-discovery/SKILL.md) | hidden regularities, reverse engineering, taxonomy gaps |
+| [`problem-reframing`](problem-reframing/SKILL.md) | malformed questions, false binaries, denied trade-offs |
 
 ## Quick Reference
 
