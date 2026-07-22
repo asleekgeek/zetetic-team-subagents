@@ -55,10 +55,18 @@ test_c1() {
 
 # ── C2: stale-lock detection — SIGKILL leaves lockdir; tool must time out ─────
 # Invariant: a process killed while holding the lock must not block callers
-# indefinitely. Current behavior: 5 s timeout then die.
-# This test documents the KNOWN LIMITATION: stale locks require manual cleanup.
-# There is no fix (see concurrency-audit.md §1); the test merely proves the
-# timeout fires within a bounded interval rather than hanging forever.
+# indefinitely. The lockdir here has NO pid file (holder died between mkdir and
+# the pid write), so PID-liveness reclaim cannot trigger: the tool must die
+# after its 5 s no-progress wall-clock deadline (concurrency-audit.md §1).
+# Window [5, 10]:
+#   lower — with_lock guarantees > 5.0 s of real spinning before the die
+#           ($SECONDS whole-second granularity, strict > compare), so the
+#           int-truncated total is always >= 5.
+#   upper — deadline fires within 5–6 s of spinning; the rest is tool startup +
+#           die-path process-spawn overhead. source: measured 2026-07-22 —
+#           total 5.3–6.5 s on ubuntu CI, 7.0–8.2 s on macOS Darwin 25.5
+#           (~85–250 ms per process spawn there); 10 s still fails on a hang
+#           or a doubled deadline.
 test_c2() {
   local ROOT; ROOT=$(mktemp -d)
   trap 'rm -rf "$ROOT"' RETURN
@@ -73,8 +81,8 @@ test_c2() {
   local END; END=$(python3 -c "import time; print(int(time.time()))")
   local ELAPSED=$(( END - START ))
 
-  if echo "$OUT" | grep -q "could not acquire lock" && (( ELAPSED >= 4 && ELAPSED <= 8 )); then
-    pass 2 "stale lock: tool dies in ~5 s with clear error (elapsed=${ELAPSED}s)"
+  if echo "$OUT" | grep -q "could not acquire lock" && (( ELAPSED >= 5 && ELAPSED <= 10 )); then
+    pass 2 "stale lock: tool dies after its 5 s no-progress deadline (elapsed=${ELAPSED}s)"
   else
     fail 2 "stale lock timeout" "elapsed=${ELAPSED}s out='$OUT'"
   fi
