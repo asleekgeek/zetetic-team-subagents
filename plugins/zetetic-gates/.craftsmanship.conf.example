@@ -1,0 +1,56 @@
+# .craftsmanship.conf — project-local configuration for craftsmanship-checker.sh
+#
+# Copy to '.craftsmanship.conf' at the repo root (or '.claude/craftsmanship.conf')
+# to take effect. Shell-sourced; same mechanism as zetetic-checker's .zetetic.conf.
+#
+# FULLY TUNABLE INCLUDING OFF. Unlike zetetic-checker, this checker has NO
+# anti-tamper guard: a team MAY relax a threshold, downgrade a rule from
+# block->advise, or turn it off entirely. The defaults below stay strict and are
+# sourced from rules/coding-standards.md §4 — change them only with a written
+# rationale (comment here, or an ADR) per coding-standards.md §10.
+#
+# A value set here OVERRIDES the live CRAFTSMANSHIP_PROFILE env (config is sourced
+# after the env default). An ABSENT config falls back entirely to these defaults.
+
+# ── Profile ────────────────────────────────────────────────────────────
+# strict     — warnings (advise) promoted to errors; maximum rigor.
+# standard   — errors block, warnings inform (default).
+# permissive — always exit 0, still reports (useful during transition).
+# CRAFTSMANSHIP_PROFILE=standard
+
+# ── Size thresholds (rules/coding-standards.md §4) ─────────────────────
+# FILE_MAX=500     # §4.1 file lines        (source: Martin 2008, Clean Code Ch.3)
+# FUNC_MAX=50      # §4.2 function lines     (source: Martin 2008, Clean Code Ch.3)
+# CLASS_MAX=300    # §4.3 class lines        (source: Martin 2008, Clean Code Ch.10)
+# PARAM_MAX=4      # §4.4 parameter count    (source: Martin 2008, Clean Code Ch.3)
+# NEST_MAX=3       # §4.5 nesting depth      (source: Martin 2008, Clean Code Ch.3)
+
+# ── Stakes-flex band (rules/coding-standards.md §10) ───────────────────
+# Sizes get a 1.2x advisory band by default:
+#   >limit and <=SIZE_FLEX_BAND*limit  => advise (within the flex band)
+#   >SIZE_FLEX_BAND*limit              => the rule's configured severity below
+# Set to 1.0 to disable the band (any over-limit fires at the configured severity).
+# SIZE_FLEX_BAND=1.2
+
+# ── Per-rule severity: block | advise | off ────────────────────────────
+# block  — counts as an error; non-zero exit; pre-commit will stop the commit.
+# advise — counts as a warning; informational; never blocks (unless profile=strict).
+# off    — rule suppressed entirely.
+#
+# SEV_FILE_TOO_LONG=block        # §4.1 deterministic (wc -l)
+# SEV_NESTING_TOO_DEEP=block     # §4.5 deterministic (brace depth / python indent)
+# SEV_FUNCTION_TOO_LONG=block    # §4.2 deterministic for recognized langs
+# SEV_CLASS_TOO_LONG=block       # §4.3 deterministic for recognized langs
+# SEV_PARAM_COUNT=block          # §4.4 deterministic for recognized langs
+# SEV_LAYER_VIOLATION=advise     # §2.2 heuristic — highest FP risk on polyglot repos.
+#                                #      Set to 'block' once your layer dirs are clean.
+# SEV_GRABBAG_NAME=advise        # §9   basename heuristic (utils/util/helpers/...).
+# SEV_LSP_NOTIMPL=advise         # §1.3 literal not-implemented marker (cannot prove an override).
+# SEV_CORE_INSTANTIATION=off     # §5.2 opt-in; high FP risk. Set to 'advise' to enable.
+
+# ── Extra file-class inclusion (default: code files only) ──────────────
+# By default .md (docs) and data/config formats (json/yaml/toml/...) are skipped:
+# §4 size limits target source code. Re-enable per repo if your source includes
+# structured Markdown or config-as-code.
+# CRAFTSMANSHIP_CHECK_DOCS=true   # also run structural rules on .md files
+# CRAFTSMANSHIP_CHECK_DATA=true   # also run on json/yaml/yml/toml/csv/sql/tsv/xml

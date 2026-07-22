@@ -1,0 +1,46 @@
+{
+  "name": "zetetic-gates",
+  "description": "Commits with unsourced constants get BLOCKED. Three mechanical gates, zero agents: a zetetic checker (absolute claims and 3+ decimal constants need a source: annotation), a craftsmanship checker (coding-standards size limits, tunable via .craftsmanship.conf), and a secret-shield that stops credential-file reads. Installs in 30 seconds.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Clement Deust",
+    "email": "admin@ai-architect.tools"
+  },
+  "homepage": "https://ai-architect.tools",
+  "repository": "https://github.com/cdeust/zetetic-team-subagents",
+  "license": "MIT",
+  "keywords": [
+    "pre-commit",
+    "quality-gates",
+    "zetetic",
+    "source-discipline",
+    "craftsmanship",
+    "secrets",
+    "claude-code"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Bash|Grep|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-secret-shield.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "when": "command contains 'git commit'",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-zetetic.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

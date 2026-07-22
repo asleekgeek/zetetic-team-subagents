@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **`zetetic-gates` micro-plugin** (`plugins/zetetic-gates/`, v1.0.0) — the mechanical enforcement gates as a standalone 30-second install with zero agents: pre-commit zetetic + craftsmanship gate hook, `tools/zetetic-checker.sh` (blocks unsourced constants and absolute claims), `tools/craftsmanship-checker.sh` (§4 size limits, `.craftsmanship.conf` tunable), and the credential secret-shield. Registered in `.claude-plugin/marketplace.json` (marketplace 2.29.0 → 2.30.0). Engine files are byte-identical copies of the canonical `tools/` + `hooks/` files (a marketplace plugin only ships files under its own directory); the new CI suite `tools/tests/gates-plugin-sync/run-tests.sh` hard-fails on any drift, so the main plugin's hooks and the micro-plugin cannot diverge silently.
+- **11 problem-shaped skills** (`skills/<name>/SKILL.md`) wrapping the 97 genius agents by the category structure of `agents/genius/INDEX.md`: `measurement-discipline`, `estimation`, `causal-audit`, `formal-correctness`, `failure-forensics`, `decision-bias-check`, `evidence-synthesis`, `systems-leverage`, `boundary-design`, `structure-discovery`, `problem-reframing`. Each states its problem shape, lists 6–10 best-fit geniuses with one-line triggers, and loads them through the existing `tools/genius-invoker.sh` invoke/route/compose machinery. The README now advertises the skills as the entry point; the 97-agent roster is kept as the reference library. Total SKILL.md frontmatter descriptions: 3.4K chars (well inside the 15K description budget).
+
+### Fixed
+- **`hooks/pre-tool-secret-shield.py` §4.5 nesting violation** — `_strip_write_dest_and_urls` nested 5 levels deep; the transfer-destination drop is extracted into `_drop_transfer_destination` (behavior unchanged, hook-layer suite 96/96).
+
 ## [2.29.0] — Boy-Scout Rule + Definition of Done + CMA facilitators + worktree/ACL fixes
 
 ### Added

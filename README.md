@@ -6,13 +6,13 @@
   <a href="https://github.com/cdeust/zetetic-team-subagents/actions/workflows/ci.yml"><img src="https://github.com/cdeust/zetetic-team-subagents/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/tests-288-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/agents-119-8A2BE2" alt="Agents">
-  <img src="https://img.shields.io/badge/skills-64-green" alt="Skills">
+  <img src="https://img.shields.io/badge/skills-75-green" alt="Skills">
   <img src="https://img.shields.io/badge/hooks-19_lifecycle-red" alt="Hooks">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-> **Claude Code agents whose commits are blocked when constants lack source citations.**
-> 97 genius reasoning agents (plus 22 team-role agents = 119 total) each citing their primary paper and documenting their refusal conditions, paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
+> **11 problem-shaped skills backed by 97 sourced reasoning patterns — and commits are blocked when constants lack source citations.**
+> You invoke a skill named after your problem's shape (`causal-audit`, `failure-forensics`, `estimation`, ...); it routes to the reasoning procedure that fits — 97 genius agents (plus 22 team-role agents = 119 total) each citing their primary paper and documenting their refusal conditions — paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
 > Not a prompt library. A methodology with **commit-time enforcement**.
 
 ---
@@ -49,6 +49,28 @@ Zetetic Agents are different in one specific way: **they can say "I don't know."
 
 ---
 
+## The entry point: 11 problem-shaped skills
+
+You don't browse a roster of 97 historical figures — you name the *shape* of your problem. Each skill lists the 6–10 reasoning procedures that fit that shape, with one-line triggers, and loads the best fit on demand:
+
+| Skill | Invoke when |
+|---|---|
+| [`measurement-discipline`](skills/measurement-discipline/SKILL.md) | the metric improved but you don't trust it; numbers don't add up; nothing actually reads X |
+| [`estimation`](skills/estimation/SKILL.md) | decision blocked by "no data"; suspiciously precise number; "is this even feasible?" |
+| [`causal-audit`](skills/causal-audit/SKILL.md) | "X causes Y" claimed from correlation; "did the change cause the improvement?" |
+| [`formal-correctness`](skills/formal-correctness/SKILL.md) | concurrent/distributed code with no spec; correctness argued by example traces |
+| [`failure-forensics`](skills/failure-forensics/SKILL.md) | incident post-mortems; anomalies filtered as noise; undesigned degraded modes |
+| [`decision-bias-check`](skills/decision-bias-check/SKILL.md) | high-stakes call on fast intuition; no pre-mortem; metric being gamed |
+| [`evidence-synthesis`](skills/evidence-synthesis/SKILL.md) | conflicting studies/benchmarks; "what does the literature actually say?" |
+| [`systems-leverage`](skills/systems-leverage/SKILL.md) | local fixes keep failing; recurring org patterns; "where should we intervene?" |
+| [`boundary-design`](skills/boundary-design/SKILL.md) | build-vs-buy; module/team/API boundary placement; leaky abstractions |
+| [`structure-discovery`](skills/structure-discovery/SKILL.md) | hidden pattern suspected; reverse-engineering; classification with gaps |
+| [`problem-reframing`](skills/problem-reframing/SKILL.md) | debate in circles; false binary; a trade-off being denied; "we're stuck" |
+
+Each skill body names the relevant genius agents, when to use each, and how to load them (`tools/genius-invoker.sh invoke <agent> "<problem>"`). The full 97-agent roster stays available as the [reference library](#the-reference-library-97-reasoning-patterns).
+
+---
+
 ## What you type → what happens
 
 ```
@@ -81,6 +103,8 @@ claude plugin install zetetic-team-subagents
 
 That's the whole install. The plugin's installer copies agents, skills, hooks, and tools into `~/.claude/`. Manual install + advanced config: [`docs/INSTALL.md`](docs/INSTALL.md).
 
+**Just want the enforcement gates, no agents?** Install the 30-second micro-plugin instead: `claude plugin install zetetic-gates` — pre-commit zetetic + craftsmanship checkers and the secret-shield, nothing else. See [`plugins/zetetic-gates/`](plugins/zetetic-gates/README.md).
+
 ### Windows prerequisites
 
 Agents, rules, skills, and commands are static Markdown and work natively. The
@@ -98,16 +122,16 @@ Agents, rules, skills, and commands are static Markdown and work natively. The
 | Capability | What it gives you (concretely) |
 |---|---|
 | **97 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
-| **64 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
+| **75 multi-step workflows** | 11 problem-shaped skills route you to the right reasoning procedure; 64 category skills run full pipelines — type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
 | **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) at any profile. `MAGIC_NUMBER` floats (3+ decimals without `source:`) and `TODO_NO_REF` warn at default profile, block under `ZETETIC_PROFILE=strict`. Active only when `git commit` is invoked through Claude Code's hook system. |
 | **Craftsmanship gate** | `tools/craftsmanship-checker.sh` mechanically enforces `coding-standards.md` §4 size limits + select structural rules. `FILE_TOO_LONG` (>500 lines) blocks; function/class/parameter/nesting block for recognized languages; grab-bag module names and layer-direction advise. Every threshold and per-rule severity (`block`/`advise`/`off`) is tunable per-repo via `.craftsmanship.conf` — defaults are the sourced §4 numbers. Runs at commit (local hook, changed files) and in CI (hard on newly-added files, informational full-tree sweep). Judgment rules (SRP/OCP/LSP/ISP, rule-of-three) are deliberately **not** mechanized — a hook that fakes a verdict it can't reach just trains you to ignore it. |
 | **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 759 table content rows (grep -cE '^\|' agents/genius/INDEX.md = 843, minus 84 separator rows), counted 2026-06-23; "650+" is a conservative floor. --> |
 
 ---
 
-## Reasoning procedures, not personas
+## The reference library: 97 reasoning patterns
 
-Most AI agent libraries ship "pretend to be Einstein." This ships **Einstein's method** — gedankenexperiment, operational definitions, equivalence-principle reasoning — with the citations, the canonical moves, the documented blind spots, and the conditions under which the agent must refuse.
+The problem-shaped skills above are the front door; this is the library behind it. Most AI agent libraries ship "pretend to be Einstein." This ships **Einstein's method** — gedankenexperiment, operational definitions, equivalence-principle reasoning — with the citations, the canonical moves, the documented blind spots, and the conditions under which the agent must refuse. Reasoning procedures, not personas.
 
 A small sample, by problem shape:
 
