@@ -289,6 +289,21 @@ A team that never writes the file gets the strict defaults; a team that disagree
 
 MIT — see [LICENSE](LICENSE).
 
+This software is the independent work of Clément Deust. It was developed
+outside any employment relationship and is not affiliated with, endorsed by,
+or owned by any past or present employer. It is part of the ai-architect
+ecosystem ([Cortex](https://github.com/cdeust/Cortex),
+[automatised-pipeline](https://github.com/cdeust/automatised-pipeline),
+[prd-spec-generator](https://github.com/cdeust/prd-spec-generator)).
+
+The reasoning patterns encoded in the 97 genius agents are derived from
+published academic work cited in each agent's documentation (e.g., Pearl on
+causal inference, Curie on measurement discipline, Dijkstra on program
+correctness). The MIT license covers the encoding of those methods as agent
+definitions and tooling; it does not assert ownership over the underlying
+methods themselves, which remain attributable to their original authors and
+publications.
+
 ---
 
 <p align="center"><sub>Built by <a href="https://github.com/cdeust">cdeust</a>. All 118 agent files pass the <a href="tools/agent-definition-auditor.sh">structural auditor</a>. The system enforces source-citation discipline on the constants in its own commits.</sub></p>
