@@ -29,13 +29,28 @@ fail() { echo "FAIL  S${1}: ${2}"; echo "      detail: ${3:-}"; FAIL=$((FAIL + 1
 # ── S1: SIGKILL reclaim ───────────────────────────────────────────────────────
 # Invariants: I-NEW (liveness), I1 (mutual exclusion)
 # A background process acquires the lock then receives SIGKILL.
-# The foreground writer must succeed within 1 s (not 5 s) and the audit log
-# must contain a stale_lock_reclaimed entry.
+# The foreground writer must succeed promptly via reclaim (audit shows
+# stale_lock_reclaimed), NOT by waiting out the 5 s no-progress deadline.
+#
+# The promptness bound is RELATIVE to an uncontended-create baseline measured
+# in the same environment, not absolute: one tool invocation's wall time is
+# dominated by per-process spawn cost, which varies by platform (measured
+# 2026-07-22: ~0.3 s/create on ubuntu CI vs 3.7–5.4 s on macOS Darwin 25.5 at
+# ~85–250 ms per spawned process). An absolute bound measures the platform,
+# not the reclaim.
 test_s1() {
   local ROOT; ROOT=$(mktemp -d)
   trap 'rm -rf "$ROOT"' RETURN
   local LOCK_DIR="$ROOT/.locks"
   mkdir -p "$LOCK_DIR"
+
+  # Baseline: an uncontended create in the same MEMORY_ROOT (different scope,
+  # so no lock interaction with the reclaim run below).
+  local BSTART; BSTART=$(python3 -c "import time; print(time.time())")
+  MEMORY_ROOT="$ROOT" MEMORY_REGISTRY="$REGISTRY" MEMORY_NO_SYNC=1 MEMORY_NO_ACL=1 \
+    "$TOOL" create /memories/s1base/base.md "baseline" >/dev/null 2>&1 || true
+  local BEND; BEND=$(python3 -c "import time; print(time.time())")
+  local BASELINE; BASELINE=$(python3 -c "print(round($BEND - $BSTART, 2))")
 
   # Simulate a SIGKILLed holder: create lockdir manually, write a PID that
   # will be killed so kill -0 returns non-zero.
@@ -64,10 +79,22 @@ test_s1() {
   local success=0
   echo "$OUT" | grep -q "File created successfully" && success=1 || true
 
-  if [[ $success -eq 1 && $reclaimed -eq 1 ]] && python3 -c "exit(0 if $ELAPSED < 2.0 else 1)" 2>/dev/null; then
-    pass 1 "SIGKILL reclaim: writer succeeded in ${ELAPSED}s (< 2s), audit shows reclaimed"
+  # Bound: ELAPSED < BASELINE * 1.5 + 2.0.
+  #   * 1.5 — run-to-run spawn-cost jitter (measured 2026-07-22 on macOS
+  #     Darwin 25.5: baseline spread 3.68–5.17 s across consecutive runs).
+  #   + 2.0 s — the reclaim itself: one 0.1 s spin tick plus ~7 extra spawned
+  #     processes at worst-measured ~0.25 s/spawn (measured delta over baseline:
+  #     -0.2 to +2.4 s on macOS, <= +0.2 s on ubuntu CI).
+  # A regression that waits out the 5 s no-progress deadline instead of
+  # reclaiming exceeds this bound on both platforms (CI: 0.3*1.5+2.0 = 2.5 s
+  # vs >= 5.3 s; macOS: ~5*1.5+2.0 = 9.5 s vs >= 10 s).
+  local within_bound
+  within_bound=$(python3 -c "print(1 if $ELAPSED < $BASELINE * 1.5 + 2.0 else 0)")
+
+  if [[ $success -eq 1 && $reclaimed -eq 1 && $within_bound -eq 1 ]]; then
+    pass 1 "SIGKILL reclaim: writer succeeded in ${ELAPSED}s (baseline ${BASELINE}s), audit shows reclaimed"
   else
-    fail 1 "SIGKILL reclaim" "success=$success reclaimed=$reclaimed elapsed=${ELAPSED}s out='$(echo "$OUT" | head -3)'"
+    fail 1 "SIGKILL reclaim" "success=$success reclaimed=$reclaimed elapsed=${ELAPSED}s baseline=${BASELINE}s out='$(echo "$OUT" | head -3)'"
   fi
 }
 

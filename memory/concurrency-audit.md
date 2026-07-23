@@ -32,8 +32,15 @@ independent processes.
 
 **What if the process is killed while holding the lock?**
 The `trap ... EXIT INT TERM` registered at line 196 does NOT fire on SIGKILL
-(signal 9). The lockdir `$LOCK_DIR/$scope.lockd` persists. Subsequent callers
-spin at 100 ms intervals for `max_tries=50` (5 s), then call `die` and exit 2.
+(signal 9). The lockdir `$LOCK_DIR/$scope.lockd` persists. If the dead holder
+left a pid file, waiters reclaim the lock (see §Stale-Lock-Recovery). If not
+(killed between `mkdir` and the pid write), subsequent callers spin at 100 ms
+intervals until 5 s of WALL-CLOCK time pass without progress (progress = the
+holder PID changing hands), then call `die` and exit 2. The deadline is
+wall-clock, not tick-count: tick duration includes per-tick process-spawn
+overhead, which is platform-dependent (measured 2026-07-22: ~5 ms/spawn on
+ubuntu CI vs ~85–250 ms/spawn on macOS Darwin 25.5), so a 50-tick proxy for
+"5 s" ran ~10 s on macOS.
 
 **Is that acceptable?** Yes for the current single-host deployment: a 5 s
 bounded timeout prevents indefinite hang. The failure mode is loud (`die` writes
@@ -285,11 +292,14 @@ stale-lock event.
 
 ```
 Holder H:   mkdir lockdir → write pid → [30 s write] → rmdir lockdir
-Waiter W:   50 × 100ms spin: each tick: kill -0 pid → 0 (alive) → continue
-            At tick 50 (5 s): die "could not acquire lock after 5s"
+Waiter W:   100 ms spin: each tick: kill -0 pid → 0 (alive) → continue
+            After 5 s wall-clock without progress (holder pid unchanged):
+            die "could not acquire lock after 5s"
 ```
 No reclaim occurs. Caller gets the existing bounded-die behavior. The 5 s
-ceiling is unchanged; I-NEW-2 is preserved.
+no-progress ceiling is unchanged; I-NEW-2 is preserved. (A lock that DOES
+change hands resets the deadline — N writers serialized behind short critical
+sections are legitimate contention, not a stuck lock.)
 
 **Case (e): PID reuse (holder died, unrelated process recycles the PID)**
 
