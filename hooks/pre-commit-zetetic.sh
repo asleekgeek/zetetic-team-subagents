@@ -64,6 +64,18 @@ if [[ -x "$TOOLS/craftsmanship-checker.sh" ]]; then
   fi
 fi
 
+# No-slop copy gate (#43): mechanical AI-writing-pattern scan on staged
+# reader-facing Markdown. ALWAYS warn-only here regardless of profile — prose
+# judgment belongs to the /no-slop skill or a human; the hook only surfaces
+# candidates. Fail OPEN on checker error.
+if [[ -x "$TOOLS/no-slop-checker.sh" ]]; then
+  slop_output=$(ZETETIC_PROFILE=standard "$TOOLS/no-slop-checker.sh" --staged 2>&1) || true
+  if [[ -n "$slop_output" ]]; then
+    echo "WARNING (no-slop): candidate AI-writing patterns in staged copy:" >&2
+    echo "$slop_output" >&2
+  fi
+fi
+
 "$TOOLS/difficulty-book-manager.sh" check 2>&1 || {
   echo "WARNING: Difficulty book has unaddressed hardest case." >&2
 }
