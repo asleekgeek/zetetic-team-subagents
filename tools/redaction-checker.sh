@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# no-slop-checker.sh — Scan reader-facing Markdown copy for mechanically
+# redaction-checker.sh — Scan reader-facing Markdown copy for mechanically
 # detectable AI-writing patterns.
 #
 # Usage:
-#   tools/no-slop-checker.sh --staged              # check staged .md changes (commit hook, warn-only)
-#   tools/no-slop-checker.sh --files <f1> <f2> ... # check specific files (review / CI)
-#   tools/no-slop-checker.sh --full                # scan all tracked copy paths (audit sweep)
+#   tools/redaction-checker.sh --staged              # check staged .md changes (commit hook, warn-only)
+#   tools/redaction-checker.sh --files <f1> <f2> ... # check specific files (review / CI)
+#   tools/redaction-checker.sh --full                # scan all tracked copy paths (audit sweep)
 #
-# Checks (the greppable subset of skills/writing/no-slop.md; judgment-level
+# Checks (the greppable subset of skills/writing/redaction.md; judgment-level
 # patterns — puffery, -ing analysis, colon reveals in context — stay with the
 # skill, which is the authoritative inventory):
 #   - EM_DASH  (warning): em dash in prose copy. House rule: zero in published copy.
@@ -16,7 +16,7 @@
 #
 # Severity model:
 #   - All findings are WARNINGS by default: exit 0, findings on stdout. Prose
-#     judgment belongs to a human or the /no-slop skill; the mechanical layer
+#     judgment belongs to a human or the /redaction skill; the mechanical layer
 #     only surfaces candidates. ZETETIC_PROFILE=strict (via .zetetic.conf,
 #     same contract as zetetic-checker.sh) makes findings exit 1.
 #
@@ -26,7 +26,7 @@
 #
 # Exit codes: 0 clean (or warnings in default profile), 1 findings in strict, 2 usage error.
 #
-# Rule provenance: skills/writing/no-slop.md (vendored from blader/humanizer
+# Rule provenance: skills/writing/redaction.md (vendored from blader/humanizer
 # v2.9.1 + petergyang/no-ai-slop, MIT; house deltas). Issue: #43.
 
 set -euo pipefail
@@ -36,7 +36,7 @@ COPY_INCLUDE='(^|/)(README[^/]*|CHANGELOG[^/]*|CONTRIBUTING[^/]*|SECURITY[^/]*|P
 COPY_EXCLUDE='^skills/|^agents/|^templates/|^tools/tests/|^tests/|^memory/|^rules/|node_modules/|^plugins/.*/(skills|agents)/'
 
 # ── Patterns ───────────────────────────────────────────────────────────
-# source: skills/writing/no-slop.md §7 (banned vocabulary), §5 (weasel), §23 (filler), §14 (em dash)
+# source: skills/writing/redaction.md §7 (banned vocabulary), §5 (weasel), §23 (filler), §14 (em dash)
 EM_DASH_RE=$'—'
 BANNED_RE='\b([Dd]elve|[Ff]oster(s|ing)?|[Ll]everag(e|es|ing)|[Uu]tiliz(e|es|ing)|[Ff]acilitat(e|es|ing)|[Ee]mpower(s|ing)?|[Ss]treamlin(e|es|ing)|[Rr]obust|[Cc]utting-edge|[Pp]aradigm shift|[Gg]ame.changer|[Tt]apestry|[Mm]ultifaceted|[Mm]eticulous|[Pp]aramount|[Tt]ransformative|[Ee]mbark(s|ing)?|[Ss]upercharg(e|es|ing)|[Hh]arness(es|ing)?|[Ee]ver-evolving)\b'
 WEASEL_RE="([Ss]tudies show|[Ee]xperts (agree|argue|believe)|[Ii]ndustry reports|[Ww]idely regarded|[Ii]t.s worth noting|[Ii]t.s important to note|[Ii]n today.s world|[Aa]t the end of the day|[Ll]et.s dive in|[Ii]n the ever-|[Gg]ame.changing)"
@@ -89,15 +89,15 @@ scan_file() {
     if [[ "$line" =~ ^\`\`\` ]]; then in_fence=$((1 - in_fence)); continue; fi
     [[ $in_fence -eq 1 ]] && continue
     if printf '%s' "$line" | grep -q "$EM_DASH_RE"; then
-      echo "$f:$lineno: EM_DASH: house rule is zero em dashes in copy (no-slop §14)"
+      echo "$f:$lineno: EM_DASH: house rule is zero em dashes in copy (redaction §14)"
       findings=$((findings + 1))
     fi
     if printf '%s' "$line" | grep -qE "$BANNED_RE"; then
-      echo "$f:$lineno: BANNED_WORD: $(printf '%s' "$line" | grep -oE "$BANNED_RE" | head -1) (no-slop §7)"
+      echo "$f:$lineno: BANNED_WORD: $(printf '%s' "$line" | grep -oE "$BANNED_RE" | head -1) (redaction §7)"
       findings=$((findings + 1))
     fi
     if printf '%s' "$line" | grep -qE "$WEASEL_RE"; then
-      echo "$f:$lineno: WEASEL: $(printf '%s' "$line" | grep -oE "$WEASEL_RE" | head -1) — name the source or cut (no-slop §5/§23)"
+      echo "$f:$lineno: WEASEL: $(printf '%s' "$line" | grep -oE "$WEASEL_RE" | head -1) — name the source or cut (redaction §5/§23)"
       findings=$((findings + 1))
     fi
   done < "$f"
@@ -106,7 +106,7 @@ scan_file() {
 for f in "${files[@]}"; do scan_file "$f"; done
 
 if [[ $findings -gt 0 ]]; then
-  echo "no-slop: $findings candidate pattern(s) in reader-facing copy. Authoritative inventory: skills/writing/no-slop.md"
+  echo "redaction: $findings candidate pattern(s) in reader-facing copy. Authoritative inventory: skills/writing/redaction.md"
   if [[ "$ZETETIC_PROFILE" == "strict" ]]; then
     exit 1
   fi
