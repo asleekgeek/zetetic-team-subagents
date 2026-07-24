@@ -4,7 +4,7 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.32.0] — no-slop as a default quality layer (mechanical checker + agent output gates)
 
 ### Added
 - **`tools/no-slop-checker.sh` + regression suite** (`tools/tests/no-slop-checker/`, 9 cases) — mechanical scan of reader-facing Markdown copy (README/CHANGELOG/docs) for the greppable subset of the no-slop inventory: em dashes (house §14), banned vocabulary (§7), weasel/filler phrases (§5/§23). Warn-only by default; `ZETETIC_PROFILE=strict` blocks. Fenced code blocks and pattern-quoting paths (skills/, agents/, templates/, test fixtures) excluded. First `--full` sweep surfaces 224 candidates in existing copy — the refinement backlog the in-tree inventory exists to work down (#43).
