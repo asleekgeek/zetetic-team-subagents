@@ -4,7 +4,7 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.33.0] — redaction checker: full mechanical inventory
 
 ### Changed
 - **`tools/redaction-checker.sh`: full mechanical inventory** — three new check groups mirror the Cortex-side expansion (cdeust/Cortex#167): CONTRAST (binary contrasts, negative listing, dramatic fragmentation; redaction §9/§35), SETUP (throat-clearing, faux insight, signposting, rhetorical setups; §27-31), PUFFERY (importance puffery, promotional language, copula avoidance, AI conversation artifacts; §1/§4/§8/§20-22). Suite grows 9 → 13 cases including an FP-guard: technical prose brushing pattern shapes stays silent.
