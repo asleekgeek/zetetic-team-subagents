@@ -420,6 +420,26 @@ A deliverable is **not done** while a seen defect in touched material remains un
 - **code-reviewer**: a diff or author report containing an un-addressed seen-defect rationalization ("pre-existing," "unrelated," "untouched by me," "out of scope" without a cited issue number) is a blocking finding — verdict is **REFUSED**, not "approve with comments."
 - This section applies at **all stakes levels**, joining §1, §2, §7, §8, §13 in §10's always-on list.
 
+## 15. No-Deviation Rule — the task definition is the contract (blocking, all stakes levels)
+
+Source: maintainer directives, 2026-07-25, issued across one working day in escalating form during the CBM-adoption loop: (1) AP PR #61 shipped with a reserved dead tier and silent staleness, framed as "deviations, each justified" — rejected ("deviations are not acceptable"); (2) Cortex PR #172 shipped with self-flagged risks and a deferred refactor — DENIED outright ("if you create a PR with a half implementation that's useless — either we make the full implementation even if it means refactoring in the process"); (3) the remaining escape hatch (pre-existing-gap deferral to a dated issue) was revoked ("it's lacking? fine, then do it — you just have to make it if it's missing"); (4) final form: "deviations of any kind are prohibited. The task definition is clear, so you make it until the end, not missing a part and not deferring or deviating."
+
+**The task definition (issue text, brief, spec) is the contract. It is executed to the end: no missing parts, no deferrals, no deviations.** §13 defines what complete means for the new code; §14 forbids leaving seen defects untreated; §15 forbids the remaining maneuver — renegotiating the scope from inside the work.
+
+### 15.1 Rule
+- **A deviation report is a failure state, not a compliance mechanism.** Reporting a divergence from the spec ("implemented X instead of Y because…", "left Z for a follow-up") does not authorize it. The report documents the failure; the work is still owed.
+- **A missing prerequisite is BUILT, never logged.** If the spec requires a capability the codebase lacks (a subsystem, a seam, an API), building it is part of the task. Large prerequisites are sequenced as their own PR (build-first), but the depending issue stays OPEN until the full spec is met. Issues exist to sequence work, never to park it.
+- **Refactor-first when seams are missing.** When an implementation cannot connect cleanly because the substrate lacks the structure for it, the answer is a SEPARATE behavior-preserving refactoring PR (the existing suite passing unchanged is the proof), then the feature on the new seams. Never ship the connection half-made on a monolith; never mix the enabling refactor and the feature in one PR.
+- **Self-flagged risks are incomplete scope.** A delivery report that lists known gaps, uncovered paths, or unwired plumbing in the NEW code describes an unfinished task. Finish it.
+- **Ambiguity is resolved BEFORE starting, never by descoping.** If the task definition genuinely underdetermines a part, ask the maintainer before beginning that part. Once work is underway, ambiguity resolves toward the complete interpretation, not the convenient one.
+
+### 15.2 Relation to §13/§14
+§13 asks "is the new code complete?"; §14 asks "did you fix what you saw?"; §15 asks "did you build what was asked?" — all three are blocking at every stakes level. A PR that passes §13's checklist against a quietly narrowed spec still fails §15: completeness is measured against the task definition, not against the shipped subset.
+
+### 15.3 Enforcement
+- Reviewer agents (code-reviewer, orchestrator verify steps) diff the delivery against the ORIGINAL task definition and block on any unmet clause, exactly as they block on §13 items.
+- Implementation-agent briefs quote this section's rule line verbatim. An agent that cannot meet the spec does not open a PR; it reports the blocker with evidence and waits — an unopened PR is recoverable, a half-PR wastes a review cycle.
+
 ## Primary Sources
 
 - Martin, R. C. (2000). "Design Principles and Design Patterns." *Object Mentor.*
