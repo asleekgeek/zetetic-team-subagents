@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regression suite — no-slop-checker.sh (issue #43).
+# Regression suite — redaction-checker.sh (issue #43).
 #
 # Asserts:
 #   T1 clean copy file → no findings, exit 0
@@ -12,7 +12,7 @@
 #   T8 usage error (no mode) → exit 2
 set -uo pipefail
 
-CHECKER="$(cd "$(dirname "$0")/../.." && pwd)/no-slop-checker.sh"
+CHECKER="$(cd "$(dirname "$0")/../.." && pwd)/redaction-checker.sh"
 PASS=0; FAIL=0
 
 run_case() {
@@ -67,5 +67,5 @@ rm -f .zetetic.conf
 run_case "T8 no mode exits 2" test "$rc" -eq 2
 
 echo "----------------------------------------"
-echo "no-slop-checker suite: $PASS passed, $FAIL failed"
+echo "redaction-checker suite: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]]

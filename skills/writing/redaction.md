@@ -1,10 +1,11 @@
 ---
-name: no-slop
+name: redaction
 description: >
-  Edit or audit prose against a vendored inventory of AI-writing patterns (32 from
-  humanizer/Wikipedia's "Signs of AI writing", plus no-ai-slop's method), extended with
-  this house's stricter rules. Edit mode returns the minimum effective edit; detect mode
-  returns quoted-line evidence per pattern, never an "AI probability" score.
+  The house redaction pass: edit or audit prose against the ai-architect.tools
+  pattern inventory of AI-writing tells, with a falsifiable eval and a detect
+  mode that returns quoted-line evidence per pattern, never an "AI probability"
+  score. Successor to the original redaction agents; the inventory is owned and
+  refined in-tree.
 category: writing
 trigger: >
   Before publishing any outward-facing prose — LinkedIn posts, READMEs, release notes,
@@ -21,22 +22,28 @@ zetetic_gate:
   rational: "Minimum effective edit: cutting proportional to actual slop; a rough draft with a real voice must survive as the same voice"
   essential: "No fact, number, citation, or claim may be invented by the edit — weasel attribution is resolved by naming the source or cutting the claim (coding-standards §8)"
 composes: [citation-verifier]
-aliases: [no-ai-slop, humanize, deslop, ai-tells]
+aliases: [no-slop, ai-tells, deslop]
 hand_off: {}
 ---
 
 ## Purpose
 
-One inventory, kept in our tree, periodically reviewed and refined as we work. Vendored
-from two MIT sources on 2026-07-24 and extended with house rules that are stricter than
-either. When either upstream ships a pattern we lack, fold it in here with a dated note.
+The redaction pass is a first-party capability of the ai-architect.tools
+ecosystem: one pattern inventory, owned in this tree, applied wherever our
+products surface prose (agents here, Cortex wiki/narrative generation,
+eventually cortex-viz panel text), and refined from our own published copy as
+we work. It descends from the original redaction agents (2026) that enforced
+the first three house rules.
 
-**Provenance:**
-- `blader/humanizer` v2.9.1 (MIT, ★30.7k) — 32 patterns based on Wikipedia's "Signs of AI
-  writing" (WikiProject AI Cleanup, continuously maintained).
-- `petergyang/no-ai-slop` (MIT, ★2.1k) — the method: minimum effective edit, separate
-  pass/fail eval, detect-with-quoted-evidence.
-- House rules from our own redaction practice (2026): see HOUSE DELTAS.
+**Sources consulted** (zetetic §8 — the inventory is informed by these, and
+diffed against them on the review cadence; the capability and its method are
+ours):
+- Wikipedia, "Signs of AI writing" (WikiProject AI Cleanup) — the primary
+  maintained catalog of the patterns.
+- Prior art on enforcement method: blader/humanizer v2.9.1 and
+  petergyang/no-ai-slop (both MIT) — pattern-inventory editing with voice
+  preservation, and the separate pass/fail eval + quoted-evidence detect mode,
+  respectively. Our implementation is house-written.
 
 ## Modes
 
@@ -121,8 +128,8 @@ inventory — except the HOUSE DELTAS, which are absolute for our own published 
 
 ## Review cadence
 
-This is a vendored copy, not a dependency. On each significant writing session, note
+The inventory is owned here, not a dependency. On each significant writing session, note
 patterns that slipped through; diff against upstream (`blader/humanizer` releases,
 `petergyang/no-ai-slop`) quarterly and fold in what we lack. Log refinements below.
 
-- 2026-07-24 — initial vendoring (humanizer v2.9.1 + no-ai-slop method + house deltas).
+- 2026-07-24 — initial inventory (house deltas + 36 patterns synthesized from the sources above).
