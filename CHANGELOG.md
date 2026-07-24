@@ -4,7 +4,7 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.34.0] — §15 No-Deviation Rule
 
 ### Added
 - **§15 No-Deviation Rule** in `rules/coding-standards.md` (blocking, all stakes levels) — the task definition is the contract, executed to the end: a deviation report is a failure state, not a compliance mechanism; missing prerequisites are BUILT (build-first sequencing, the depending issue stays open until the full spec is met); refactor-first when seams are missing (separate behavior-preserving PR, existing suite unchanged as proof); self-flagged risks = incomplete scope; ambiguity is resolved before starting, never by descoping. Completes the §13 (complete new code) / §14 (fix what you see) / §15 (build what was asked) completion trilogy. Source: four maintainer directives, 2026-07-25 (AP PR #61 corrections; Cortex PR #172 denial; deferral revocation; final absolute form).
