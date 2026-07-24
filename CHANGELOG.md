@@ -4,6 +4,15 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`advisor` agent** (`agents/advisor.md`, model: fable, effort: high) — the frontier-model half of Anthropic's **Advisor loop** (webinar "Building on the Claude Platform: Claude Fable 5 and model orchestration patterns", Abrams & Hadfield): a Sonnet-driven session consults it sparingly at decision points (plan review, hard forks, final verification) and it never implements (no write tools by design). Anthropic internal benchmark: ~92% of Fable-alone quality at ~63% of its cost on SWE-bench Pro, with ~1 consultation per task; the agent self-reports misuse when called more than twice on one task.
+- **`skills/writing/no-slop.md`** — vendored AI-writing-pattern inventory: 36 patterns merged from `blader/humanizer` v2.9.1 (MIT, Wikipedia "Signs of AI writing" base) and `petergyang/no-ai-slop` (MIT: minimum-effective-edit + eval + detect-with-quoted-evidence method), extended with stricter house deltas (zero em dashes in copy, no antithesis, no triads, weasel attribution treated as coding-standards §8 violation, LinkedIn formula). Kept in-tree for periodic refinement; review-cadence log included.
+
+### Changed
+- **`orchestrator` agent model: opus → fable** — aligns the plan/dispatch/verify role with Anthropic's **Orchestrator loop** (same webinar: ~96% of Fable-alone quality at ~46% of cost on BrowseComp when Fable coordinates parallel Sonnet workers). Executor-class agents stay on sonnet; the existing tiering already matched the pattern's execution half.
+
 ## [2.30.0] — zetetic-gates micro-plugin + 11 problem-shaped skills + directory-policy metadata
 
 ### Added

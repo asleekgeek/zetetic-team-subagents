@@ -1,7 +1,11 @@
 ---
 name: orchestrator
 description: "Orchestrates parallel agent execution across worktrees — decomposes tasks, routes to specialists"
-model: opus
+# model: fable per the Orchestrator pattern (Anthropic webinar "Building on the
+# Claude Platform: Claude Fable 5 and model orchestration patterns", Abrams &
+# Hadfield): the frontier model plans, dispatches to sonnet workers, verifies —
+# ~96% of Fable-alone quality at ~46% of its cost on BrowseComp (internal bench).
+model: fable
 effort: medium
 when_to_use: "When a task requires multiple specialists working in parallel or sequentially, when decomposition across modules is needed"
 agent_topic: orchestrator
