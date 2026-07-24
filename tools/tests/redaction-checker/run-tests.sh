@@ -66,6 +66,26 @@ rm -f .zetetic.conf
 "$CHECKER" >/dev/null 2>&1; rc=$?
 run_case "T8 no mode exits 2" test "$rc" -eq 2
 
+# T9 binary contrast / negative listing / dramatic fragment
+printf "It's not a cache. It's a memory.\n" > docs/contrast.md
+out=$("$CHECKER" --files docs/contrast.md)
+run_case "T9 binary contrast flagged" grep -q "CONTRAST" <<<"$out"
+
+# T10 setup patterns (throat-clearing / faux insight / signposting / rhetorical)
+printf "What nobody tells you about recall.\n" > docs/setup.md
+out=$("$CHECKER" --files docs/setup.md)
+run_case "T10 faux-insight setup flagged" grep -q "SETUP" <<<"$out"
+
+# T11 puffery / promotional / copula avoidance / AI artifacts
+printf 'The launch marks a pivotal moment. I hope this helps.\n' > docs/puff.md
+out=$("$CHECKER" --files docs/puff.md)
+run_case "T11 puffery flagged" grep -q "PUFFERY" <<<"$out"
+
+# T12 FP guard: technical prose brushing pattern shapes stays silent
+printf 'The store is not thread-safe; callers hold the lock.\nServes requests from the read replica.\n' > docs/fp.md
+out=$("$CHECKER" --files docs/fp.md)
+run_case "T12 technical prose stays silent" test -z "$out"
+
 echo "----------------------------------------"
 echo "redaction-checker suite: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]]
