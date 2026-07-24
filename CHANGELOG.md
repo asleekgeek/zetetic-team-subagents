@@ -4,7 +4,7 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.32.1] — redaction: first-party identity
 
 ### Changed
 - **Redaction is first-party: `no-slop` → `redaction`.** The skill (`skills/writing/redaction.md`, alias `no-slop` retained), the checker (`tools/redaction-checker.sh`), its test suite, the pre-commit warning label, and the agents' gate sections are renamed and reframed as the house redaction pass — successor to the original redaction agents — owned and refined in-tree. External material remains cited as sources consulted (Wikipedia "Signs of AI writing"; method prior art: blader/humanizer, petergyang/no-ai-slop, MIT) per zetetic §8, but the capability's identity is ai-architect.tools, not a vendored third-party skill. No behavior change; 9-case suite still green.
