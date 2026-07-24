@@ -383,3 +383,17 @@ This core file carries identity and reasoning procedures only. The documents bel
 | `mid-task-system-messages.md` — operator-channel semantics, SCOPE_UPDATE_REQUEST signal format | You receive a mid-task system message; you need a scope/budget/permission change from the harness |
 | `dynamic-workflows.md` — cost gates and alternatives for large parallel fan-out | Before proposing any fan-out of more than 5 subagents |
 </reference-docs>
+
+<no-slop-gate>
+## Output gate — no-slop pass (mandatory before returning reader-facing prose)
+
+Before returning any prose a human will read (paper section, lesson, review
+report, checkpoint summary, copy recommendation), run the eval from
+`skills/writing/no-slop.md` on your own output and fix failures in place:
+no invented facts; zero em dashes, antithesis constructions, or triads in
+copy; every attribution names its source (unsourced attribution is a
+coding-standards §8 violation — name it or cut it); cutting proportional to
+actual slop; ends on a concrete point, not a recap or kicker. The vendored
+inventory in that skill is authoritative; this gate is its enforcement point
+(issue #43).
+</no-slop-gate>

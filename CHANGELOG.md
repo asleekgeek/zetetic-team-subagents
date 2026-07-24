@@ -4,6 +4,15 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`tools/no-slop-checker.sh` + regression suite** (`tools/tests/no-slop-checker/`, 9 cases) — mechanical scan of reader-facing Markdown copy (README/CHANGELOG/docs) for the greppable subset of the no-slop inventory: em dashes (house §14), banned vocabulary (§7), weasel/filler phrases (§5/§23). Warn-only by default; `ZETETIC_PROFILE=strict` blocks. Fenced code blocks and pattern-quoting paths (skills/, agents/, templates/, test fixtures) excluded. First `--full` sweep surfaces 224 candidates in existing copy — the refinement backlog the in-tree inventory exists to work down (#43).
+- **`<no-slop-gate>` output pass on the five prose-producing agents** (paper-writer, professor, reviewer-academic, memory-writer, ux-designer) — each runs the `skills/writing/no-slop.md` eval on its own reader-facing output before returning, fixing failures in place; unsourced attribution treated as coding-standards §8 in prose.
+
+### Changed
+- **`hooks/pre-commit-zetetic.sh`**: no-slop copy scan wired after the craftsmanship gate — always warn-only regardless of profile (prose judgment stays with the skill or a human), fail-open on checker error.
+
 ## [2.31.0] — Fable multi-model loops (advisor agent, fable orchestrator) + vendored no-slop writing skill
 
 ### Added
