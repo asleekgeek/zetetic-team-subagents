@@ -4,7 +4,7 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.31.0] — Fable multi-model loops (advisor agent, fable orchestrator) + vendored no-slop writing skill
 
 ### Added
 - **`advisor` agent** (`agents/advisor.md`, model: fable, effort: high) — the frontier-model half of Anthropic's **Advisor loop** (webinar "Building on the Claude Platform: Claude Fable 5 and model orchestration patterns", Abrams & Hadfield): a Sonnet-driven session consults it sparingly at decision points (plan review, hard forks, final verification) and it never implements (no write tools by design). Anthropic internal benchmark: ~92% of Fable-alone quality at ~63% of its cost on SWE-bench Pro, with ~1 consultation per task; the agent self-reports misuse when called more than twice on one task.
