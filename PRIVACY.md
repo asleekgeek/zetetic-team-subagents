@@ -1,4 +1,4 @@
-# Privacy Policy — zetetic-team-subagents / zetetic-gates
+# Privacy Policy: zetetic-team-subagents / zetetic-gates
 
 _Last updated: 2026-07-22_
 
@@ -12,7 +12,7 @@ and write, and what leaves your machine.
   Code itself; they process nothing on their own.
 - **Hooks and gate tools** (pre-commit zetetic checker, craftsmanship checker,
   secret-shield, lifecycle hooks) run local shell/Python subprocesses over the
-  files in your working repository — staged diffs, file sizes, constants —
+  files in your working repository (staged diffs, file sizes, constants)
   and over local state under `~/.claude/`. Results go to your terminal and
   local state files only.
 - **The memory tool** (full plugin only) stores notes locally under your home
@@ -22,7 +22,7 @@ and write, and what leaves your machine.
 
 **Nothing is transmitted by this plugin's own code.** No network calls, no
 telemetry, no analytics. Note: some agents list Claude Code's own WebSearch /
-WebFetch among their permitted tools — when *you* invoke such an agent and it
+WebFetch among their permitted tools: when *you* invoke such an agent and it
 uses those tools, the resulting web requests are ordinary Claude Code tool
 calls under your control and visibility, not plugin telemetry.
 

@@ -1,4 +1,4 @@
-# Install — manual + advanced configuration
+# Install: manual + advanced configuration
 
 ## Plugin install (one-line, recommended)
 
@@ -21,7 +21,7 @@ bash scripts/setup.sh install
 
 | Command | What it does |
 |---|---|
-| `install` | Install or re-install — copies tracked files to `~/.claude/` |
+| `install` | Install or re-install: copies tracked files to `~/.claude/` |
 | `update` | Re-apply agent models, pull new assets, prune orphans |
 | `configure` | Create `~/.claude/zetetic-agent-models.json` with calibrated defaults |
 | `uninstall` | Remove tracked files; keeps user-modified copies |
@@ -35,7 +35,7 @@ cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 
 ## Per-agent model + effort overrides
 
-`~/.claude/zetetic-agent-models.json` — yours to keep, plugin updates never overwrite. Run `setup.sh configure` to seed with calibrated defaults.
+`~/.claude/zetetic-agent-models.json`: yours to keep, plugin updates never overwrite. Run `setup.sh configure` to seed with calibrated defaults.
 
 ```json
 {
@@ -72,15 +72,15 @@ Re-run `setup.sh update` after editing.
 
 ## Adaptive reasoning depth (stakes-driven)
 
-Five team agents — `engineer`, `architect`, `code-reviewer`, `security-auditor`, `research-scientist` — adjust reasoning depth dynamically:
+Five team agents (`engineer`, `architect`, `code-reviewer`, `security-auditor`, `research-scientist`) adjust reasoning depth dynamically:
 
 - **Low-stakes** change → reason one level below baseline (skip exploratory alternatives)
 - **Medium-stakes** → baseline
 - **High-stakes** → reason one level above baseline (enumerate alternatives, full verification loop)
 
-Stakes classification is objective (see [`rules/coding-standards.md`](../rules/coding-standards.md) §10). No config — built into the agent's Moves.
+Stakes classification is objective (see [`rules/coding-standards.md`](../rules/coding-standards.md) §10). No config: built into the agent's Moves.
 
-## Project-local checker config — `<repo-root>/.zetetic.conf`
+## Project-local checker config: `<repo-root>/.zetetic.conf`
 
 ```bash
 ZETETIC_PROFILE=standard           # strict | standard | permissive
@@ -89,12 +89,12 @@ ZETETIC_CHECK_DATA_FORMATS=false   # true to scan .json/.yaml/.toml/.sql/.csv
 
 **Profiles:**
 
-- `strict` — UNSOURCED, MAGIC_NUMBER, TODO_NO_REF all block commits
-- `standard` (default) — UNSOURCED blocks; MAGIC_NUMBER / TODO_NO_REF warn
-- `permissive` — informational; never blocks (use during transition)
+- `strict`: UNSOURCED, MAGIC_NUMBER, TODO_NO_REF all block commits
+- `standard` (default): UNSOURCED blocks; MAGIC_NUMBER / TODO_NO_REF warn
+- `permissive`: informational; never blocks (use during transition)
 
 **You cannot disable rules via `.zetetic.conf`.** Directives like `DISABLE_UNSOURCED=true`, `SKIP_RULE`, `EXCLUDE_RULE` cause the checker to refuse to load the config. You can override the profile and file/path exclusions; you cannot silence the checks.
 
-## Project-local extensions — `<repo-root>/.zetetic-check.sh`
+## Project-local extensions: `<repo-root>/.zetetic-check.sh`
 
 Optional Bash script sourced by `zetetic-checker.sh` if present. Can add project-specific checks that increment `ERRORS` or `WARNINGS`. Cannot disable built-in checks.

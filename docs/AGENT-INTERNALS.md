@@ -2,7 +2,7 @@
 
 Every agent ships as a single Markdown file with YAML frontmatter. Slim frontmatter keeps cumulative description tokens across all 118 agents under Claude Code's startup cap (~12.6k tokens, was 28k in v2.12.0). Rich routing detail lives in body sections, loaded only when the agent is invoked.
 
-## File shape (current — v2.13.0+)
+## File shape (current: v2.13.0+)
 
 ```yaml
 ---
@@ -44,7 +44,7 @@ distinct-from-X clauses; loaded only when the agent is invoked):**
 
 ## Why this shape
 
-The orchestrator routes based on frontmatter — a sentence is enough. The invoked agent reads its full body. This separates **routing cost** (paid every session) from **methodology cost** (paid only when used), aligning with Claude Code's startup token budget while preserving every word of the canonical moves and procedure depth.
+The orchestrator routes based on frontmatter: a sentence is enough. The invoked agent reads its full body. This separates **routing cost** (paid every session) from **methodology cost** (paid only when used), aligning with Claude Code's startup token budget while preserving every word of the canonical moves and procedure depth.
 
 ## Frontmatter fields
 
@@ -53,21 +53,21 @@ The orchestrator routes based on frontmatter — a sentence is enough. The invok
 | `name` | yes | The agent slug; matches the filename and `MEMORY_AGENT_ID` |
 | `description` | yes | One-sentence routing signal; appears in the agent picker |
 | `when_to_use` | yes | One-clause trigger; helps the orchestrator pick |
-| `model` | yes | `opus` / `sonnet` / `haiku` — overridable via `~/.claude/zetetic-agent-models.json` |
-| `effort` | yes | `low` / `medium` / `high` / `max` — reasoning-token budget |
+| `model` | yes | `opus` / `sonnet` / `haiku`: overridable via `~/.claude/zetetic-agent-models.json` |
+| `effort` | yes | `low` / `medium` / `high` / `max`: reasoning-token budget |
 | `shapes` | genius only | Problem-shape labels matched by the shape-router |
 | `tools` | yes | Subset of `Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, Agent` |
-| `memory_scope` | yes | Maps to `scope-registry.json` for ACL — team agents use their slug; all genius agents use `genius` |
+| `memory_scope` | yes | Maps to `scope-registry.json` for ACL: team agents use their slug; all genius agents use `genius` |
 
 ## Body sections
 
 | Section | Required for | Purpose |
 |---|---|---|
 | `<identity>` | both | One-paragraph self-statement |
-| `<routing>` | both | Full routing guidance — pairings, triggers, distinct-from-X |
+| `<routing>` | both | Full routing guidance: pairings, triggers, distinct-from-X |
 | `<revolution>` | genius | The reasoning-pattern's epistemological move |
 | `<domain-context>` | team | The role's working domain |
-| `<memory>` | both | Eco template — `view /memories/<scope>/` first; persist WHY-level decisions; respect ACL |
+| `<memory>` | both | Eco template: `view /memories/<scope>/` first; persist WHY-level decisions; respect ACL |
 | `<canonical-moves>` | both | The 5 numbered moves the agent applies |
 | `<refusal-conditions>` | both | When the agent declines and what artifact it produces instead |
 | `<blind-spots>` | both | Self-documented limits |
@@ -75,13 +75,13 @@ The orchestrator routes based on frontmatter — a sentence is enough. The invok
 
 ## Adding a new agent
 
-1. **Pick the slug** — must be unique across `agents/*.md` and `agents/genius/*.md`. Filename = `<slug>.md`.
+1. **Pick the slug**: must be unique across `agents/*.md` and `agents/genius/*.md`. Filename = `<slug>.md`.
 2. **Pick the scope:**
    - Team agent: add an entry to [`memory/scope-registry.json`](../memory/scope-registry.json) with `owners: ["<slug>", "_user"]`
    - Genius agent: use `memory_scope: genius` (shared scope, per-slug subpath convention `/memories/genius/<slug>/`)
 3. **Use the templates:**
-   - Team body: [`memory/templates/agent-memory-block.team.md`](../memory/templates/agent-memory-block.team.md) — substitute `{{scope}}` and `{{agent_slug}}`
-   - Genius body: [`memory/templates/agent-memory-block.genius.md`](../memory/templates/agent-memory-block.genius.md) — substitute `{{agent_slug}}`
+   - Team body: [`memory/templates/agent-memory-block.team.md`](../memory/templates/agent-memory-block.team.md), substitute `{{scope}}` and `{{agent_slug}}`
+   - Genius body: [`memory/templates/agent-memory-block.genius.md`](../memory/templates/agent-memory-block.genius.md), substitute `{{agent_slug}}`
 4. **Run the auditor:**
    ```bash
    bash tools/agent-definition-auditor.sh
@@ -92,7 +92,7 @@ The orchestrator routes based on frontmatter — a sentence is enough. The invok
    bash scripts/test-memory-e2e.sh
    bash scripts/test-agent-id-propagation.sh
    ```
-6. **Submit a PR** — see CONTRIBUTING.md (TODO).
+6. **Submit a PR**; see CONTRIBUTING.md (TODO).
 
 ## Refactorer's quick-extraction commands
 

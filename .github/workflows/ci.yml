@@ -139,6 +139,26 @@ jobs:
       - name: Run craftsmanship-checker on full tree (informational)
         run: bash tools/craftsmanship-checker.sh --full || echo "craftsmanship --full reported violations (informational; legacy tree)"
 
+  redaction-sweep:
+    name: Redaction Sweep (hard gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # HARD gate on the FULL tree, not an added-files ratchet. The craftsmanship
+      # job ratchets because its legacy §4 debt is a real refactoring backlog;
+      # copy debt was different — it was ~190 findings that no one had measured,
+      # because the checker cost minutes to run (12 subprocesses per line) and so
+      # was never swept. Both were fixed together in issue #56: the checker is now
+      # ~6s tree-wide and the tree is at ZERO. A gate that can be green today
+      # should be a gate, not a report — a sweep that always prints ~200 findings
+      # trains everyone to ignore it, which is how the backlog accumulated.
+      #
+      # strict promotes findings to exit 1; the default profile is warn-only by
+      # design so a local run never blocks a commit on prose judgment.
+      - name: Redaction check on all reader-facing copy
+        run: ZETETIC_PROFILE=strict bash tools/redaction-checker.sh --full
+
   tools-tests:
     name: Tools Regression Suite (hard gate)
     runs-on: ubuntu-latest

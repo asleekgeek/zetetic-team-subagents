@@ -1,10 +1,10 @@
-# Examples — Five Sessions, Five Recognitions
+# Examples: Five Sessions, Five Recognitions
 
-These are illustrative reconstructions, not verbatim transcripts. The system behaviors shown — the hook that blocks, the agent that refuses, the chain that surfaces a finding — are real and reproducible (see the table at the end).
+These are illustrative reconstructions, not verbatim transcripts. The system behaviors shown (the hook that blocks, the agent that refuses, the chain that surfaces a finding) are real and reproducible (see the table at the end).
 
 ---
 
-## #1 — The unsourced constant
+## #1: The unsourced constant
 
 A retry window for an external payment API was being tuned by trial-and-error. The developer typed `RETRY_DELAY_S = 2.7` and went to commit, expecting nothing to fight back.
 
@@ -36,11 +36,11 @@ $ git commit -m "set retry to 3.0s based on measured p99 success rate"
 PASSED.
 ```
 
-> **The system didn't find the answer — it found that you didn't have one yet.**
+> **The system didn't find the answer; it found that you didn't have one yet.**
 
 ---
 
-## #2 — The latency bug
+## #2: The latency bug
 
 An API showed p99 latency 200ms above the sum of profiled component latencies. Profiling tools said everything was fine. The team had been chasing it for a week.
 
@@ -68,7 +68,7 @@ $ perf lock report
 
 ---
 
-## #3 — The literature search before a design decision
+## #3: The literature search before a design decision
 
 Before committing to a new attention layer for a model in production, the team needed to know what the 2024–2026 literature actually shows about linear attention alternatives. Reading 40 papers in a week is not realistic. Reading abstracts is not enough.
 
@@ -101,7 +101,7 @@ $ /deep-research "transformer attention alternatives 2024-2026, focus on
 
 ---
 
-## #4 — The architecture decision the agent refused to make
+## #4: The architecture decision the agent refused to make
 
 A login bug needed to ship before a demo. The dev asked the engineer agent to add a `try/except` around the failing call and log the error. Standard band-aid. Five minutes of work.
 
@@ -139,7 +139,7 @@ $ # demo shipped on time
 
 ---
 
-## #5 — The incident postmortem
+## #5: The incident postmortem
 
 A 3am pager: "checkout flow broken, ~2% error rate." It cleared by 6am with no deploy, no obvious cause, no log line that pointed at it. Standard response: "transient, monitor, close."
 
@@ -206,5 +206,5 @@ Each scenario corresponds to a real skill or agent invocation:
 | #1 Unsourced constant | `tools/zetetic-checker.sh --staged` + `/verify-claim` | [`tools/zetetic-checker.sh`](../tools/zetetic-checker.sh) + [`skills/zetetic/verify-claim.md`](../skills/zetetic/verify-claim.md) |
 | #2 Latency bug | `/genius route "<problem>"` | [`agents/genius/curie.md`](../agents/genius/curie.md) + [`agents/genius/knuth.md`](../agents/genius/knuth.md) |
 | #3 Literature search | `/deep-research "<topic>"` | [`skills/research/deep-research.md`](../skills/research/deep-research.md) |
-| #4 Architecture refusal | `/implement` (engineer agent) | [`agents/engineer.md`](../agents/engineer.md) — refusal-conditions section, bullet #1 |
+| #4 Architecture refusal | `/implement` (engineer agent) | [`agents/engineer.md`](../agents/engineer.md): refusal-conditions section, bullet #1 |
 | #5 Incident postmortem | `/incident-investigation` | [`skills/engineering/incident-investigation.md`](../skills/engineering/incident-investigation.md) |
