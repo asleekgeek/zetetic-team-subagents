@@ -1,0 +1,30 @@
+name: OpenSSF Scorecard
+
+# Issue #53 criterion 6. zetetic-team-subagents adopts the ecosystem's single
+# Scorecard definition as a CALL SITE, not a copy: the reusable workflow lives
+# in cdeust/automatised-pipeline (AP #66/#77). There is a fitting symmetry here
+# — this repo hosts rules/coding-standards.md, the standard every other repo's
+# supply-chain work is measured against, so it should not be the one asserting
+# its posture instead of showing it.
+#
+# The first score is a BASELINE recorded as-is (§8); it deliberately does not
+# gate a PR — a contributor cannot fix repo-level policy inside their diff.
+
+on:
+  schedule:
+    - cron: "0 7 * * 2"   # Tuesdays 07:00 UTC — posture drifts by inaction
+  branch_protection_rule:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  scorecard:
+    uses: cdeust/automatised-pipeline/.github/workflows/scorecard.yml@main
+    permissions:
+      security-events: write   # upload SARIF to code scanning
+      id-token: write          # publish signed results to the OpenSSF API
+      contents: read
+      actions: read

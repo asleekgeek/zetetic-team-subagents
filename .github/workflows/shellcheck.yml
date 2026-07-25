@@ -1,0 +1,59 @@
+name: ShellCheck
+
+# Issue #53 criterion 5. hooks/ and tools/ are the session-executing surface —
+# these scripts run on every commit in every repo that installs this plugin, and
+# they were unlinted in CI. shellcheck is the language-appropriate static
+# analysis for shell (CodeQL has no shell support — codeql.yml covers the .py
+# hooks/tools instead; this is the honest split, stated rather than left as a
+# gap).
+#
+# On a SCHEDULE as well as PR: a new shellcheck release recognises a new class
+# against code that has not changed, and the weekly cron is what catches it.
+#
+# Gate shape follows this repo's own ratchet convention (see ci.yml
+# craftsmanship/redaction jobs): the tree was MEASURED at exactly one
+# error-severity finding (a sourced lib missing a shell directive), which is
+# fixed in this change, so the hard gate runs error-severity on the FULL
+# hooks/+tools/ tree at zero. Warning-severity legacy debt (31 findings across
+# 11 files, measured 2026-07-25) is surfaced informationally, not blocked — a
+# gate that always prints ~30 findings trains everyone to ignore it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 3"   # Wednesdays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: shellcheck hooks/ + tools/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      # HARD gate: error-severity across every shell script in hooks/ and
+      # tools/. No "|| true" — a real error fails the job.
+      - name: ShellCheck (error severity — hard gate)
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find hooks tools -type f -name "*.sh" -print0)
+          printf 'Hard-gating %d shell files at error severity:\n' "${#files[@]}"
+          shellcheck -S error "${files[@]}"
+
+      # INFORMATIONAL: warning-severity full sweep that never fails the job —
+      # surfaces the legacy backlog without blocking (mirrors the repo's
+      # existing informational checker jobs).
+      - name: ShellCheck (warning severity — informational)
+        run: |
+          mapfile -d '' files < <(find hooks tools -type f -name "*.sh" -print0)
+          shellcheck -S warning "${files[@]}" \
+            || echo "shellcheck --warning reported legacy findings (informational)"

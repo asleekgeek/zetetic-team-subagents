@@ -1,6 +1,9 @@
+# shellcheck shell=bash
 # craftsmanship-detectors.sh — detector implementations for craftsmanship-checker.sh
 #
 # Sourced by tools/craftsmanship-checker.sh. NOT executable on its own.
+# (No shebang by design — this is a sourced library; the shell= directive on
+# line 1 declares the dialect for static analysis. Issue #53.)
 # Each detector reads a whole file (path in $1) and emits findings on STDOUT via
 # the emit() function defined by the caller. Detectors never block directly;
 # emit() owns severity/exit accounting. All detectors are language-aware where the

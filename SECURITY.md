@@ -1,5 +1,71 @@
 # Security Policy
 
+## What this plugin installs and executes
+
+Installing this plugin grants **session-execution rights**. Everything it ships
+is source that runs with your permissions. There is no sandbox between a
+modified file and your machine:
+
+- **`hooks/`** run automatically on Claude Code session-lifecycle events
+  (session start/end, pre/post tool use, pre-commit, pre-push). A modified hook
+  is a shell or python script that runs on your next session start.
+- **`tools/*.sh` and `tools/*.py`** run as part of pre-commit and pre-push
+  gates (the zetetic checker, redaction checker, craftsmanship checker,
+  mutation gates).
+- **`agents/`** define what your assistant is permitted to do.
+
+This is the ecosystem's shortest path from a compromised artifact to code
+execution, because the payload does not even need to be compiled. That is the
+threat model the assurance below is built for.
+
+## Supply-chain assurance
+
+As of issue #53, every release (`.github/workflows/release.yml`) builds and
+attests a bundle of exactly what it delivers:
+
+- **Signed provenance.** The release bundle
+  (`zetetic-team-subagents.tar.gz`), its executable-content manifest and its
+  SBOM each carry a Sigstore-backed build-provenance attestation. Because this
+  is a source-only plugin there is no binary to sign, so signed releases and
+  tags over the bundle are the achievable attestation. Verify a download:
+
+  ```bash
+  gh attestation verify zetetic-team-subagents.tar.gz --repo cdeust/zetetic-team-subagents
+  ```
+
+- **Enumerate what you grant.** `EXECUTABLE-MANIFEST.sha256` lists every
+  `hooks/*` and `tools/*.sh|*.py` that will run on your machine, with its
+  SHA-256. You can diff it against the previous release to see exactly which
+  session-executing files changed.
+
+- **Verify before it runs.** `tools/verify-release-bundle.sh` checks the
+  bundle's checksum **before unpacking** and every executable against the
+  manifest **before execution**, rejecting a tampered bundle. Attestation
+  nobody checks changes nothing; this is the check.
+
+  ```bash
+  tools/verify-release-bundle.sh zetetic-team-subagents.tar.gz \
+    zetetic-team-subagents.tar.gz.sha256 EXECUTABLE-MANIFEST.sha256
+  ```
+
+- **SBOM.** `zetetic-team-subagents.cdx.json` (CycloneDX) inventories every
+  bundled file with its hash, including vendored third-party skill material.
+
+- **Continuous analysis.** shellcheck over `hooks/` and `tools/`
+  (`shellcheck.yml`, error-severity hard gate), CodeQL for the python
+  hooks/tools (`codeql.yml`), and OpenSSF Scorecard (`scorecard.yml`), all on a
+  schedule. The Scorecard number is a recorded baseline, not a badge.
+
+**Relationship to #52.** #52 answers "am I running the version I think I am?"
+(visibility); this answers "is the artifact I am running the one that was
+published?" (integrity). Both are required.
+
+**What this does NOT claim.** Provenance proves *who built the bundle and from
+which commit*, not that the scripts are free of defects; and it is worth
+nothing to a user who does not run the verification. The marketplace install
+path consumes the git tree directly, so its integrity is the tagged commit plus
+its attestation.
+
 ## Reporting a Vulnerability
 
 If you discover a security issue in this project, **do not** open a public
