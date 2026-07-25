@@ -86,6 +86,43 @@ printf 'The store is not thread-safe; callers hold the lock.\nServes requests fr
 out=$("$CHECKER" --files docs/fp.md)
 run_case "T12 technical prose stays silent" test -z "$out"
 
+# T13 inline code spans are identifiers, not copy (issue #52 follow-on).
+# `systems-leverage` is a shipped skill NAME; renaming an artifact to satisfy
+# a prose rule is the tail wagging the dog, so spans are stripped before match.
+printf 'The [`systems-leverage`](skills/systems-leverage/SKILL.md) skill routes it.\n' > docs/span.md
+out=$("$CHECKER" --files docs/span.md)
+run_case "T13 banned word inside an inline code span: NOT flagged" test -z "$out"
+
+# T13b the same word in PROSE is still flagged — proves T13 stripped the span,
+# not the detector (a stripping bug that disabled BANNED_WORD would pass T13).
+printf 'We leverage the runtime here.\n' > docs/span_prose.md
+out=$("$CHECKER" --files docs/span_prose.md)
+run_case "T13b same word in prose still flagged" grep -q "BANNED_WORD" <<<"$out"
+
+# T13c link TARGET is an address; link TEXT is copy the reader reads.
+printf 'See [the robust guide](docs/robust-utilize-notes.md) for details.\n' > docs/link.md
+out=$("$CHECKER" --files docs/link.md)
+run_case "T13c banned word in link TEXT is flagged" grep -q "BANNED_WORD" <<<"$out"
+run_case "T13c link target is not double-counted" test "$(grep -c BANNED_WORD <<<"$out")" -eq 1
+
+# T14 REGRESSION: word boundaries must not rely on the GNU `\b` extension.
+# Matching runs through bash's builtin `=~` (POSIX ERE), where `\b` matches
+# nothing and every BANNED_WORD finding silently vanished. Start-of-line is
+# the case a naive `[^alnum]` guard also gets wrong.
+printf 'Leverage is the first word on this line.\n' > docs/bol.md
+out=$("$CHECKER" --files docs/bol.md)
+run_case "T14 banned word at start-of-line flagged (no \\b dependency)" grep -q "BANNED_WORD" <<<"$out"
+printf 'The word ends the line: utilize\n' > docs/eol.md
+out=$("$CHECKER" --files docs/eol.md)
+run_case "T14 banned word at end-of-line flagged" grep -q "BANNED_WORD" <<<"$out"
+
+# T15 REGRESSION: a clean file must exit 0. Written as `[[ ]] && { }`, the last
+# test in the scan loop returned non-zero on a clean line, which under `set -e`
+# aborted the script before its summary — a clean file reported failure.
+printf 'A plain sentence with nothing to report.\n' > docs/exit0.md
+"$CHECKER" --files docs/exit0.md >/dev/null 2>&1
+run_case "T15 clean file exits 0 (set -e trap)" test "$?" -eq 0
+
 echo "----------------------------------------"
 echo "redaction-checker suite: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]]
