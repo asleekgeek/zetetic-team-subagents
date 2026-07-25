@@ -1,21 +1,35 @@
 name: Release
 
+# Supply-chain hardening (issue #53). This plugin ships NO binary — every
+# artifact is source that executes in the user's session (hooks/ on lifecycle
+# events, tools/*.sh in pre-commit gates, agents/ define assistant
+# permissions), so the payload does not even need to be compiled. Honest
+# attestation for a source-only plugin is: a deterministic bundle of exactly
+# what a release delivers, signed; an executable-content manifest a user can
+# enumerate and diff; and a verifier that rejects a tampered bundle before it
+# runs. This workflow now builds and attests that bundle. Verify a download:
+#   gh attestation verify zetetic-team-subagents.tar.gz --repo cdeust/zetetic-team-subagents
+
 on:
   push:
     tags:
       - "v*.*.*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     name: Run tests and publish release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write       # create the release + upload assets
+      id-token: write       # OIDC token Sigstore exchanges for a signing cert
+      attestations: write   # record the build-provenance statement on the repo
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -45,6 +59,32 @@ jobs:
           # Note: --full mode is informational here; --staged mode is the
           # commit-time gate. Tag-time check is advisory.
 
+      - name: Build the attestable release bundle (tarball + exec manifest + SBOM)
+        run: bash tools/build-release-bundle.sh dist
+
+      # Self-verify BEFORE attesting/publishing: the verifier the install path
+      # uses must accept the bundle we are about to sign. If the build produced
+      # an inconsistent bundle, fail the release here rather than ship it.
+      - name: Verify the built bundle self-consistently
+        run: |
+          bash tools/verify-release-bundle.sh \
+            dist/zetetic-team-subagents.tar.gz \
+            dist/zetetic-team-subagents.tar.gz.sha256 \
+            dist/EXECUTABLE-MANIFEST.sha256
+
+      # Provenance BEFORE upload: binds each artifact digest to this workflow,
+      # commit and runner (issue #53 criterion 1). Signed releases/tags are the
+      # achievable attestation for a source-only plugin — there is no binary to
+      # sign, so the bundle, its executable manifest and its SBOM are the
+      # subjects.
+      - name: Attest build provenance (bundle + manifest + SBOM)
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: |
+            dist/zetetic-team-subagents.tar.gz
+            dist/EXECUTABLE-MANIFEST.sha256
+            dist/zetetic-team-subagents.cdx.json
+
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
@@ -60,11 +100,19 @@ jobs:
             echo "No CHANGELOG entry found for $VERSION; using tag message" > release-notes.md
           fi
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Create GitHub Release (with attested bundle, manifest + SBOM)
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            dist/zetetic-team-subagents.tar.gz
+            dist/zetetic-team-subagents.tar.gz.sha256
+            dist/EXECUTABLE-MANIFEST.sha256
+            dist/EXECUTABLE-MANIFEST.sha256.sha256
+            dist/zetetic-team-subagents.cdx.json
+            dist/zetetic-team-subagents.cdx.json.sha256
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

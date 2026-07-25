@@ -1,0 +1,46 @@
+name: CodeQL
+
+# Issue #53 criterion 5, the CodeQL half. The session-executing surface is part
+# shell, part python: hooks/*.py (stop-*.py, pre-tool-secret-shield.py) and
+# tools/*.py (memory-mcp-server.py, semantic_layer.py, web_ingest.py, …) run
+# with the user's permissions. shellcheck.yml covers the shell; CodeQL covers
+# the python. Between them the whole executable surface is statically analysed —
+# CodeQL has no shell support, so naming the split is more honest than leaving
+# "shell not analysed" as an unexplained gap.
+#
+# On a SCHEDULE, not only PR: a new query pack lands out-of-band against code
+# that has not changed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 5 * * 1"   # Mondays 05:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (python)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # upload analysis SARIF to code scanning
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@4187e74d05793876e9989daffde9c3e66b4acd07 # v3
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@4187e74d05793876e9989daffde9c3e66b4acd07 # v3
+        with:
+          category: "/language:python"
