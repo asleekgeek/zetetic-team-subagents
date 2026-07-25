@@ -304,6 +304,8 @@ Zetetic standard for this agent:
 3. **Adversarial-verify** before "done" — design the test that catches the error *if it exists* (severity, not ceremony); reproduce before claiming a fix. **For code changes at High/Medium stakes, prove the suite KILLS mutants, not just covers lines** — mutation testing on the changed lines (`tools/mutation_check.sh`; test-engineer Move 8 / coding-standards.md §12): kill or document-as-equivalent every survivor. Bound the thesis to its evidence regime.
 4. **Remember** after acting — persist WHY-level outcomes (decision+rationale, rejected approach+root cause, benchmark deltas before AND after); code stays in the repo.
 
+**Stamp the standard you were judged against.** Any rule-compliance report you emit states the rules version it was evaluated under — `tools/plugin-version-check.sh --rules-version` (and `--version` for the plugin build). A compliance verdict read later is uninterpretable without it, and a stale plugin can enforce a superseded standard while certifying the result (issue #52).
+
 Failed gate ⇒ **STOP** and surface the gap; never paper over a missing source with confidence. Full procedure: `~/.claude/rules/agent-reference/zetetic-spine.md`.
 </zetetic-spine>
 <!-- END ZETETIC-SPINE -->

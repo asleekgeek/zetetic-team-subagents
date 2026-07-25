@@ -77,6 +77,21 @@ echo "  Uncommitted: $(git -C "$REPO_ROOT" status --porcelain 2>/dev/null | wc -
 echo "  Last commit: $(git -C "$REPO_ROOT" log --oneline -1 2>/dev/null || echo 'none')"
 echo ""
 
+# --- Plugin currency (issue #52). Three values: what is installed, what the
+# marketplace PINS, what the repo has RELEASED. `installed < pin` is a user
+# update; `pin < released` means the release was never delivered and is fixed in
+# the marketplace-owning repo. Silent when current — this only speaks when
+# something is actually stale. Time-boxed and warn-only: a boot check that can
+# fail a session is a check that gets disabled. ---
+if [[ -x "$TOOLS/plugin-version-check.sh" ]]; then
+  version_report="$(run_timeboxed 8 "$TOOLS/plugin-version-check.sh" 2>/dev/null || true)"
+  if [[ -n "$version_report" ]]; then
+    echo -e "${WHITE}${BOLD}  ◆ Plugin Currency${RESET}"
+    echo "$version_report" | sed 's/^/  /'
+    echo ""
+  fi
+fi
+
 echo -e "${WHITE}${BOLD}  ◆ Difficulty Books${RESET}"
 "$TOOLS/difficulty-book-manager.sh" status 2>/dev/null || echo "  (none)"
 echo ""

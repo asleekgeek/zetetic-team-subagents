@@ -105,6 +105,36 @@ That's the whole install. The plugin's installer copies agents, skills, hooks, a
 
 **Just want the enforcement gates, no agents?** Install the 30-second micro-plugin instead: `claude plugin install zetetic-gates` — pre-commit zetetic + craftsmanship checkers and the secret-shield, nothing else. See [`plugins/zetetic-gates/`](plugins/zetetic-gates/README.md).
 
+### Staying current — and why a release can fail to reach you
+
+This plugin's product is rule currency, so running a stale copy is not a mild
+degradation: agents enforce a **superseded** standard and certify the result.
+Session start therefore checks three values and stays silent unless one is off:
+
+| | Meaning | Who fixes it |
+|---|---|---|
+| `installed` | the build this session loaded | — |
+| `pinned` | the version the marketplace serves | — |
+| `released` | the latest published release | — |
+| **`installed < pinned`** | you have not updated | **you** — run `/plugin` and restart |
+| **`pinned < released`** | the release was never delivered | **the marketplace-owning repo**, named in the message |
+
+Check it any time:
+
+```bash
+tools/plugin-version-check.sh          # silent when current; names the lag otherwise
+tools/plugin-version-check.sh --json   # machine-readable
+tools/plugin-version-check.sh --version --rules-version
+```
+
+The second row is not hypothetical. On 2026-07-24 the installed plugin ran
+v2.29.0 while v2.34.0 was released — six releases, including §15 and the
+redaction gates, reached zero installs, because the version is pinned in a
+*different* repository's marketplace manifest and nothing bumped it. No user
+action could have fixed that, and nothing reported it. The check is fail-open:
+offline, rate-limited, or unreadable metadata prints a `NOTICE` and never
+blocks or fails a session.
+
 ### Windows prerequisites
 
 Agents, rules, skills, and commands are static Markdown and work natively. The

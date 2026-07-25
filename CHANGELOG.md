@@ -4,6 +4,19 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — plugin-currency check (three-value staleness)
+
+### Added
+- **`tools/plugin-version-check.sh`** — answers "is the plugin I am running the one that was published?" by comparing **three** values, not two: what is **installed**, what the marketplace **pins**, and what the repo has **released**. It names two defects with different owners: `INSTALL_LAG` (`installed < pinned` — the user updates) and `PIN_LAG` (`pinned < released` — **the release was never delivered**, fixed in the marketplace-owning repo, which the message names). A two-value check reports "up to date" against a stale pin, which for a rules-enforcement plugin is a false compliance statement one level up (issue #52; counterpart publishing-side gate: cdeust/Cortex#179).
+- **Session-start currency panel** — runs the check, time-boxed and warn-only, and stays **silent when current**. Fail-open by construction: no network, no `jq`, unreadable metadata or an unparseable version prints a single `NOTICE` and exits 0. A boot check that can fail a session is a check that gets disabled, and then the gap recurs with the check nominally in place.
+- **Rules-change discrimination** — when the withheld gap crosses a commit touching `rules/coding-standards.md`, the report says so explicitly: that is the case where agents are enforcing a superseded standard, as opposed to a docs-only bump not worth interrupting for.
+- **`--version` / `--rules-version`** — every agent and hook run can name the plugin build and the rules version it operates under.
+- **Compliance reports now stamp their standard** — the generated zetetic-spine (118 agents) requires any rule-compliance verdict to state the rules version it was evaluated under. A verdict read later is uninterpretable without it.
+- **`tools/tests/plugin-version-check/`** — 31 hermetic assertions covering every arm: current (silent, negative assertion), install lag, pin lag with the owning repo named, rules-changed vs rules-unchanged, both lags at once, undeterminable version, offline probe, malformed release tag, no-marketplace, usage error, withheld-release count, and a regression test pinning that releases are probed from the **plugin's** repo rather than the marketplace owner's.
+
+### Fixed
+- Release probing targeted the marketplace owner's repo instead of the plugin's own. Since `cortex-plugins` is a clone of `cdeust/Cortex` but serves `cdeust/zetetic-team-subagents`, this compared 2.34.0 against Cortex's 4.16.0 and produced a spurious `PIN_LAG`. Caught by running the tool against the live environment before it shipped; regression-tested as T14.
+
 ## [2.34.0] — §15 No-Deviation Rule
 
 ### Added

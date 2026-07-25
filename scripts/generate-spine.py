@@ -94,6 +94,13 @@ def spine_block(strong: bool) -> str:
         "(decision+rationale, rejected approach+root cause, benchmark deltas "
         "before AND after); code stays in the repo.",
         "",
+        "**Stamp the standard you were judged against.** Any rule-compliance "
+        "report you emit states the rules version it was evaluated under — "
+        "`tools/plugin-version-check.sh --rules-version` (and "
+        "`--version` for the plugin build). A compliance verdict read later is "
+        "uninterpretable without it, and a stale plugin can enforce a "
+        "superseded standard while certifying the result (issue #52).",
+        "",
         "Failed gate ⇒ **STOP** and surface the gap; never paper over a missing "
         "source with confidence. Full procedure: "
         "`~/.claude/rules/agent-reference/zetetic-spine.md`.",
