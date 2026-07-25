@@ -49,7 +49,7 @@ claude plugin install zetetic-team-subagents
 - Branch naming: `feature/<short-slug>`, `fix/<short-slug>`, `docs/<short-slug>`, `agent/<name>` (for new agent definitions).
 - One agent per PR (when adding new genius agents). The genius INDEX update goes in the same commit.
 - Pre-commit hook runs on every commit. If it blocks, fix the violation
-  rather than bypassing — bypassing requires explicit human reviewer
+  rather than bypassing: bypassing requires explicit human reviewer
   approval.
 
 ---
@@ -168,7 +168,7 @@ verify.
 ## Reporting security issues
 
 See [`SECURITY.md`](SECURITY.md). The `pre-tool-secret-shield` hook is
-load-bearing — security-sensitive changes to it warrant private
+load-bearing: security-sensitive changes to it warrant private
 disclosure first.
 
 ---

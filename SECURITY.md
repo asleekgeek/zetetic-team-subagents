@@ -39,7 +39,7 @@ Only the latest minor release on `main` receives security patches.
 ## Out of Scope
 
 - Vulnerabilities in third-party dependencies that have not been patched
-  upstream — please report those upstream first.
+  upstream: please report those upstream first.
 - Issues that require an attacker to already have control of the host
   process (in-process supply-chain attacks).
 - Self-inflicted misconfigurations of your own MCP server registration.

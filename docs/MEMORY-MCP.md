@@ -18,7 +18,7 @@ Plus a `memory_extensions` tool exposing `search` (grep across scope), `scopes` 
 
 ## Architecture (one paragraph)
 
-The MCP server is a thin Python stdio shim (`tools/memory-mcp-server.py`) that maps tool calls to subprocess invocations of `tools/memory-tool.sh` — a 1000-line Bash CLI that owns the contract. The CLI uses `mkdir`-based locks for portable mutual exclusion, atomic write-to-tmp+rename for durability, a JSON `scope-registry.json` for ACL, a `~/.claude/memories/.audit.log` append-only log for observability, and a `~/.claude/memories/.pending-sync/` directory for jobs queued to Cortex via `/session:memory-sync`.
+The MCP server is a thin Python stdio shim (`tools/memory-mcp-server.py`) that maps tool calls to subprocess invocations of `tools/memory-tool.sh`: a 1000-line Bash CLI that owns the contract. The CLI uses `mkdir`-based locks for portable mutual exclusion, atomic write-to-tmp+rename for durability, a JSON `scope-registry.json` for ACL, a `~/.claude/memories/.audit.log` append-only log for observability, and a `~/.claude/memories/.pending-sync/` directory for jobs queued to Cortex via `/session:memory-sync`.
 
 ## Enable in Claude Code / Desktop
 
@@ -44,7 +44,7 @@ If your MCP host doesn't auto-discover `.mcp.json`:
 claude mcp add memory -- python3 /path/to/zetetic-team-subagents/tools/memory-mcp-server.py
 ```
 
-Set `MEMORY_AGENT_ID` in your shell or MCP host env to the agent's slug — every write is attributed in the audit log under that ID. `scripts/spawn-agent.sh` exports this automatically.
+Set `MEMORY_AGENT_ID` in your shell or MCP host env to the agent's slug: every write is attributed in the audit log under that ID. `scripts/spawn-agent.sh` exports this automatically.
 
 ## Smoke test
 
@@ -55,7 +55,7 @@ bash scripts/test-memory-mcp.sh
 
 ## Verbatim error strings (Anthropic contract)
 
-The CLI returns Anthropic's verbatim error strings — Claude is trained on these specific strings; paraphrase degrades model behavior:
+The CLI returns Anthropic's verbatim error strings. Claude is trained on these specific strings, and paraphrasing them degrades model behavior:
 
 - `"File created successfully at: {path}"` / `"Error: File {path} already exists"`
 - `"The memory file has been edited."`
@@ -69,11 +69,11 @@ Plus local-extension errors for path-traversal rejection and ACL denials. Full t
 
 24 scopes declared in `memory/scope-registry.json` with `owners` (write list), `readers` (read list), `ttl_days`, and `max_file_kb`. Default: per-team-agent dedicated scope (engineer → `/memories/engineer/`); 97 genius agents share `/memories/genius/<slug>/` by subpath convention. Curator scopes (`global`, `lessons`) are write-locked to `_user` and the `orchestrator` agent.
 
-`strict_unknown_scope: true` — writes to undeclared scopes are denied. Adding a new scope requires editing `scope-registry.json`.
+`strict_unknown_scope: true`: writes to undeclared scopes are denied. Adding a new scope requires editing `scope-registry.json`.
 
 ## PII scrubbing
 
-Every `create` / `str_replace` / `insert` runs through `pii-scanner.py` (or the persistent `pii-daemon.py` to amortize Python interpreter cold-start) before disk write. Matches against 14 calibrated regex classes (FPR=0%, FNR=0% on a 172-fixture corpus — verifiable via `bash scripts/test-memory-pii-expanded.sh`) plus a Shannon-entropy threshold (H > 4.5 bits/char) for high-confidence classes. Blocked writes emit a `pii_blocked` audit entry naming the matched class (never the matched bytes). Latency: scanner is sub-50ms on a ~10 KB payload in dev measurements; no committed benchmark has been published yet — `scripts/test-memory-pii.sh` reports the wall-clock per run when `MEMORY_PII_BENCHMARK=1` is set.
+Every `create` / `str_replace` / `insert` runs through `pii-scanner.py` (or the persistent `pii-daemon.py` to amortize Python interpreter cold-start) before disk write. Matches against 14 calibrated regex classes (FPR=0%, FNR=0% on a 172-fixture corpus, verifiable via `bash scripts/test-memory-pii-expanded.sh`) plus a Shannon-entropy threshold (H > 4.5 bits/char) for high-confidence classes. Blocked writes emit a `pii_blocked` audit entry naming the matched class (never the matched bytes). Latency: scanner is sub-50ms on a ~10 KB payload in dev measurements; no committed benchmark has been published yet: `scripts/test-memory-pii.sh` reports the wall-clock per run when `MEMORY_PII_BENCHMARK=1` is set.
 
 ## Cortex replica queue
 

@@ -4,96 +4,118 @@ All notable changes to this project will be documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.34.0] — §15 No-Deviation Rule
+> **Copy edit, 2026-07-25 (issue #56).** Entries below this line were edited
+> after publication to remove em dashes, bringing historical copy under the
+> house redaction rule (`skills/writing/redaction.md` §14) so the tree-wide
+> sweep reaches zero and its output stays meaningful. **Punctuation only:** no
+> claim, version, date, count, attribution or issue reference was altered. This
+> notice exists because a changelog whose past entries are groomed silently is
+> no longer evidence of what was said at the time; the record should be honest
+> about having been edited. The pre-edit text is in git history.
+
+## [Unreleased]: plugin-currency check (three-value staleness)
 
 ### Added
-- **§15 No-Deviation Rule** in `rules/coding-standards.md` (blocking, all stakes levels) — the task definition is the contract, executed to the end: a deviation report is a failure state, not a compliance mechanism; missing prerequisites are BUILT (build-first sequencing, the depending issue stays open until the full spec is met); refactor-first when seams are missing (separate behavior-preserving PR, existing suite unchanged as proof); self-flagged risks = incomplete scope; ambiguity is resolved before starting, never by descoping. Completes the §13 (complete new code) / §14 (fix what you see) / §15 (build what was asked) completion trilogy. Source: four maintainer directives, 2026-07-25 (AP PR #61 corrections; Cortex PR #172 denial; deferral revocation; final absolute form).
+- **`tools/plugin-version-check.sh`** answers "is the plugin I am running the one that was published?" by comparing **three** values, not two: what is **installed**, what the marketplace **pins**, and what the repo has **released**. It names two defects with different owners: `INSTALL_LAG` (`installed < pinned`, which the user fixes) and `PIN_LAG` (`pinned < released`, meaning **the release was never delivered**, fixed in the marketplace-owning repo, which the message names). A two-value check reports "up to date" against a stale pin, which for a rules-enforcement plugin is a false compliance statement one level up (issue #52; counterpart publishing-side gate: cdeust/Cortex#179).
+- **Session-start currency panel** runs the check, time-boxed and warn-only, and stays **silent when current**. Fail-open by construction: no network, no `jq`, unreadable metadata or an unparseable version prints a single `NOTICE` and exits 0. A boot check that can fail a session is a check that gets disabled, and then the gap recurs with the check nominally in place.
+- **Rules-change discrimination**: when the withheld gap crosses a commit touching `rules/coding-standards.md`, the report says so explicitly: that is the case where agents are enforcing a superseded standard, as opposed to a docs-only bump not worth interrupting for.
+- **`--version` / `--rules-version`**: every agent and hook run can name the plugin build and the rules version it operates under.
+- **Compliance reports now stamp their standard**: the generated zetetic-spine (118 agents) requires any rule-compliance verdict to state the rules version it was evaluated under. A verdict read later is uninterpretable without it.
+- **`tools/tests/plugin-version-check/`**: 31 hermetic assertions covering every arm: current (silent, negative assertion), install lag, pin lag with the owning repo named, rules-changed vs rules-unchanged, both lags at once, undeterminable version, offline probe, malformed release tag, no-marketplace, usage error, withheld-release count, and a regression test pinning that releases are probed from the **plugin's** repo rather than the marketplace owner's.
 
-## [2.33.0] — redaction checker: full mechanical inventory
+### Fixed
+- Release probing targeted the marketplace owner's repo instead of the plugin's own. Since `cortex-plugins` is a clone of `cdeust/Cortex` but serves `cdeust/zetetic-team-subagents`, this compared 2.34.0 against Cortex's 4.16.0 and produced a spurious `PIN_LAG`. Caught by running the tool against the live environment before it shipped; regression-tested as T14.
 
-### Changed
-- **`tools/redaction-checker.sh`: full mechanical inventory** — three new check groups mirror the Cortex-side expansion (cdeust/Cortex#167): CONTRAST (binary contrasts, negative listing, dramatic fragmentation; redaction §9/§35), SETUP (throat-clearing, faux insight, signposting, rhetorical setups; §27-31), PUFFERY (importance puffery, promotional language, copula avoidance, AI conversation artifacts; §1/§4/§8/§20-22). Suite grows 9 → 13 cases including an FP-guard: technical prose brushing pattern shapes stays silent.
-
-## [2.32.1] — redaction: first-party identity
-
-### Changed
-- **Redaction is first-party: `no-slop` → `redaction`.** The skill (`skills/writing/redaction.md`, alias `no-slop` retained), the checker (`tools/redaction-checker.sh`), its test suite, the pre-commit warning label, and the agents' gate sections are renamed and reframed as the house redaction pass — successor to the original redaction agents — owned and refined in-tree. External material remains cited as sources consulted (Wikipedia "Signs of AI writing"; method prior art: blader/humanizer, petergyang/no-ai-slop, MIT) per zetetic §8, but the capability's identity is ai-architect.tools, not a vendored third-party skill. No behavior change; 9-case suite still green.
-
-## [2.32.0] — no-slop as a default quality layer (mechanical checker + agent output gates)
+## [2.34.0]: §15 No-Deviation Rule
 
 ### Added
-- **`tools/no-slop-checker.sh` + regression suite** (`tools/tests/no-slop-checker/`, 9 cases) — mechanical scan of reader-facing Markdown copy (README/CHANGELOG/docs) for the greppable subset of the no-slop inventory: em dashes (house §14), banned vocabulary (§7), weasel/filler phrases (§5/§23). Warn-only by default; `ZETETIC_PROFILE=strict` blocks. Fenced code blocks and pattern-quoting paths (skills/, agents/, templates/, test fixtures) excluded. First `--full` sweep surfaces 224 candidates in existing copy — the refinement backlog the in-tree inventory exists to work down (#43).
-- **`<no-slop-gate>` output pass on the five prose-producing agents** (paper-writer, professor, reviewer-academic, memory-writer, ux-designer) — each runs the `skills/writing/no-slop.md` eval on its own reader-facing output before returning, fixing failures in place; unsourced attribution treated as coding-standards §8 in prose.
+- **§15 No-Deviation Rule** in `rules/coding-standards.md` (blocking, all stakes levels): the task definition is the contract, executed to the end: a deviation report is a failure state, not a compliance mechanism; missing prerequisites are BUILT (build-first sequencing, the depending issue stays open until the full spec is met); refactor-first when seams are missing (separate behavior-preserving PR, existing suite unchanged as proof); self-flagged risks = incomplete scope; ambiguity is resolved before starting, never by descoping. Completes the §13 (complete new code) / §14 (fix what you see) / §15 (build what was asked) completion trilogy. Source: four maintainer directives, 2026-07-25 (AP PR #61 corrections; Cortex PR #172 denial; deferral revocation; final absolute form).
+
+## [2.33.0]: redaction checker: full mechanical inventory
 
 ### Changed
-- **`hooks/pre-commit-zetetic.sh`**: no-slop copy scan wired after the craftsmanship gate — always warn-only regardless of profile (prose judgment stays with the skill or a human), fail-open on checker error.
+- **`tools/redaction-checker.sh`: full mechanical inventory**: three new check groups mirror the Cortex-side expansion (cdeust/Cortex#167): CONTRAST (binary contrasts, negative listing, dramatic fragmentation; redaction §9/§35), SETUP (throat-clearing, faux insight, signposting, rhetorical setups; §27-31), PUFFERY (importance puffery, promotional language, copula avoidance, AI conversation artifacts; §1/§4/§8/§20-22). Suite grows 9 → 13 cases including an FP-guard: technical prose brushing pattern shapes stays silent.
 
-## [2.31.0] — Fable multi-model loops (advisor agent, fable orchestrator) + vendored no-slop writing skill
-
-### Added
-- **`advisor` agent** (`agents/advisor.md`, model: fable, effort: high) — the frontier-model half of Anthropic's **Advisor loop** (webinar "Building on the Claude Platform: Claude Fable 5 and model orchestration patterns", Abrams & Hadfield): a Sonnet-driven session consults it sparingly at decision points (plan review, hard forks, final verification) and it never implements (no write tools by design). Anthropic internal benchmark: ~92% of Fable-alone quality at ~63% of its cost on SWE-bench Pro, with ~1 consultation per task; the agent self-reports misuse when called more than twice on one task.
-- **`skills/writing/no-slop.md`** — vendored AI-writing-pattern inventory: 36 patterns merged from `blader/humanizer` v2.9.1 (MIT, Wikipedia "Signs of AI writing" base) and `petergyang/no-ai-slop` (MIT: minimum-effective-edit + eval + detect-with-quoted-evidence method), extended with stricter house deltas (zero em dashes in copy, no antithesis, no triads, weasel attribution treated as coding-standards §8 violation, LinkedIn formula). Kept in-tree for periodic refinement; review-cadence log included.
+## [2.32.1]: redaction: first-party identity
 
 ### Changed
-- **`orchestrator` agent model: opus → fable** — aligns the plan/dispatch/verify role with Anthropic's **Orchestrator loop** (same webinar: ~96% of Fable-alone quality at ~46% of cost on BrowseComp when Fable coordinates parallel Sonnet workers). Executor-class agents stay on sonnet; the existing tiering already matched the pattern's execution half.
+- **Redaction is first-party: `no-slop` → `redaction`.** The skill (`skills/writing/redaction.md`, alias `no-slop` retained), the checker (`tools/redaction-checker.sh`), its test suite, the pre-commit warning label, and the agents' gate sections are renamed and reframed as the house redaction pass (successor to the original redaction agents) owned and refined in-tree. External material remains cited as sources consulted (Wikipedia "Signs of AI writing"; method prior art: blader/humanizer, petergyang/no-ai-slop, MIT) per zetetic §8, but the capability's identity is ai-architect.tools, not a vendored third-party skill. No behavior change; 9-case suite still green.
 
-## [2.30.0] — zetetic-gates micro-plugin + 11 problem-shaped skills + directory-policy metadata
+## [2.32.0]: no-slop as a default quality layer (mechanical checker + agent output gates)
 
 ### Added
-- **`zetetic-gates` micro-plugin** (`plugins/zetetic-gates/`, v1.0.0) — the mechanical enforcement gates as a standalone 30-second install with zero agents: pre-commit zetetic + craftsmanship gate hook, `tools/zetetic-checker.sh` (blocks unsourced constants and absolute claims), `tools/craftsmanship-checker.sh` (§4 size limits, `.craftsmanship.conf` tunable), and the credential secret-shield. Registered in `.claude-plugin/marketplace.json` (marketplace 2.29.0 → 2.30.0). Engine files are byte-identical copies of the canonical `tools/` + `hooks/` files (a marketplace plugin only ships files under its own directory); the new CI suite `tools/tests/gates-plugin-sync/run-tests.sh` hard-fails on any drift, so the main plugin's hooks and the micro-plugin cannot diverge silently.
+- **`tools/no-slop-checker.sh` + regression suite** (`tools/tests/no-slop-checker/`, 9 cases): mechanical scan of reader-facing Markdown copy (README/CHANGELOG/docs) for the greppable subset of the no-slop inventory: em dashes (house §14), banned vocabulary (§7), weasel/filler phrases (§5/§23). Warn-only by default; `ZETETIC_PROFILE=strict` blocks. Fenced code blocks and pattern-quoting paths (skills/, agents/, templates/, test fixtures) excluded. First `--full` sweep surfaces 224 candidates in existing copy: the refinement backlog the in-tree inventory exists to work down (#43).
+- **`<no-slop-gate>` output pass on the five prose-producing agents** (paper-writer, professor, reviewer-academic, memory-writer, ux-designer), each runs the `skills/writing/no-slop.md` eval on its own reader-facing output before returning, fixing failures in place; unsourced attribution treated as coding-standards §8 in prose.
+
+### Changed
+- **`hooks/pre-commit-zetetic.sh`**: no-slop copy scan wired after the craftsmanship gate: always warn-only regardless of profile (prose judgment stays with the skill or a human), fail-open on checker error.
+
+## [2.31.0]: Fable multi-model loops (advisor agent, fable orchestrator) + vendored no-slop writing skill
+
+### Added
+- **`advisor` agent** (`agents/advisor.md`, model: fable, effort: high): the frontier-model half of Anthropic's **Advisor loop** (webinar "Building on the Claude Platform: Claude Fable 5 and model orchestration patterns", Abrams & Hadfield): a Sonnet-driven session consults it sparingly at decision points (plan review, hard forks, final verification) and it never implements (no write tools by design). Anthropic internal benchmark: ~92% of Fable-alone quality at ~63% of its cost on SWE-bench Pro, with ~1 consultation per task; the agent self-reports misuse when called more than twice on one task.
+- **`skills/writing/no-slop.md`**: vendored AI-writing-pattern inventory: 36 patterns merged from `blader/humanizer` v2.9.1 (MIT, Wikipedia "Signs of AI writing" base) and `petergyang/no-ai-slop` (MIT: minimum-effective-edit + eval + detect-with-quoted-evidence method), extended with stricter house deltas (zero em dashes in copy, no antithesis, no triads, weasel attribution treated as coding-standards §8 violation, LinkedIn formula). Kept in-tree for periodic refinement; review-cadence log included.
+
+### Changed
+- **`orchestrator` agent model: opus → fable**: aligns the plan/dispatch/verify role with Anthropic's **Orchestrator loop** (same webinar: ~96% of Fable-alone quality at ~46% of cost on BrowseComp when Fable coordinates parallel Sonnet workers). Executor-class agents stay on sonnet; the existing tiering already matched the pattern's execution half.
+
+## [2.30.0]: zetetic-gates micro-plugin + 11 problem-shaped skills + directory-policy metadata
+
+### Added
+- **`zetetic-gates` micro-plugin** (`plugins/zetetic-gates/`, v1.0.0): the mechanical enforcement gates as a standalone 30-second install with zero agents: pre-commit zetetic + craftsmanship gate hook, `tools/zetetic-checker.sh` (blocks unsourced constants and absolute claims), `tools/craftsmanship-checker.sh` (§4 size limits, `.craftsmanship.conf` tunable), and the credential secret-shield. Registered in `.claude-plugin/marketplace.json` (marketplace 2.29.0 → 2.30.0). Engine files are byte-identical copies of the canonical `tools/` + `hooks/` files (a marketplace plugin only ships files under its own directory); the new CI suite `tools/tests/gates-plugin-sync/run-tests.sh` hard-fails on any drift, so the main plugin's hooks and the micro-plugin cannot diverge silently.
 - **11 problem-shaped skills** (`skills/<name>/SKILL.md`) wrapping the 97 genius agents by the category structure of `agents/genius/INDEX.md`: `measurement-discipline`, `estimation`, `causal-audit`, `formal-correctness`, `failure-forensics`, `decision-bias-check`, `evidence-synthesis`, `systems-leverage`, `boundary-design`, `structure-discovery`, `problem-reframing`. Each states its problem shape, lists 6–10 best-fit geniuses with one-line triggers, and loads them through the existing `tools/genius-invoker.sh` invoke/route/compose machinery. The README now advertises the skills as the entry point; the 97-agent roster is kept as the reference library. Total SKILL.md frontmatter descriptions: 3.4K chars (well inside the 15K description budget).
-- **`PRIVACY.md`** — privacy policy covering both plugins (local-only processing, no telemetry, what hooks read/write), required by the plugin Directory Policy. (#38)
+- **`PRIVACY.md`**: privacy policy covering both plugins (local-only processing, no telemetry, what hooks read/write), required by the plugin Directory Policy. (#38)
 
 ### Fixed
-- **`hooks/pre-tool-secret-shield.py` §4.5 nesting violation** — `_strip_write_dest_and_urls` nested 5 levels deep; the transfer-destination drop is extracted into `_drop_transfer_destination` (behavior unchanged, hook-layer suite 96/96).
-- **GitHub license detection reported NOASSERTION** — the descriptive preamble, independence statement, and trailing attribution note inside `LICENSE` broke `licensee`, awesome-list license bots, the official marketplace's validate-licenses CI, and anything reading the GitHub license API. `LICENSE` is now the verbatim MIT text; the three explanatory blocks moved to the README license section. (#36)
+- **`hooks/pre-tool-secret-shield.py` §4.5 nesting violation**: `_strip_write_dest_and_urls` nested 5 levels deep; the transfer-destination drop is extracted into `_drop_transfer_destination` (behavior unchanged, hook-layer suite 96/96).
+- **GitHub license detection reported NOASSERTION**: the descriptive preamble, independence statement, and trailing attribution note inside `LICENSE` broke `licensee`, awesome-list license bots, the official marketplace's validate-licenses CI, and anything reading the GitHub license API. `LICENSE` is now the verbatim MIT text; the three explanatory blocks moved to the README license section. (#36)
 
-## [2.29.0] — Boy-Scout Rule + Definition of Done + CMA facilitators + worktree/ACL fixes
+## [2.29.0]: Boy-Scout Rule + Definition of Done + CMA facilitators + worktree/ACL fixes
 
 ### Added
-- **§13 Definition of Done** in `rules/coding-standards.md` — "an implementation is complete and without remainder, or it does not exist": forbids classifying an unasserted path in new code as "non-blocking / later," and requires pre-existing debt discovered along the way to become a dated remediation item rather than a passing note. `commands/git/pr.md` gained the corresponding completion-ledger scaffolding. (#25)
-- **§14 Boy-Scout Rule (mandatory, all stakes)** in `rules/coding-standards.md` — any defect *seen* in material a change touches (fmt, lint, dead code, weak/flaky test, broken doc link, size-cap violation) must be fixed in the same PR; bypassing it (temp-dir dodges, skip flags, narrowed globs, or an un-issued "pre-existing"/"unrelated"/"untouched by me" classification) means the deliverable is refused without review. Only a defect genuinely outside the change's blast radius may be deferred, and only as a filed issue whose number is cited in the report. Wired as a Boy-scout gate into `engineer`, `refactorer`, `test-engineer`, `frontend-engineer`, `devops-engineer`, `dba`, `mlops`, `data-scientist`, and `latex-engineer`, and as a blocking Move 0 (ledger reconciliation + seen-defect refusal check) in `code-reviewer` — a diff or report with an un-issued rationalization is REFUSED, not requested-changes. `commands/git/pr.md`'s Completion Ledger template gained an H7 row for the check. Issued after three same-day agent rationalizations ("unrelated failure" on a 9/10 test tally, "pre-existing flake," and "pre-existing fmt debt untouched by me" bypassed via temp-dir gymnastics instead of running the formatter) were caught re-scoping problems instead of solving them. (#28) Tightened further so build/lint/compiler warnings count as seen defects and in-code excuses ("kept for a future caller") no longer substitute for a filed §14.3 issue number.
-- **CMA facilitator agent manifests** (`enterprise/managed-agents/`) — version-controlled Claude Agent SDK manifests for the four managed-agent facilitators (`reporting`, `analysis`, `agent-management`, `security-data-audit`) plus their shared pilot environment, per the issue #26 "architecture finale" decision: the local roster stays on the field plane, and these four facilitators handle engagement meta-work (readouts, adoption diagnosis, fleet-drift comparison, security/data audit) as billable, versioned server-side objects. System prompts are grounded in the Anthropic activation-guide reference material (measurement/scorecard, pilot-qualification, security-questionnaire, managed-settings, MCP-governance). Phase B adds the verified deployment layer against the live Claude Agent SDK API — `pilot.engagement.yaml` (per-engagement memory store + credential vault), four `*.deployment.yaml` files (reporting on a weekly cron, the rest on-demand), and `deploy.py`'s idempotent upsert flow for memory stores, vaults, and deployments. Live API validation is deferred to the first funded pilot engagement (no credit spend pre-signature); every unverified field is explicitly marked ASSUMED in the manifests and README until then. (#26, review follow-up: plateau-remediation correction and citation precision against source material)
+- **§13 Definition of Done** in `rules/coding-standards.md`: "an implementation is complete and without remainder, or it does not exist": forbids classifying an unasserted path in new code as "non-blocking / later," and requires pre-existing debt discovered along the way to become a dated remediation item rather than a passing note. `commands/git/pr.md` gained the corresponding completion-ledger scaffolding. (#25)
+- **§14 Boy-Scout Rule (mandatory, all stakes)** in `rules/coding-standards.md`: any defect *seen* in material a change touches (fmt, lint, dead code, weak/flaky test, broken doc link, size-cap violation) must be fixed in the same PR; bypassing it (temp-dir dodges, skip flags, narrowed globs, or an un-issued "pre-existing"/"unrelated"/"untouched by me" classification) means the deliverable is refused without review. Only a defect genuinely outside the change's blast radius may be deferred, and only as a filed issue whose number is cited in the report. Wired as a Boy-scout gate into `engineer`, `refactorer`, `test-engineer`, `frontend-engineer`, `devops-engineer`, `dba`, `mlops`, `data-scientist`, and `latex-engineer`, and as a blocking Move 0 (ledger reconciliation + seen-defect refusal check) in `code-reviewer`: a diff or report with an un-issued rationalization is REFUSED, not requested-changes. `commands/git/pr.md`'s Completion Ledger template gained an H7 row for the check. Issued after three same-day agent rationalizations ("unrelated failure" on a 9/10 test tally, "pre-existing flake," and "pre-existing fmt debt untouched by me" bypassed via temp-dir gymnastics instead of running the formatter) were caught re-scoping problems instead of solving them. (#28) Tightened further so build/lint/compiler warnings count as seen defects and in-code excuses ("kept for a future caller") no longer substitute for a filed §14.3 issue number.
+- **CMA facilitator agent manifests** (`enterprise/managed-agents/`): version-controlled Claude Agent SDK manifests for the four managed-agent facilitators (`reporting`, `analysis`, `agent-management`, `security-data-audit`) plus their shared pilot environment, per the issue #26 "architecture finale" decision: the local roster stays on the field plane, and these four facilitators handle engagement meta-work (readouts, adoption diagnosis, fleet-drift comparison, security/data audit) as billable, versioned server-side objects. System prompts are grounded in the Anthropic activation-guide reference material (measurement/scorecard, pilot-qualification, security-questionnaire, managed-settings, MCP-governance). Phase B adds the verified deployment layer against the live Claude Agent SDK API: `pilot.engagement.yaml` (per-engagement memory store + credential vault), four `*.deployment.yaml` files (reporting on a weekly cron, the rest on-demand), and `deploy.py`'s idempotent upsert flow for memory stores, vaults, and deployments. Live API validation is deferred to the first funded pilot engagement (no credit spend pre-signature); every unverified field is explicitly marked ASSUMED in the manifests and README until then. (#26, review follow-up: plateau-remediation correction and citation precision against source material)
 
 ### Fixed
-- **`_user` memory scope was permanently unwritable.** `memory-tool.sh` denied every write from `MEMORY_AGENT_ID=_user` to `/memories/_user/*` — exactly the path the checkpoint protocol (`hooks/session-start.sh`, `hooks/stop-context-guard.py`, `token-budget.md`) prescribes for the top-level interactive session's own checkpoint. Root cause: ADR-001 gave every team/genius agent a home scope keyed by its `agents/*.md` slug, but `_user` isn't a file under `agents/` — it's the interactive session identity, present elsewhere in the registry only as a curator/owner *token*, never registered as owner of its own scope. Fixed by registering `_user` as its own scope in `memory/scope-registry.json` (additive; does not weaken `strict_unknown_scope`). Also corrects a stale scope count in `memory/scope-coverage.md` (28 → 30, missing the `cortex-viz` external-plugin scope). Documented in `memory/ADR-004-user-scope-registry-gap.md`. New regression: `scripts/test-memory-e2e.sh::test_i12`. (#31)
-- **Automatic worktree sweep could delete a worktree seconds after creation.** `git merge-base --is-ancestor <branch> origin/main` returns true for a brand-new branch with zero commits (its tip equals `origin/main`'s tip), and a fresh worktree starts with a clean working tree — so `worktree-manager.sh sweep` classified a minutes-old, untouched worktree as "merged + clean" and removed it, deregistering it from `git worktree list` and deleting its directory mid-task. Fixed with a grace period (`WORKTREE_GRACE_SECONDS`, default 3600s) that blocks removal regardless of merge/clean state until a worktree has existed past the threshold, plus best-effort audit logging of every removal/skip-by-grace decision to `~/.claude/worktree-sweep-audit.log`.
-- **Automatic worktree sweep reached into unrelated sibling repos.** `hooks/session-start.sh` called `worktree-manager.sh sweep` with no repo argument, which auto-discovers and sweeps *every* sibling git repo under the booting repo's parent directory — so a session started in any project on the machine could remove worktrees belonging to a completely unrelated repo. The automatic call is now scoped to `$REPO_ROOT`; the multi-repo sweep remains available as an explicit, deliberate command. `rules/agent-reference/worktree-protocol.md` and `agents/orchestrator.md` Move 4 now prescribe a durable sibling-directory worktree location instead of `/tmp` or `/private/tmp`. New regression suite `scripts/test-worktree-sweep-safety.sh` (grace-period survival, genuinely-stale removal, non-tmp worktrees untouched) is wired into CI, with follow-up portability fixes for platform-dependent `mktemp` defaults and CI git identity. (#33)
-- **`dev-symlink-doctor.sh` reported OK by vacuity on a fresh, unmounted plugin install.** `mounted_entries()` only inspected `<entry>.orig-backup` markers to decide which cache-root entries needed checking; a fresh install has zero backups and zero symlinks, so it checked nothing and printed OK — reproduced in production across 4 real plugin installs after `claude plugin update`, none of which were actually mounted. "Montable" is now defined as: the entry exists at the top level of both the cache install and the dev repo, independent of any backup marker; any montable entry that isn't a symlink into the dev repo is BROKEN (exit 1) and gets mounted by `--repair`. Cache-only entries with no dev-repo counterpart are reported as informational, not BROKEN. (#23)
+- **`_user` memory scope was permanently unwritable.** `memory-tool.sh` denied every write from `MEMORY_AGENT_ID=_user` to `/memories/_user/*`: exactly the path the checkpoint protocol (`hooks/session-start.sh`, `hooks/stop-context-guard.py`, `token-budget.md`) prescribes for the top-level interactive session's own checkpoint. Root cause: ADR-001 gave every team/genius agent a home scope keyed by its `agents/*.md` slug, but `_user` isn't a file under `agents/`; it's the interactive session identity, present elsewhere in the registry only as a curator/owner *token*, never registered as owner of its own scope. Fixed by registering `_user` as its own scope in `memory/scope-registry.json` (additive; does not weaken `strict_unknown_scope`). Also corrects a stale scope count in `memory/scope-coverage.md` (28 → 30, missing the `cortex-viz` external-plugin scope). Documented in `memory/ADR-004-user-scope-registry-gap.md`. New regression: `scripts/test-memory-e2e.sh::test_i12`. (#31)
+- **Automatic worktree sweep could delete a worktree seconds after creation.** `git merge-base --is-ancestor <branch> origin/main` returns true for a brand-new branch with zero commits (its tip equals `origin/main`'s tip), and a fresh worktree starts with a clean working tree, so `worktree-manager.sh sweep` classified a minutes-old, untouched worktree as "merged + clean" and removed it, deregistering it from `git worktree list` and deleting its directory mid-task. Fixed with a grace period (`WORKTREE_GRACE_SECONDS`, default 3600s) that blocks removal regardless of merge/clean state until a worktree has existed past the threshold, plus best-effort audit logging of every removal/skip-by-grace decision to `~/.claude/worktree-sweep-audit.log`.
+- **Automatic worktree sweep reached into unrelated sibling repos.** `hooks/session-start.sh` called `worktree-manager.sh sweep` with no repo argument, which auto-discovers and sweeps *every* sibling git repo under the booting repo's parent directory, so a session started in any project on the machine could remove worktrees belonging to a completely unrelated repo. The automatic call is now scoped to `$REPO_ROOT`; the multi-repo sweep remains available as an explicit, deliberate command. `rules/agent-reference/worktree-protocol.md` and `agents/orchestrator.md` Move 4 now prescribe a durable sibling-directory worktree location instead of `/tmp` or `/private/tmp`. New regression suite `scripts/test-worktree-sweep-safety.sh` (grace-period survival, genuinely-stale removal, non-tmp worktrees untouched) is wired into CI, with follow-up portability fixes for platform-dependent `mktemp` defaults and CI git identity. (#33)
+- **`dev-symlink-doctor.sh` reported OK by vacuity on a fresh, unmounted plugin install.** `mounted_entries()` only inspected `<entry>.orig-backup` markers to decide which cache-root entries needed checking; a fresh install has zero backups and zero symlinks, so it checked nothing and printed OK: reproduced in production across 4 real plugin installs after `claude plugin update`, none of which were actually mounted. "Montable" is now defined as: the entry exists at the top level of both the cache install and the dev repo, independent of any backup marker; any montable entry that isn't a symlink into the dev repo is BROKEN (exit 1) and gets mounted by `--repair`. Cache-only entries with no dev-repo counterpart are reported as informational, not BROKEN. (#23)
 
-## [2.28.1] — CI audit gate fix + subagent alignment
+## [2.28.1]: CI audit gate fix + subagent alignment
 
 ### Fixed
-- **`agent-definition-auditor.sh` now actually gates in CI** — the script's default `ROOT` was a hardcoded personal absolute path that didn't exist on the CI runner, so the glob silently matched 0 files and the whole audit (F1-F9, FD, B1-B3, G1-G3, P1) passed vacuously. `ROOT` now resolves relative to the script's own location, and a 0-match glob fails explicitly (exit 2) instead of reporting an empty pass. All 97 genius agents also gained an explicit `tools:` frontmatter field (previously scoped only via the plugin manifest's blanket "All tools" grant), bringing F8/F9 from 22/119 to 119/119 passing.
-- **26 genius agent descriptions repaired** — 4 agents (`deming`, `fisher`, `leguin`, `ranganathan`) shipped with frontmatter `description` truncated mid-sentence by a JSON double-encoding bug (e.g. `"W."`); a further 10 had the same corruption undetected until a new quality gate (check FD: description ≥ 40 chars, no broken escape artifacts) was added to the auditor, and 16 more had valid-but-terse descriptions. Since `description` is the spawn/routing criterion, corrupted values made these agents unroutable; `rules/agent-routing-table.md` was regenerated so the fix reaches routing consumers.
-- Orchestrator now validates a subagent's result against its artifact contract before forwarding it downstream, and isolates a failed subtask so it does not invalidate already-validated independent results — encoded as new Move 6 steps and refusal conditions.
+- **`agent-definition-auditor.sh` now actually gates in CI**: the script's default `ROOT` was a hardcoded personal absolute path that didn't exist on the CI runner, so the glob silently matched 0 files and the whole audit (F1-F9, FD, B1-B3, G1-G3, P1) passed vacuously. `ROOT` now resolves relative to the script's own location, and a 0-match glob fails explicitly (exit 2) instead of reporting an empty pass. All 97 genius agents also gained an explicit `tools:` frontmatter field (previously scoped only via the plugin manifest's blanket "All tools" grant), bringing F8/F9 from 22/119 to 119/119 passing.
+- **26 genius agent descriptions repaired**: 4 agents (`deming`, `fisher`, `leguin`, `ranganathan`) shipped with frontmatter `description` truncated mid-sentence by a JSON double-encoding bug (e.g. `"W."`); a further 10 had the same corruption undetected until a new quality gate (check FD: description ≥ 40 chars, no broken escape artifacts) was added to the auditor, and 16 more had valid-but-terse descriptions. Since `description` is the spawn/routing criterion, corrupted values made these agents unroutable; `rules/agent-routing-table.md` was regenerated so the fix reaches routing consumers.
+- Orchestrator now validates a subagent's result against its artifact contract before forwarding it downstream, and isolates a failed subtask so it does not invalidate already-validated independent results: encoded as new Move 6 steps and refusal conditions.
 - Encoded the anti-passive-waiting lesson (long-running work is foreground-blocking or terminate-and-handoff, never a sleep/poll loop on a background monitor) as binding §8c in the shared memory contract.
 
-## [2.27.0] — git-historian agent + get_impact drift fix
+## [2.27.0]: git-historian agent + get_impact drift fix
 
 ### Added
-- **git-historian** team agent — regression provenance and abandoned-approach recovery: traces when a behavior changed, which commit introduced it, and surfaces approaches tried-and-reverted so a session doesn't re-walk a dead end.
+- **git-historian** team agent: regression provenance and abandoned-approach recovery: traces when a behavior changed, which commit introduced it, and surfaces approaches tried-and-reverted so a session doesn't re-walk a dead end.
 
 ### Changed
 - Registered the `cortex-viz` memory scope in the central registry so cross-agent recall resolves it.
 
 ### Fixed
-- Corrected `get_impact` drift in `rules/agent-reference/codebase-intelligence.md` — the doc over-promised the tool's blast-radius (it returns one reverse-edge hop, not transitive/test-aware); wording now matches the implementation.
+- Corrected `get_impact` drift in `rules/agent-reference/codebase-intelligence.md`: the doc over-promised the tool's blast-radius (it returns one reverse-edge hop, not transitive/test-aware); wording now matches the implementation.
 
-## [2.26.0] — zetetic spine: evidence directionality (source-before-code)
+## [2.26.0]: zetetic spine: evidence directionality (source-before-code)
 
 ### Changed
 
 - **Spine beat 2 (`evidence/sources`) now enforces the *direction* of evidence**,
   across all 117 agents (team + genius) via the single generator
   `scripts/generate-spine.py` and its elaboration
-  `rules/agent-reference/zetetic-spine.md`. The prior wording — "every claim traces
-  to a source" — was direction-agnostic: it was satisfied equally by rigor (read a
+  `rules/agent-reference/zetetic-spine.md`. The prior wording: "every claim traces
+  to a source" was direction-agnostic. It was satisfied equally by rigor (read a
   source, derive the code from it) and by fabrication (write the code, then find a
   resembling paper and attach the citation as post-hoc justification). Scientific
   rigor is *source-first*: start from a factual, verifiable, demonstrable source and
   produce the implementation **from** it. A citation attached after the fact to a
-  lookalike paper is fabricated proof, not evidence — even when the citation is real,
+  lookalike paper is fabricated proof, not evidence: even when the citation is real,
   because the code was never derived from it.
 - Beat 2 now names three refused failure modes, backed by observed provenance audits
   (invented arXiv ids, fabricated benchmark deltas, constants mislabeled with
@@ -103,7 +125,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   conditions match yours), and **borrowed authority** (a hardcoded constant wearing a
   paper's name with no line the paper actually prescribes). The honesty discriminator
   is the provenance comment written *before* the value plus an explicit
-  "engineering-default / hand-tuned" disclaimer when a value is not paper-prescribed —
+  "engineering-default / hand-tuned" disclaimer when a value is not paper-prescribed,
   never the citation alone.
 - No source → "I don't know" and stop is now explicit that this is a **gate failure,
   not a formatting gap to fill later**: do not ship, then justify.
@@ -114,27 +136,27 @@ adheres to [Semantic Versioning](https://semver.org/).
   memory-contract surface changed. `scripts/generate-spine.py --check` is clean
   (idempotent) and all seven release-gate memory suites pass locally.
 
-## [2.24.0] — `simplifier` agent (de-over-engineering) + adversarial-verify simplicity lens
+## [2.24.0]: `simplifier` agent (de-over-engineering) + adversarial-verify simplicity lens
 
 ### Added
 
 - **New `simplifier` team agent** (`agents/simplifier.md`). De-over-engineers code
   that already works and breaks no hard rule but carries more complexity than its
-  problem requires — premature abstraction, needless indirection, speculative
+  problem requires: premature abstraction, needless indirection, speculative
   generality, premature optimization, and drifted duplication. Distinct trigger from
   `refactorer`: refactorer fixes *hard-rule violations*; simplifier removes
   *superfluous complexity that violates no hard rule* (already-functional,
   already-compliant code never invokes refactorer, so over-engineering needs its own
-  trigger — folding both into one agent would be an SRP violation in agent design).
+  trigger: folding both into one agent would be an SRP violation in agent design).
   Behavior-preserving (tests pass before and after, one simplification per commit),
   stakes-calibrated, and language-/project-agnostic (idiom-mapping across Python,
   TypeScript, Go, Rust, Java, Swift). Its over-engineering heuristics are an **open,
   non-exhaustive catalog** (YAGNI, rule-of-three, needless indirection, premature
   optimization, speculative generality, drifted duplication, plus KISS, Gall's Law,
-  Ousterhout shallow modules, dead code, boolean blindness, …) — each removal must
+  Ousterhout shallow modules, dead code, boolean blindness, …), each removal must
   name and source its principle per the zetetic §8 standard. New `simplifier` memory
   scope (`memory/scope-registry.json`).
-- **A2 / CR-4 — adversarial-verify pre-verdict workflow** now carries a **fifth,
+- **A2 / CR-4: adversarial-verify pre-verdict workflow** now carries a **fifth,
   perspective-diverse lens**: `simplicity` (agentType `simplifier`), prompted to
   REFUTE by hunting superfluous complexity that no hard rule forbids. Joins the four
   existing refute lenses (residual-fp, missed-cases, robustness, test-adequacy);
@@ -154,7 +176,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   to 20 **scope-owning** team agents, 117 tabulated agents, 27 distinct registry
   scopes (7 systemic + 18 team + 1 research + 1 genius). This doc tabulates only
   scope-owning agents, so its total is intentionally one less than the 118 agent
-  *definition files* the README/marketplace count — `memory-writer` is a scribe that
+  *definition files* the README/marketplace count: `memory-writer` is a scribe that
   owns no scope. A new footnote in the doc records the distinction.
 
 ### Tests
@@ -163,22 +185,22 @@ adheres to [Semantic Versioning](https://semver.org/).
   (lens count, lens-keys ordering, distinct-agentType count, five-element fixtures).
   13/13 deterministic synthesis-core tests pass.
 
-## [2.23.0] — CAP-2 reviewer-prefs, history seeding, and doc/count refresh
+## [2.23.0]: CAP-2 reviewer-prefs, history seeding, and doc/count refresh
 
 ### Added
 
-- **CAP-2 — adapt to a demanding team lead.** New `reviewer-prefs` memory scope
+- **CAP-2: adapt to a demanding team lead.** New `reviewer-prefs` memory scope
   (`memory/scope-registry.json`) holding a lead's standing review preferences.
   Owners are the lead (`_user`) and the orchestrator/curator; the reviewed agents
   (`engineer`, `refactorer`, `code-reviewer`) are readers only, so an agent cannot
   invent its own prefs. The three agents read the scope at the top of their workflow
-  with a fixed precedence — a `coding-standards.md` blocking rule always outranks a
-  preference — and a graceful fallback when the scope is absent.
-- **`tools/seed-reviewer-prefs.sh`** — bootstraps a lead's prefs from evidence of how
+  with a fixed precedence: a `coding-standards.md` blocking rule always outranks a
+  preference, and a graceful fallback when the scope is absent.
+- **`tools/seed-reviewer-prefs.sh`**: bootstraps a lead's prefs from evidence of how
   they already work (their `gh` review comments + merged PRs), emitting a
   provenance-tagged `status: inferred` draft. It presents raw evidence only;
   abstracting it into confirmed preferences is the lead/orchestrator's judgment step
-  (§9 — no faked judgment). Injection-safe, owner-only writes, deterministic exit
+  (§9, no faked judgment). Injection-safe, owner-only writes, deterministic exit
   codes. 19-case test suite under `tools/tests/seed-reviewer-prefs/`.
 
 ### Changed
@@ -194,7 +216,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   tabulated. Reconciled to 26 scopes (7 systemic + 17 team + 1 research + 1 genius);
   the doc's embedded verification command now matches.
 
-## [2.22.0] — mutation-test suites for the gate cores + gate-integrity fix
+## [2.22.0]: mutation-test suites for the gate cores + gate-integrity fix
 
 ### Added
 
@@ -209,7 +231,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   (`TEST_FILE_MAX`/`TEST_FILE_RE`); production stays `FILE_MAX=500`.
 - Routing table regenerated to include the `memory-writer` agent.
 
-## [2.21.0] — mechanical craftsmanship enforcement + hook-layer correctness
+## [2.21.0]: mechanical craftsmanship enforcement + hook-layer correctness
 
 ### Added
 
@@ -218,7 +240,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   rules. `FILE_TOO_LONG` (>500 lines) blocks; function/class/parameter/nesting block
   for recognized languages; grab-bag module names and layer-direction advise.
   Judgment rules (SRP/OCP/LSP/ISP, rule-of-three, dead-code) are deliberately NOT
-  mechanized — a hook that fakes a verdict it cannot reach just trains you to ignore
+  mechanized: a hook that fakes a verdict it cannot reach just trains you to ignore
   it. Mirrors `zetetic-checker.sh` (`--staged`/`--files`/`--full`, exit 0/1/2);
   wired into the commit/push hooks and a new CI job (hard on newly-added files,
   informational full-tree sweep).
@@ -260,32 +282,32 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 - Mutation testing stays operationalized as `test-engineer` Move 8 (in
   `coding-standards.md` §3.2 and `craftsmanship-moves.md`); a real per-stack runner
-  integration in the acceptance gate is a tracked follow-up — an inert draft was not
+  integration in the acceptance gate is a tracked follow-up: an inert draft was not
   shipped (no current caller, per §9).
 - The craftsmanship CI gate is a ratchet: newly-added files must fully comply; the
   legacy tree's pre-existing §4 debt (e.g. `scripts/setup.sh`) is surfaced
   informationally, not blocked, until refactored.
 
-## [2.20.0] — autonomous build loop + self-hosted knowledge ingestion
+## [2.20.0]: autonomous build loop + self-hosted knowledge ingestion
 
 ### Added
 
 - **Closed-loop autonomous build** (`.claude/workflows/autonomous-build-loop.js`).
   Drives a build task to a candidate on an isolated iteration branch:
   refine → plan → verify-plan → orchestrator build → best-effort in-loop
-  acceptance checks → iterate until green or the budget is spent. Repo-generic —
+  acceptance checks → iterate until green or the budget is spent. Repo-generic:
   `repoPath`, `gateRunner`, and an optional base `gateConfig` are inputs, so the
   loop runs from any working directory against a repo that need not contain this
   tooling. It drafts and converges a candidate; it does not self-certify.
 - **Deterministic acceptance gate** (`tools/acceptance_gate.py`,
   `tools/acceptance-gate.sh`). Runs configured *command* gates and aggregates
-  their exit codes — a gate passes iff its command exits 0, never a model grading
+  their exit codes: a gate passes iff its command exits 0, never a model grading
   its own output (Huang et al., arXiv:2310.01798). Gates any repo via `--root`,
   evaluates the committed tip via `--diff-base/--diff-head` in a throwaway
   worktree, rejects an empty diff, and fails closed. Unit-tested under
   `tools/tests/acceptance-gate/` (incl. external-repo-from-a-foreign-cwd and
   fail-closed cases).
-- **Real-exec Stop-hook gate** (`hooks/stop-acceptance-gate.py`) — the build
+- **Real-exec Stop-hook gate** (`hooks/stop-acceptance-gate.py`): the build
   loop's gate component (invoked by the workflow, not registered as a global
   lifecycle hook).
 - **Self-hosted web ingestion engine** (`tools/web_ingest.py`,
@@ -298,7 +320,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   `tools/semantic-layer.sh`, `memory/semantic-layer.yaml`,
   `memory/semantic-layer.schema.yaml`). A YAML index keyed by query + intent
   (`ingest` / `verify` / `compare` / `monitor`) with `fresh` / `stale` /
-  `superseded` states. Never writes Cortex itself — the agent owns the write and
+  `superseded` states. Never writes Cortex itself: the agent owns the write and
   passes back the `cortex_id` as a pointer.
 - **Manifest-membership gate** (`tools/manifest_gate.py`, `tools/manifest-gate.sh`,
   tests under `tools/tests/manifest-gate/`). Fail-closed grounding check: every
@@ -308,7 +330,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **README: broader refresh.** Corrected counts to ground truth — agents
+- **README: broader refresh.** Corrected counts to ground truth: agents
   116 → 117 (a 20th team-role agent, `memory-writer`), skills 63 → 64; documented
   the autonomous build loop and the new knowledge-ingestion / semantic-layer
   subsystems; refreshed the genius-trigger source comment (recounted 2026-06-23).
@@ -320,7 +342,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 - **`web-ingest` follows 308 redirects** and records the final resolved URL.
 - **Manifest-gate comments** reworded to satisfy the absolute-claim checker (§8).
 
-## [2.19.1] — fix Release workflow test paths
+## [2.19.1]: fix Release workflow test paths
 
 ### Fixed
 
@@ -334,20 +356,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 - Added `jq` to the release job's apt dependencies (required by the memory
   suites, matching CI).
 
-## [2.19.0] — genius corpus inherits the full tool set
+## [2.19.0]: genius corpus inherits the full tool set
 
 ### Changed
 
 - **All 97 genius agents drop the explicit `tools:` front-matter line.** Each
   genius now inherits the full session tool set instead of pinning a hardcoded
   allow-list that had drifted from the live tool registry; pinning silently
-  starved an agent of any tool the list omitted. Single uniform change — 97
+  starved an agent of any tool the list omitted. Single uniform change: 97
   files, 97 deletions, reasoning sections untouched.
 - Validated by a full isolation sweep before release: with the plugin disabled
   and an un-namespaced clone live, all 97 genius agents spawned and responded,
-  each confirming file/search tools visible — 97/97, zero failures.
+  each confirming file/search tools visible: 97/97, zero failures.
 
-## [2.18.0] — letta-code follow-up: lean genius corpus, compact routing, reflective checkpoints, memory contract hardening
+## [2.18.0]: letta-code follow-up: lean genius corpus, compact routing, reflective checkpoints, memory contract hardening
 
 ### Changed
 
@@ -364,7 +386,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   `scripts/generate-routing-table.py`) replaces full Reads of the 132KB
   INDEX.md in genius:route, genius:index and the orchestrator (~30K tokens
   saved per routing decision). pre-commit warns when the table is stale.
-- **R3: checkpoint stubs follow the letta summary schema** — goals / file
+- **R3: checkpoint stubs follow the letta summary schema**: goals / file
   references (paths + line ranges) / errors and fixes / current state / next
   steps, ≤500 words, tool outputs clipped to 2K chars, frontmatter
   description retrieval cue. Resume contract: checkpoint + ONE targeted
@@ -374,7 +396,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   firing is now a one-time blocking reflection (like letta's compaction
   event): the model spawns the new budgeted **memory-writer** agent (haiku,
   ≤16K context) to persist the semantic checkpoint + cortex:remember entries
-  while headroom remains, then resumes the task — the HARD block becomes a
+  while headroom remains, then resumes the task: the HARD block becomes a
   formality.
 
 ### Added
@@ -382,13 +404,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 - **R5: mandatory `description:` frontmatter on memory .md files**, enforced
   at the memory-tool.sh chokepoint on create/rethink (instructive error,
   `MEMORY_NO_DESC_CHECK=1` test escape hatch). Contract §4.8.
-- **R6: conflict-aware memory verbs** — `rethink <path> <text>
+- **R6: conflict-aware memory verbs**: `rethink <path> <text>
   [expected_sha]` (atomic whole-file rewrite, letta memory_rethink) and
   `sha <path>` (CAS token); `str_replace` gains optional compare-and-swap.
   Contract §3.6b/§3.6c/§4.7; exposed via the memory_extensions MCP tool.
-- `agents/memory-writer.md` — single-purpose budgeted reflection scribe.
+- `agents/memory-writer.md`: single-purpose budgeted reflection scribe.
 
-## [2.17.0] — Lean team agents: core + on-demand reference docs
+## [2.17.0]: Lean team agents: core + on-demand reference docs
 
 ### Changed
 
@@ -408,7 +430,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   latex-engineer/professor `MEMORY_AGENT_ID=haiku` bug (now agent name)
   and the orchestrator's dangling `<dynamic-workflows>` prose reference.
 
-## [2.16.0] — Per-model context thresholds via shared config
+## [2.16.0]: Per-model context thresholds via shared config
 
 ### Changed
 
@@ -417,7 +439,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   Thresholds are now per-model and loaded from
   `~/.claude/ctxguard-thresholds.json` (embedded fallback when the config
   is absent or malformed; first substring match on the lowercased model id
-  wins): Fable 5 / Mythos warn 120K hard 160K (2x Opus rates — carrying
+  wins): Fable 5 / Mythos warn 120K hard 160K (2x Opus rates, carrying
   rent and the 5-min cache-expiry resume penalty bite twice as hard),
   Haiku 4.5 warn 120K hard 170K (200K IS the window; leave headroom for
   the checkpoint turn), Opus/Sonnet warn 180K hard 200K (cost discipline;
@@ -430,19 +452,19 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **`hooks/ctxguard-thresholds.json`** — vendored copy of the shared
+- **`hooks/ctxguard-thresholds.json`**: vendored copy of the shared
   threshold config. `session-start.sh` seeds it to
-  `~/.claude/ctxguard-thresholds.json` when absent (idempotent — never
+  `~/.claude/ctxguard-thresholds.json` when absent (idempotent, never
   overwrites user edits, so tuned thresholds survive plugin updates).
 
-## [2.15.0] — Complete the plugin hook manifest
+## [2.15.0]: Complete the plugin hook manifest
 
 ### Fixed
 
 - **Missing hooks in the plugin manifest.** `.claude-plugin/plugin.json`
   had drifted from `hooks/hooks.json`: the inline `hooks` block omitted
   three hooks that the canonical wiring defines, so they never registered
-  when the plugin loaded — `pre-tool-secret-shield.py` (PreToolUse),
+  when the plugin loaded: `pre-tool-secret-shield.py` (PreToolUse),
   `stop-context-guard.py` (Stop, the context-budget guard from
   [session-optimizer](https://github.com/cdeust/session-optimizer)), and
   `session-end-memory-drain.sh` (Stop). The manifest now mirrors
@@ -453,7 +475,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 - Marketplace entry hook count corrected (16 → 17).
 
-## [2.14.0] — Public-readiness baseline
+## [2.14.0]: Public-readiness baseline
 
 ### Added
 
@@ -469,7 +491,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   ecosystem-context preamble + explicit non-affiliation statement added.
 - LinkedIn post first-comment options refined for algorithm-aware reach.
 
-## [2.13.1] — Tier-1 visibility + memory MCP + PII scanner
+## [2.13.1]: Tier-1 visibility + memory MCP + PII scanner
 
 ### Added
 
@@ -478,7 +500,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   full MCP wire compatibility. 241 tests passing across functional, ACL,
   concurrency, stale-lock, MCP, and PII suites.
 - **PII / secret scrubbing on memory write path** (contract §7.2).
-- **`pre-tool-secret-shield` hook** — blocks any agent from reading
+- **`pre-tool-secret-shield` hook**: blocks any agent from reading
   `.env`, `.aws/credentials`, `*.pem`, `*.key`, or shell-history files.
 - **PII scanner daemon.** Persistent process eliminates Python cold-start;
   median scan time reduced 34→8 ms.
