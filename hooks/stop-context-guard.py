@@ -401,15 +401,45 @@ def _block_reason(ctx: int, stub_path: str, hard: int) -> str:
     )
 
 
-def main():
+def _read_payload():
+    """Parse the hook payload from stdin, or None when it is unusable.
+
+    Split out of ``main()`` so the local is ALWAYS bound. Inline, the value was
+    assigned in the ``try`` and the ``except`` ended in ``_exit()``; that is
+    correct at runtime but only because ``_exit()`` never returns, which no
+    intraprocedural analyser can see (the ``NoReturn`` annotation states it for
+    a reader and for a type checker, but CodeQL's py/uninitialized-local-
+    variable does not consult annotations — it kept flagging the use below).
+    Returning a value on every path makes the property structural instead of
+    inferred, which is the honest fix: nothing is suppressed and there is no
+    path where the caller reads an unbound name.
+    """
     try:
-        data = json.load(sys.stdin)
+        return json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
-        _exit()
+        return None
+
+
+def _level_for(ctx: int, warn: int, hard: int):
+    """Threshold band for ``ctx``: "hard", "warn", or None when below both.
+
+    Same reason as ``_read_payload``: every path returns, so the caller's local
+    is bound before it is read.
+    """
+    if ctx >= hard:
+        return "hard"
+    if ctx >= warn:
+        return "warn"
+    return None
+
+
+def main():
+    data = _read_payload()
 
     # Valid JSON that is not an object (e.g. a bare number, string, list, or
     # null) parses without error but has no .get(); treating it as a missing
     # payload preserves the fail-open contract (parse/shape problems exit 0).
+    # `None` from a parse failure lands here too — same contract, one check.
     if not isinstance(data, dict):
         _exit()
 
@@ -426,11 +456,8 @@ def main():
         _exit()
 
     warn, hard = _thresholds(model_id)
-    if ctx >= hard:
-        level = "hard"
-    elif ctx >= warn:
-        level = "warn"
-    else:
+    level = _level_for(ctx, warn, hard)
+    if level is None:
         _exit()
 
     prev = _load_level(session_id)
