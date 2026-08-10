@@ -95,11 +95,53 @@ def has_changes(root: str) -> bool:
     return bool(out.strip())
 
 
-def gate_args(root: str, cfg: dict) -> list:
-    """Build the acceptance-gate.sh argv from a marker config (empty cfg -> defaults)."""
-    gate = os.path.join(root, "tools", "acceptance-gate.sh")
-    args = [gate, "--config",
-            os.path.join(root, cfg.get("config", "memory/acceptance-gates.loop.yaml"))]
+def resolve_gate(root: str) -> str:
+    """Path to a usable acceptance-gate.sh: the repo's own, else the plugin's.
+
+    Only this plugin's repo carries ``tools/acceptance-gate.sh``; every other repo
+    hit the executability check and the hook no-opped there — the gate was global
+    in name only. The runner is repo-generic by construction (it resolves its
+    Python core via BASH_SOURCE and takes ``--root``), so falling back to the
+    plugin's copy makes the gate reachable from any repository without vendoring
+    the tool six times. Returns "" when neither exists.
+    """
+    local = os.path.join(root, "tools", "acceptance-gate.sh")
+    if os.access(local, os.X_OK):
+        return local
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
+    if plugin_root:
+        shared = os.path.join(plugin_root, "tools", "acceptance-gate.sh")
+        if os.access(shared, os.X_OK):
+            return shared
+    return ""
+
+
+def resolve_config(root: str, requested: str) -> str:
+    """Absolute path of the gate config: the repo's own, else the plugin's global set.
+
+    A repo without its own gate definitions still gets the universal gates, so
+    "blocking everywhere" does not require authoring a config per repository.
+    """
+    local = os.path.join(root, requested)
+    if os.path.isfile(local):
+        return local
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
+    if plugin_root:
+        shared = os.path.join(plugin_root, "memory", "acceptance-gates.global.yaml")
+        if os.path.isfile(shared):
+            return shared
+    return local
+
+
+def gate_args(gate: str, root: str, cfg: dict) -> list:
+    """Build the acceptance-gate.sh argv from a marker config (empty cfg -> defaults).
+
+    `gate` is the already-resolved runner path: `main` resolves it once, so this
+    stays a pure function of its arguments rather than re-reading the filesystem
+    and the environment a second time.
+    """
+    args = [gate, "--root", root, "--config",
+            resolve_config(root, cfg.get("config", "memory/acceptance-gates.loop.yaml"))]
     base, head = cfg.get("diff_base"), cfg.get("diff_head")
     if base and head:
         args += ["--diff-base", base, "--diff-head", head]
@@ -138,11 +180,26 @@ def main() -> None:
         allow()
 
     root = repo_root()
-    gate = os.path.join(root, "tools", "acceptance-gate.sh")
-    if not os.access(gate, os.X_OK):
+    gate = resolve_gate(root)
+    if not gate:
         allow()
 
+    # BLOCK everywhere (owner directive 2026-08-09): the marker is no longer the
+    # only way in. `ABL_STOP_BLOCK=on` makes the gate blocking in every repo, which
+    # is what "what must happen every time belongs in a hook" requires — an opt-in
+    # gate is advisory, and advisory guidance is exactly what gets skipped. The
+    # 2026-06-10 product-safety default (report-only unless opted in) still governs
+    # a machine that has NOT set the variable; setting it is that opt-in, made once
+    # and globally rather than per repository.
     marker = os.path.join(root, ".abl-gate.json")
+    if os.environ.get("ABL_STOP_BLOCK", "off").lower() == "on" and not os.path.isfile(marker):
+        result = run_gate(gate_args(gate, root, {"config": "memory/acceptance-gates.yaml"}),
+                          root, GATE_TIMEOUT_S)
+        if result is None or result[0] == 0:
+            allow()
+        block(verdict_reason("Acceptance gate is not green; keep working until it passes",
+                             result[0], result[1]))
+
     if os.path.isfile(marker):
         # BLOCK tier — an autonomous build run opted in to hard gating.
         try:
@@ -152,7 +209,7 @@ def main() -> None:
             allow()
         if not isinstance(cfg, dict):  # hand-edited non-object marker -> fail open
             allow()
-        result = run_gate(gate_args(root, cfg), root, GATE_TIMEOUT_S)
+        result = run_gate(gate_args(gate, root, cfg), root, GATE_TIMEOUT_S)
         if result is None or result[0] == 0:
             allow()
         block(verdict_reason("Acceptance gate is not green; keep working until it passes",
@@ -164,7 +221,7 @@ def main() -> None:
     if not has_changes(root):
         allow()
     # WARN checks the committed BASE gate set, not the autonomous-loop variant.
-    result = run_gate(gate_args(root, {"config": "memory/acceptance-gates.yaml"}),
+    result = run_gate(gate_args(gate, root, {"config": "memory/acceptance-gates.yaml"}),
                       root, WARN_TIMEOUT_S)
     if result is None or result[0] == 0:
         allow()
