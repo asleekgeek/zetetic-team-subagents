@@ -15,7 +15,23 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.37.0]: GOA Phase 0/Instrument B tooling, genius-bank coverage complete, and the engineering-loop restored
+
+### Added
+- **Four new problem-shaped skills complete genius-bank coverage (82/97 -> 97/97).** `experience-and-transmission`, `narrative-sensemaking`, `normative-design` and `representation-and-possibility` were the only skill-layer gaps left after the skills wave that shipped `zetetic-gates`; a genius agent the skill layer does not route to is unreachable in practice. Problem-shaped skills: 11 -> 15. Propagated through README, CONTRIBUTING, `marketplace.json`, `skills/_index.md` and `docs/COUNTING.md`, with eleven previously ungated README/COUNTING claims added to the doc-count registry so this class of drift (75 vs 76 skills, stale suite and tool counts) cannot recur silently. (#92)
+- **GOA Phase 0: a replayable inter-rater-agreement protocol and scorer**, measuring agreement on the routing gold set before any router is scored. 351 mined cases, two blind labellers on a frozen rubric: Cohen's kappa 0.554, 39.0% shape-agreement on routable cases (replicates the earlier 120-case ceiling to three decimals). `tools/score_shape_labels.py` (Cohen 1960 / Fleiss 1971), `tools/mine_shape_cases.py`, and the frozen protocol/rubric/prompt under `docs/goa-phase0/`. The cases themselves are not published (verbatim project paths, 35 concern enterprise work); the protocol is replayable, the data is not. (#94)
+- **GOA Phase 0: a cross-family replay report** (Codex GPT-5.6, three model IDs) validating the frozen 351-case gold set at 351/351 rows with no repair, published as evidence rather than adjudication: it does not resolve the seven three-way splits still pending human arbitration. (#98)
+- **GOA Phase 0: the binding scorecard** (`docs/GOA-SCORECARD.md`): gold-set composition, the replicated agreement ceiling and its reporting rule, cross-family replay limits, declared biases and reproducibility gaps, the two-instrument design, and standing rules against quoting rates from selection-biased subsets. (#101)
+- **GOA Phase 1: Instrument B curation pipeline** building the frozen `external_testbase_v1.json` fixture from archive.org's 2024-04-02 Stack Exchange dump (CC BY-SA 4.0) and the NTSB Zenodo record 17096333 (CC BY 4.0): score-stratified sampling, MinHash near-duplicate removal (Broder 1997), blind-batch construction with a two-labeler + 3rd-pass-adjudication protocol, and locally-derived fixture assembly that never stores raw corpus text. Two new CI hard gates (`tools/goa/no-raw-text-gate.sh`, `tools/goa/fixture-freeze-gate.sh`), 105 new pytest tests at 91% line coverage on `tools/goa`. (#99)
+- **A generated skill-shape routing table with an anti-drift gate.** Each of the 15 problem-shaped skills gains a `shapes:` frontmatter field (sourced from `docs/goa-phase0/label-rubric.md`); `scripts/generate-skill-routing-table.py --check` fails CI on drift between that frontmatter and the committed `rules/skill-routing-table.md`. Codegen only, for the routing-artifact half of the GOA design; no router or abstention-gate behavior changed. (#102)
+- **`/zetetic:engineering-loop` restored and the acceptance gate made global.** The command was advertised in the command surface and referenced in the past tense by ADR-003, but its definition existed nowhere on disk. Restored as a step-by-step procedure whose step 0 is naming the pass/fail check. `hooks/stop-acceptance-gate.py` now falls back to this plugin's own repo-generic runner and a global config when a repo has no vendored `tools/acceptance-gate.sh`, and `ABL_STOP_BLOCK=on` enables blocking machine-wide (the 2026-06-10 report-only default still governs where it is unset). `CLAUDE.md` now wires the global agent rules into this repo, which previously loaded neither `model-behavior.md` nor `coding-standards.md` for sessions working here. The three contract-violation refusals ("pre-existing", a skip, a red PR), root-cause-ends-the-contract, refusal-is-not-an-option, and the shortcuts-refused-by-default rule are stated explicitly where agents read them. (#103)
+- **`tools/changelog-commit-check.sh`: a hard CI gate closing the exact hole this release's own postmortem found.** `CHANGELOG.md`'s `Unreleased` section stopped being updated after #89 and 14 of the 30 commits before this one went unrecorded, three of them `feat:` and four `fix:`, with nothing measuring the gap. The gate walks every `feat:`/`fix:`/`sec:`/`perf:` commit since the latest release tag and fails if its `(#NNN)` PR number is not cited anywhere in `CHANGELOG.md`'s not-yet-released content; `docs:`/`chore:` commits are not required. Fails closed on every unverifiable path (no tag, no matching section header, a required commit with no PR number of its own to check). 7-case regression suite under `tools/tests/changelog-commit-check/`, each case built against a throwaway git repository. (#106)
+
 ### Fixed
+- **`requirements-dev.txt`'s four test dependencies were unpinned by hash** (Scorecard Pinned-Dependencies, code-scanning #40): any CI run could resolve to swapped bytes with no diff in this repository. `requirements-dev.lock`, compiled with `uv pip compile --generate-hashes --universal`, is now the only thing installed; a drift step recompiles and diffs against it. (#84)
+- **122 agent/genius files carried a dead MCP tool-name prefix.** The codebase-intelligence server was renamed twice (`automatised-pipeline` -> `ai-architect-codebase` -> `ai-architect-mcp-codebase`, canonical since v0.9.0); the host silently drops a tool name it cannot resolve, so every agent lost code intelligence with no error line. The auditor's own allowlist had been hand-copied and carried the dead spelling too, so CI certified the defect it exists to catch. `.github/workflows/identity.yml` now derives the expected prefix from the producer's `mcp-contract.json` (pinned to a commit, not a movable tag) instead of restating it, and fails on any revoked prefix or allowlist drift. (#95, #97)
+- **The zetetic-checker CI job reported blocking violations under a green build.** `|| echo "... (informational)"` swallowed the exit code, so a run printing "FAILED: 9 blocking violation(s)" still passed. Made blocking; the checker's own stimulus corpus (which exists to fire UNSOURCED) joins the generated/lock exclusion paths, and the one real hit is fixed at the source. The `zetetic-gates` plugin's copy of the checker is re-synced to match (see below). (#100)
+- **`tools/tests/hook-layer/run-tests.sh` was registered nowhere and never ran** (issue #93): `run-all.sh`'s glob discovery matches only `tools/tests/<suite>/run-tests.sh`, so a suite nested one level deeper looks like coverage on disk while silently never executing. `check_no_orphan_suites()` compares `find tools/tests -name run-tests.sh` against the discovered set and fails closed on any mismatch, in both `--list` and run mode; the tools-tests CI job now runs this check before its own hard gate. `docs/COUNTING.md`'s `suites` row, previously unmonitored, is corrected (28 -> 31) and added to the drift registry. (#104)
 - **Stale post-rename references to `automatised-pipeline`, `prd-spec-generator`
   and `cortex-viz`.** `README.md`'s companion-projects table and license
   footnote still linked `github.com/cdeust/prd-spec-generator` (a redirect,
@@ -31,7 +47,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   `.bestpractices.json` citation of the external OpenSSF project by its
   registered pre-rename name, and the ADR/audit files describing past
   decisions are unchanged on purpose: editing them would falsify the trace
-  they exist to keep.
+  they exist to keep. (#105)
 - **`memory/scope-registry.json`'s `cortex-viz` memory scope was never
   reconciled with the plugin's marketplace rename to `hypermnesia-mcp-viz`.**
   Directories already exist on users' disks at
@@ -41,7 +57,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   Registered `hypermnesia-mcp-viz` as a second external-plugin scope,
   identical in shape, and documented the compatibility decision in
   `memory/scope-coverage.md`. Distinct registry scopes: 30 -> 31 (both
-  counted values and the file's self-verification snippet updated together).
+  counted values and the file's self-verification snippet updated together). (#105)
 
 ### Added
 - **HTTPS-only validation at the web-ingest trust boundary.** Caller-supplied,
@@ -51,7 +67,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   offline regression tests covering every rejection path. This closes the
   OpenSSF Silver `crypto_used_network` and `input_validation` MUST gaps. The
   full pinned suite passes 969 tests with 97 percent statement coverage over
-  the declared shipped surface; the 80 percent CI floor remains enforced.
+  the declared shipped surface; the 80 percent CI floor remains enforced. (#86)
 - **Portable evidence synthesis for Codex and Gemini CLI.** A separately
   packaged `plugins/zetetic-reasoning` vertical slice exposes one skill and
   eight sourced reasoning references through a Codex marketplace manifest and
@@ -59,7 +75,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   server registration or team-agent roster. Contract tests pin versions and
   paths, validate the skill frontmatter, require source, refusal, uncertainty
   and blind-spot language, and reject host-specific runtime tokens from the
-  portable package. The attested release bundle and SBOM now include it.
+  portable package. The attested release bundle and SBOM now include it. (#85)
 - **The Python suite runs in CI, gated on 80 percent coverage.** Before this,
   `grep -rn pytest .github/` returned nothing: the suites under `tests/` ran
   nowhere in CI, so a change that broke all of them landed green, and
@@ -67,7 +83,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   runs on push and pull_request as a hard gate, with `coverage.py` in the same
   job and `fail_under = 80` over the shipped Python surface (`hooks/` plus
   `tools/`). Scope, floor and exclusions are declared in `pyproject.toml` rather
-  than in flags, so a local run and CI cannot measure different things.
+  than in flags, so a local run and CI cannot measure different things. (issue #71, #83)
 - **625 new tests, taking Python coverage from 21 percent to 99.** Every shipped
   Python file is now at 97 percent or above. The two the issue named as
   highest-consequence and at zero, the credential denylist
@@ -127,7 +143,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   a contributor-facing document tells the reader to run names a file this repo
   actually ships. Scoped to runnable positions inside fenced blocks; host paths,
   placeholders, `-m`/`-c` invocations and prompt-prefixed session transcripts
-  are not path claims. 14-case regression suite under `tools/tests/`.
+  are not path claims. 14-case regression suite under `tools/tests/`. (issue #73, #78)
 
 ### Fixed
 - **PostToolUse git hooks no longer leak repository-resolution failures into
@@ -139,7 +155,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   Command parsing stops at shell separators so an earlier `git -C` cannot leak
   into a later commit, and it follows the measured Claude Code form
   `cd <repo> && git commit`. Regression coverage asserts the exact selected
-  repository under precedence conflicts as well as the exit-0 contract.
+  repository under precedence conflicts as well as the exit-0 contract. (#89)
 - **`tools/web_ingest.py` could not be imported under its package path.** A bare
   `import web_extract` worked only because `tools/web-ingest.sh` sets
   `PYTHONPATH`; `from tools import web_ingest` failed. It now tries the package
@@ -158,7 +174,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   hooks; `marketplace.json` claimed 78 skills and 42 tools. The tree holds 97
   genius agents, 23 team agents, 76 skills, 19 hook registrations, 20 hook
   scripts, 26 commands and 44 tools. Every claim is regenerated from the
-  convention and gated.
+  convention and gated. (#79)
 - **Two test-count claims were not reproducible by any command**: a `tests-288`
   badge and "241 tests passing" in the memory section. The bash suites report
   their tallies in incompatible formats, so no total was derivable. Both are
@@ -176,6 +192,33 @@ adheres to [Semantic Versioning](https://semver.org/).
   a report concerns the maintainer.
 
 ### Changed
+- **Opus 5 / Sonnet 5 added to the model reference surface.** The 119 agent
+  `<token-budget>` stubs (Opus 4.8 -> Opus 5, Sonnet 4.6 -> Sonnet 5; Haiku 4.5
+  unchanged), `token-budget.md` and `effort-calibration.md` (model IDs, context,
+  pricing, the `xhigh` ladder no longer being Opus-only), and
+  `mid-task-system-messages.md` (GA on Opus 5/4.8/Fable 5/Mythos 5, unsupported
+  on Sonnet 5) all previously described the 4.x generation only. Two
+  pre-existing errors in `token-budget.md` are corrected in the same pass:
+  Sonnet 4.6 max output is 128K not 64K, and Fable 5 max output was blank. No
+  session-budget threshold changed. (#90)
+- **Project positioned as cross-platform, and OpenSSF Silver evidence refreshed
+  to the v2.36.0 measurement** (coverage 21% -> 22%, 15 -> 16 regression
+  suites), with the succession model and continuity evidence kept consistent
+  with `GOVERNANCE.md`. (#75, #76, #87, #88)
+- **`automatised-pipeline` references renamed to `ai-architect-mcp-codebase`**
+  (repository and MCP server key) across `.github/workflows/scorecard.yml`,
+  the dev-symlink example and the historical LinkedIn asset that describes the
+  rename itself. (#97)
+- **Routine dependency maintenance**: the `github-actions` group bumped to
+  `codeql-action` 4.37.4 (#91), and `requirements-dev.lock` recompiled for
+  `packaging` 26.3 after the committed lock stopped matching a fresh resolution
+  (#96).
+- **`zetetic-gates` micro-plugin: v1.0.0 -> v1.0.1.** Two fixes landed in its
+  shipped copy since the plugin's initial release: the shellcheck
+  warning-severity cleanup (#77) and the fixture-corpus exclusion that let the
+  `zetetic-checker` CI job become blocking without false-positiving on its own
+  test fixtures (#100, which also re-synced this plugin's checker copy).
+  Registered in `.claude-plugin/marketplace.json`.
 - **The shellcheck warning-severity sweep is now a hard gate, and shellcheck is
   pinned.** Issue #74 measured 26 warning-severity findings across `hooks/` and
   `tools/` and dispositioned every one: 3 `SC2164` (`cd` without `|| exit`, the
