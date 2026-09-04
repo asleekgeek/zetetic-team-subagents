@@ -15,6 +15,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.38.0]: deletion-gate Tier 2/3, mechanically enforced push authority, and a duplicated Stop hook fixed
+
 ### Fixed
 
 - **`requirements-dev.lock` disagreed with a fresh resolve of `requirements-dev.txt`
