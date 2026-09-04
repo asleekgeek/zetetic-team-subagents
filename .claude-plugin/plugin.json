@@ -22,6 +22,31 @@
     "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh install",
     "message": "Installing zetetic agents, skills, commands, and hooks to ~/.claude/ ..."
   },
+  "agents": [
+    "./agents/advisor.md",
+    "./agents/architect.md",
+    "./agents/code-reviewer.md",
+    "./agents/data-scientist.md",
+    "./agents/dba.md",
+    "./agents/devops-engineer.md",
+    "./agents/engineer.md",
+    "./agents/experiment-runner.md",
+    "./agents/frontend-engineer.md",
+    "./agents/git-historian.md",
+    "./agents/latex-engineer.md",
+    "./agents/memory-writer.md",
+    "./agents/mlops.md",
+    "./agents/orchestrator.md",
+    "./agents/paper-writer.md",
+    "./agents/professor.md",
+    "./agents/refactorer.md",
+    "./agents/research-scientist.md",
+    "./agents/reviewer-academic.md",
+    "./agents/security-auditor.md",
+    "./agents/simplifier.md",
+    "./agents/test-engineer.md",
+    "./agents/ux-designer.md"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -86,6 +111,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-deletion-gate.py\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -130,6 +165,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-deletion-gate.py\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
@@ -164,15 +209,6 @@
       }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-context-guard.py\"",
-            "timeout": 10
-          }
-        ]
-      },
       {
         "hooks": [
           {
