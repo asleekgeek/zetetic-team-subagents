@@ -177,6 +177,14 @@ def _usage(ctx: int, model="claude-opus-5"):
     return {"message": {"model": model, "usage": {"input_tokens": ctx}}}
 
 
+def _tool_use(name="Read"):
+    """A transcript record carrying a tool_use content block -- the signal
+    _has_activity_since looks for. Most main()-level tests need at least one
+    of these alongside a _usage() record, or the activity gate now suppresses
+    the block regardless of how far over threshold ctx is."""
+    return {"message": {"content": [{"type": "tool_use", "name": name}]}}
+
+
 def _run_main(monkeypatch, payload):
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
     with pytest.raises(SystemExit) as excinfo:
@@ -468,34 +476,76 @@ def test_write_stub_returns_empty_when_the_file_cannot_be_written(
     assert guard._write_stub("s", "/w", 1, "m", "warn") == ""
 
 
-# ── level state ──────────────────────────────────────────────────────────────
+# ── state (level + telemetry) ────────────────────────────────────────────────
 
 def test_level_state_defaults_to_none(isolate_guard):
-    assert guard._load_level("fresh") == "none"
+    assert guard._load_state("fresh") == {"level": "none"}
 
 
 def test_level_state_round_trips(isolate_guard):
-    guard._save_level("s1", "warn")
-    assert guard._load_level("s1") == "warn"
+    guard._save_state("s1", {"level": "warn", "initial_ctx": 190_000})
+    assert guard._load_state("s1") == {"level": "warn", "initial_ctx": 190_000}
 
 
 def test_level_state_is_per_session(isolate_guard):
-    guard._save_level("s1", "hard")
-    assert guard._load_level("s2") == "none"
+    guard._save_state("s1", {"level": "hard"})
+    assert guard._load_state("s2") == {"level": "none"}
 
 
 def test_level_state_defaults_to_none_on_a_corrupt_file(isolate_guard):
     path = Path(guard.STATE_DIR) / "zetetic-ctxguard-s1.json"
     path.write_text("{not json")
-    assert guard._load_level("s1") == "none"
+    assert guard._load_state("s1") == {"level": "none"}
 
 
-def test_save_level_reports_but_survives_an_unwritable_state_dir(
+def test_level_state_defaults_to_none_on_a_legacy_shape(isolate_guard):
+    path = Path(guard.STATE_DIR) / "zetetic-ctxguard-s1.json"
+    path.write_text(json.dumps({"nope": True}))
+    assert guard._load_state("s1") == {"level": "none"}
+
+
+def test_save_state_reports_but_survives_an_unwritable_state_dir(
     isolate_guard, monkeypatch, capsys
 ):
     monkeypatch.setattr(guard, "STATE_DIR", str(isolate_guard / "missing"))
-    guard._save_level("s1", "warn")  # must not raise
+    guard._save_state("s1", {"level": "warn"})  # must not raise
     assert "level-state write failed" in capsys.readouterr().err
+
+
+# ── activity gate helpers ────────────────────────────────────────────────────
+
+def test_line_has_tool_use(isolate_guard):
+    assert guard._line_has_tool_use(json.dumps(_tool_use())) is True
+    assert guard._line_has_tool_use(json.dumps(_usage(1))) is False
+    assert guard._line_has_tool_use("not json") is False
+    assert guard._line_has_tool_use("") is False
+
+
+def test_has_activity_since_finds_a_tool_use(isolate_guard):
+    path = _jsonl(isolate_guard, _usage(1), _tool_use())
+    assert guard._has_activity_since(path, 0) is True
+
+
+def test_has_activity_since_is_false_for_usage_only_transcript(isolate_guard):
+    path = _jsonl(isolate_guard, _usage(1), _usage(2))
+    assert guard._has_activity_since(path, 0) is False
+
+
+def test_has_activity_since_ignores_activity_before_the_offset(isolate_guard):
+    path = _jsonl(isolate_guard, _tool_use(), _usage(1))
+    size = Path(path).stat().st_size
+    assert guard._has_activity_since(path, size) is False
+
+
+def test_has_activity_since_rescans_when_the_offset_is_stale(isolate_guard):
+    """An offset larger than the current file (transcript rotated/replaced
+    between fires) must not be trusted as 'caught up' -- rescan from 0."""
+    path = _jsonl(isolate_guard, _tool_use())
+    assert guard._has_activity_since(path, 10_000_000) is True
+
+
+def test_has_activity_since_fails_open_on_a_missing_file(isolate_guard):
+    assert guard._has_activity_since(str(isolate_guard / "missing.jsonl"), 0) is True
 
 
 # ── reason strings ───────────────────────────────────────────────────────────
@@ -558,33 +608,34 @@ def test_main_emits_the_warn_decision_on_crossing_up(
     monkeypatch, isolate_guard, capsys
 ):
     payload = {"session_id": "s", "cwd": str(isolate_guard),
-               "transcript_path": _jsonl(isolate_guard, _usage(185_000))}
+               "transcript_path": _jsonl(isolate_guard, _usage(185_000), _tool_use())}
     assert _run_main(monkeypatch, payload) == 0
     decision = json.loads(capsys.readouterr().out)
     assert decision["decision"] == "block"
     assert "CHECKPOINT THRESHOLD" in decision["reason"]
     assert "checkpoint threshold" in decision["systemMessage"]
-    assert guard._load_level("s") == "warn"
+    assert guard._load_state("s")["level"] == "warn"
 
 
 def test_main_emits_the_hard_decision_above_the_cap(
     monkeypatch, isolate_guard, capsys
 ):
     payload = {"session_id": "s", "cwd": str(isolate_guard),
-               "transcript_path": _jsonl(isolate_guard, _usage(250_000))}
+               "transcript_path": _jsonl(isolate_guard, _usage(250_000), _tool_use())}
     _run_main(monkeypatch, payload)
     decision = json.loads(capsys.readouterr().out)
     assert "SOFT CAP REACHED" in decision["reason"]
     assert "soft cap" in decision["systemMessage"]
-    assert guard._load_level("s") == "hard"
+    assert guard._load_state("s")["level"] == "hard"
 
 
 def test_main_fires_each_level_only_once(monkeypatch, isolate_guard, capsys):
     """Crossing UP is the trigger; staying in the band must stay quiet."""
     payload = {"session_id": "s", "cwd": str(isolate_guard),
-               "transcript_path": _jsonl(isolate_guard, _usage(185_000))}
+               "transcript_path": _jsonl(isolate_guard, _usage(185_000), _tool_use())}
     _run_main(monkeypatch, payload)
-    capsys.readouterr()
+    first = json.loads(capsys.readouterr().out)
+    assert first["decision"] == "block"
     assert _run_main(monkeypatch, payload) == 0
     assert capsys.readouterr().out == ""
 
@@ -592,18 +643,18 @@ def test_main_fires_each_level_only_once(monkeypatch, isolate_guard, capsys):
 def test_main_still_escalates_from_warn_to_hard(monkeypatch, isolate_guard, capsys):
     """One-time-per-level, not one-time-per-session: hard must still fire."""
     warn_payload = {"session_id": "s", "cwd": str(isolate_guard),
-                    "transcript_path": _jsonl(isolate_guard, _usage(185_000))}
+                    "transcript_path": _jsonl(isolate_guard, _usage(185_000), _tool_use())}
     _run_main(monkeypatch, warn_payload)
     capsys.readouterr()
     hard_path = isolate_guard / "t2.jsonl"
-    hard_path.write_text(json.dumps(_usage(250_000)) + "\n")
+    hard_path.write_text(json.dumps(_usage(250_000)) + "\n" + json.dumps(_tool_use()) + "\n")
     _run_main(monkeypatch, {"session_id": "s", "cwd": str(isolate_guard),
                             "transcript_path": str(hard_path)})
     assert "SOFT CAP REACHED" in json.loads(capsys.readouterr().out)["reason"]
 
 
 def test_main_does_not_downgrade_from_hard_to_warn(monkeypatch, isolate_guard, capsys):
-    guard._save_level("s", "hard")
+    guard._save_state("s", {"level": "hard"})
     payload = {"session_id": "s", "cwd": str(isolate_guard),
                "transcript_path": _jsonl(isolate_guard, _usage(185_000))}
     assert _run_main(monkeypatch, payload) == 0
@@ -614,11 +665,11 @@ def test_main_uses_the_model_specific_band(monkeypatch, isolate_guard, capsys):
     """125k is under opus's warn band but over haiku's, so the model decides."""
     payload = {"session_id": "s", "cwd": str(isolate_guard),
                "transcript_path": _jsonl(
-                   isolate_guard, _usage(125_000, "claude-haiku-4-5-20251001"))}
+                   isolate_guard, _usage(125_000, "claude-haiku-4-5-20251001"), _tool_use())}
     _run_main(monkeypatch, payload)
     assert "CHECKPOINT THRESHOLD" in json.loads(capsys.readouterr().out)["reason"]
 
-    guard._save_level("s2", "none")
+    guard._save_state("s2", {"level": "none"})
     payload2 = {"session_id": "s2", "cwd": str(isolate_guard),
                 "transcript_path": _jsonl(
                     isolate_guard, _usage(125_000, "claude-opus-5"))}
@@ -631,6 +682,40 @@ def test_main_defaults_cwd_when_the_payload_omits_it(
 ):
     monkeypatch.setattr(guard, "_git", lambda cwd, *a: "")
     payload = {"session_id": "s",
-               "transcript_path": _jsonl(isolate_guard, _usage(250_000))}
+               "transcript_path": _jsonl(isolate_guard, _usage(250_000), _tool_use())}
     _run_main(monkeypatch, payload)
     assert json.loads(capsys.readouterr().out)["decision"] == "block"
+
+
+# ── activity gate ────────────────────────────────────────────────────────────
+
+def test_main_skips_silently_above_threshold_with_no_tool_use(
+    monkeypatch, isolate_guard, capsys
+):
+    """The reproduced bug: ctx over WARN on the very first turn, nothing
+    checkpointable yet (no tool_use anywhere in the transcript) -> exit
+    silently, level state left untouched so the next Stop re-checks."""
+    payload = {"session_id": "s", "cwd": str(isolate_guard),
+               "transcript_path": _jsonl(isolate_guard, _usage(250_000))}
+    assert _run_main(monkeypatch, payload) == 0
+    assert capsys.readouterr().out == ""
+    assert guard._load_state("s") == {"level": "none"}
+
+
+def test_main_fires_once_activity_appears_after_a_skipped_check(
+    monkeypatch, isolate_guard, capsys
+):
+    """A session that starts idle and later does real work must still get
+    checkpointed -- the gate re-checks every Stop, it does not permanently
+    silence a session once skipped."""
+    path = _jsonl(isolate_guard, _usage(185_000))
+    payload = {"session_id": "s", "cwd": str(isolate_guard), "transcript_path": path}
+    assert _run_main(monkeypatch, payload) == 0
+    assert capsys.readouterr().out == ""
+
+    Path(path).write_text(
+        Path(path).read_text() + json.dumps(_tool_use()) + "\n" + json.dumps(_usage(186_000)) + "\n"
+    )
+    assert _run_main(monkeypatch, payload) == 0
+    decision = json.loads(capsys.readouterr().out)
+    assert decision["decision"] == "block"
