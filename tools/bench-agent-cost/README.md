@@ -140,6 +140,53 @@ under `fixtures/`, committed to this PR) and the fixed rubric per task
  `PairedComparison`) is reported as a tie, not resolved in either
  direction.
 
+**Completion threshold -- pre-registration requirement, and one documented
+exception:** every task JSON must set `completion_threshold_points` -- the
+minimum blind-scored quality point *total* (summed across all rubric
+criteria, out of `rubric_max_points`; this is what `analyze_results.py`'s
+`quality_score`/`report_completion_gated_tokens` actually gates on -- a
+run can reach the threshold via any combination of criteria, not only the
+combination named in a task's rationale text) a run must reach to count as
+having *completed* the task, not merely attempted it. **The rule going
+forward:** this value must be fixed *before* that task's first run,
+committed in the same change that introduces the task, and never edited
+once any run exists for it (Move 1/Fisher discipline) -- a defensible,
+stated rule tied to specific rubric criteria, never an arbitrary global
+percentage (§8: no invented constants).
+
+`review_small_diff` is **the one documented exception to that rule, not an
+example of following it.** Its 10 runs (`docs/bench-agent-cost/20260905/`)
+were committed to `main` by PR #121 before `completion_threshold_points`
+existed as a field (added later by the PR that introduced this metric); the
+threshold (5/10) was therefore chosen with the resulting quality scores
+(7-10/10 across all 10 runs) already visible -- a retrospective criterion,
+not a blind pre-registration, however defensible its stated logic
+(`tasks/review_small_diff.json`'s `completion_threshold_rationale` field
+states this plainly and is the source of truth for this task; do not cite
+this README as having pre-registered it). Any task added after this one
+must actually satisfy the rule above -- pre-registered before its first
+run -- for its completion-gated numbers to carry the pre-registration
+discipline this benchmark otherwise claims throughout. A task JSON without
+`completion_threshold_points` causes `analyze_results.py` to skip the
+completion-gated metric with an explicit message, never a silent default.
+
+**Why this metric exists:** reporting mean token count over "all valid
+runs" (this benchmark's original metric, still reported for transparency)
+treats a run that burned tokens on a low-quality or incomplete output
+identically to one that finished the task correctly. A condition that
+completes the task less often than its counterpart can look artificially
+cheap on that metric alone. `analyze_results.py` additionally reports, per
+condition: (1) the **completion rate** -- the fraction of valid runs whose
+blind quality score meets `completion_threshold_points`, always printed,
+never hidden even when it is 100% or 0%; and (2) **tokens per completed
+task** -- the mean total-token count among only the threshold-meeting runs,
+matching this document's own SCI functional-unit definition of R as "one
+*completed* task." When zero runs in a condition meet the threshold, this
+is reported as "0 completed runs, metric undefined" -- never silently
+computed as a mean over an empty list. The pre-fix metric (mean over all
+valid runs) is kept alongside it, unchanged, for comparability; the new
+metric is additive, not a replacement.
+
 **Non-inferiority margin:** the skill condition's mean blind quality score
 must not fall more than **1.0 point below** the subagent condition's mean,
 on each task's 10-point rubric (10%). Rationale (reasoned choice, not a
@@ -317,6 +364,25 @@ for being "just a smoke run."
 - Explanation candidate for the quality/margin result: single task, n=5,
   haiku/low tier -- underpowered by design (this run's purpose was to
   prove the tool's plumbing, not to answer the production question).
+- **Completion-gated re-check (added after the initial log entry, same
+  data, re-run with the updated `analyze_results.py`):** both conditions
+  scored 100% completion rate (5/5 runs each meet `review_small_diff`'s
+  `completion_threshold_points: 5`) -- every run in this smoke run cleared
+  the bar. This threshold is the documented **retrospective** exception
+  described above (chosen after these scores were already known, not
+  pre-registered before the runs); it is applied here for consistency with
+  the rest of this negative-result log, not presented as a blind
+  confirmation. `tokens per completed task` therefore
+  equals the pre-existing "mean tokens among all valid runs" figure exactly
+  for both conditions (216,824 inline vs. 111,222 subagent); nothing was
+  excluded, and the qualitative conclusion above (non-inferiority not
+  established at this margin; token and dollar-cost proxies disagree in
+  direction) is unchanged. This is expected, not a surprise: it shows the
+  completion gate reduces to a no-op when no run actually produced a
+  low-quality/incomplete output, and confirms the metric doesn't silently
+  alter an already-reported result -- see the synthetic differential-
+  completion-rate test in `tests/test_bench_agent_cost.py` for the case
+  where the two metrics genuinely diverge.
 
 **Action:** re-run at the pinned production tier (sonnet/medium) across
 all 3 tasks before any Phase 4/7 decision leans on this benchmark's
