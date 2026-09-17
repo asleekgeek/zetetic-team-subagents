@@ -14,6 +14,8 @@ FILES = (
     'hooks/pre-tool-claim-gate.sh', 'hooks/pre-edit-layer-check.sh',
     'hooks/pre-tool-deletion-gate.py', 'hooks/post-tool-deletion-gate.py',
     'hooks/pre-tool-redaction-gate.py', 'hooks/stop-redaction-gate.py',
+    'hooks/pre-push-fail-before.sh', 'hooks/git-push-context.py',
+    'tools/fail-before-checker.sh', 'tools/fail-before-runners.sh',
     'tools/zetetic-checker.sh', 'tools/craftsmanship-checker.sh',
     'tools/lib/craftsmanship-detectors.sh', 'tools/redaction-checker.sh',
     'tools/redaction_gate.py', 'tools/deletion_gate.py',

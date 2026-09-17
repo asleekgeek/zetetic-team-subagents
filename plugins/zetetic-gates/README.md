@@ -1,6 +1,6 @@
 # zetetic-gates
 
-Shared source, craftsmanship, secret-read and prose checks for Claude Code and
+Shared source, craftsmanship, secret-read, prose and fail-before checks for Claude Code and
 Codex. The full zetetic-team-subagents plugin includes the same controls.
 
 ## Install
@@ -46,3 +46,17 @@ commits need native Git hooks for enforcement independent of the assistant.
 Canonical checkers live in the parent repository. `scripts/sync-gates.py`
 generates the bundled copies; tests reject drift. See
 [shared-host design and verification](../../docs/shared-host-gates.md).
+
+## The fail-before gate
+
+`tools/fail-before-checker.sh` proves that a test the diff adds can fail: the
+changed test files are copied over a throwaway checkout of the base and run
+there. A new pytest node that passes against the old code is reported
+`VACUOUS`, a warning under the standard profile and blocking under
+`ZETETIC_PROFILE=strict`. A run that reaches no verdict is `INCONCLUSIVE`,
+never a pass. `hooks/pre-push-fail-before.sh` runs it when Claude Code issues
+`git push`. Rationale and limits: [docs/fail-before.md](docs/fail-before.md).
+
+Outside Claude Code the same gate runs from a plain git hook:
+`printf 'exec plugins/zetetic-gates/tools/fail-before-checker.sh\n' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push`
+(adjust the path to where the plugin is checked out).
